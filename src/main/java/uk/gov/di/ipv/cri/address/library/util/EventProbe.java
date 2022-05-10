@@ -16,6 +16,15 @@ public class EventProbe {
 
     public EventProbe log(Level level, Exception e) {
         LOGGER.log(level, e);
+        if (level == Level.ERROR) {
+            if (e.getCause() != null) {
+                LOGGER.log(level, e.getCause());
+
+                if (e.getCause().getCause() != null) {
+                    LOGGER.log(level, e.getCause().getCause());
+                }
+            }
+        }
         return this;
     }
 
