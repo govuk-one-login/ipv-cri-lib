@@ -1,16 +1,16 @@
 package uk.gov.di.ipv.cri.address.library.domain;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDocument;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@DynamoDBDocument
+@DynamoDbBean
 public class CanonicalAddress {
     private Long uprn;
     private String organisationName;
@@ -20,6 +20,8 @@ public class CanonicalAddress {
     private String buildingName;
 
     @JsonAlias("dependentThoroughfare")
+    private String dependentThoroughfare;
+
     private String dependentStreetName;
 
     @JsonAlias("thoroughfareName")
@@ -52,7 +54,6 @@ public class CanonicalAddress {
         // Default constructor
     }
 
-    @DynamoDBAttribute(attributeName = "UPRN")
     public Optional<Long> getUprn() {
         return Optional.ofNullable(this.uprn);
     }
@@ -61,7 +62,6 @@ public class CanonicalAddress {
         this.uprn = uprn;
     }
 
-    @DynamoDBAttribute(attributeName = "OrganisationName")
     public String getOrganisationName() {
         return organisationName;
     }
@@ -70,7 +70,6 @@ public class CanonicalAddress {
         this.organisationName = organisationName;
     }
 
-    @DynamoDBAttribute(attributeName = "DepartmentName")
     public String getDepartmentName() {
         return departmentName;
     }
@@ -79,7 +78,6 @@ public class CanonicalAddress {
         this.departmentName = departmentName;
     }
 
-    @DynamoDBAttribute(attributeName = "SubBuildingName")
     public String getSubBuildingName() {
         return subBuildingName;
     }
@@ -88,7 +86,6 @@ public class CanonicalAddress {
         this.subBuildingName = subBuildingName;
     }
 
-    @DynamoDBAttribute(attributeName = "BuildingNumber")
     public String getBuildingNumber() {
         return buildingNumber;
     }
@@ -97,7 +94,6 @@ public class CanonicalAddress {
         this.buildingNumber = buildingNumber;
     }
 
-    @DynamoDBAttribute(attributeName = "DependentStreetName")
     public String getDependentStreetName() {
         return dependentStreetName;
     }
@@ -106,7 +102,6 @@ public class CanonicalAddress {
         this.dependentStreetName = dependentStreetName;
     }
 
-    @DynamoDBAttribute(attributeName = "DoubleDependentAddressLocality")
     public String getDoubleDependentAddressLocality() {
         return doubleDependentAddressLocality;
     }
@@ -115,7 +110,6 @@ public class CanonicalAddress {
         this.doubleDependentAddressLocality = doubleDependentAddressLocality;
     }
 
-    @DynamoDBAttribute(attributeName = "DependentAddressLocality")
     public String getDependentAddressLocality() {
         return dependentAddressLocality;
     }
@@ -124,7 +118,6 @@ public class CanonicalAddress {
         this.dependentAddressLocality = dependentAddressLocality;
     }
 
-    @DynamoDBAttribute(attributeName = "BuildingName")
     public String getBuildingName() {
         return buildingName;
     }
@@ -133,7 +126,6 @@ public class CanonicalAddress {
         this.buildingName = buildingName;
     }
 
-    @DynamoDBAttribute(attributeName = "StreetName")
     public String getStreetName() {
         return streetName;
     }
@@ -142,7 +134,6 @@ public class CanonicalAddress {
         this.streetName = streetName;
     }
 
-    @DynamoDBAttribute(attributeName = "AddressLocality")
     public String getAddressLocality() {
         return addressLocality;
     }
@@ -151,7 +142,6 @@ public class CanonicalAddress {
         this.addressLocality = addressLocality;
     }
 
-    @DynamoDBAttribute(attributeName = "PostalCode")
     public String getPostalCode() {
         return postalCode;
     }
@@ -160,7 +150,6 @@ public class CanonicalAddress {
         this.postalCode = postalCode;
     }
 
-    @DynamoDBAttribute(attributeName = "AddressCountry")
     public String getAddressCountry() {
         return addressCountry;
     }
@@ -169,19 +158,27 @@ public class CanonicalAddress {
         this.addressCountry = addressCountry;
     }
 
-    public Optional<Date> getValidFrom() {
-        return Optional.ofNullable(validFrom);
+    public LocalDate getValidFrom() {
+        if (validFrom != null) {
+            return new java.sql.Date(validFrom.getTime()).toLocalDate();
+        } else {
+            return null;
+        }
     }
 
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
+    public void setValidFrom(LocalDate validFrom) {
+        this.validFrom = java.sql.Date.valueOf(validFrom);
     }
 
-    public Optional<Date> getValidUntil() {
-        return Optional.ofNullable(validUntil);
+    public LocalDate getValidUntil() {
+        if (validUntil != null) {
+            return new java.sql.Date(validUntil.getTime()).toLocalDate();
+        } else {
+            return null;
+        }
     }
 
-    public void setValidUntil(Date validUntil) {
-        this.validUntil = validUntil;
+    public void setValidUntil(LocalDate validUntil) {
+        this.validUntil = java.sql.Date.valueOf(validUntil);
     }
 }

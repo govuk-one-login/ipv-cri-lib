@@ -17,9 +17,8 @@ import uk.gov.di.ipv.cri.address.library.exception.AddressProcessingException;
 import uk.gov.di.ipv.cri.address.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.address.library.persistence.item.AddressItem;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -104,8 +103,8 @@ class AddressServiceTest {
         address1.setAddressLocality("LEEDS");
         address1.setPostalCode("LS10 4QL");
         address1.setAddressCountry("GBR");
-        address1.setValidFrom(Date.from(Instant.parse("2010-02-26T00:00:00.00Z")));
-        address1.setValidUntil(Date.from(Instant.parse("2021-01-16T00:00:00.00Z")));
+        address1.setValidFrom(LocalDate.of(2010, 2, 26));
+        address1.setValidUntil(LocalDate.of(2021, 1, 16));
 
         CanonicalAddress address2 = new CanonicalAddress();
         address2.setUprn(Long.valueOf("63094965"));
@@ -115,8 +114,8 @@ class AddressServiceTest {
         address2.setAddressLocality("WAKEFIELD");
         address2.setPostalCode("WF3 3SE");
         address2.setAddressCountry("GBR");
-        address2.setValidFrom(Date.from(Instant.parse("2021-01-16T00:00:00.00Z")));
-        address2.setValidUntil(Date.from(Instant.parse("2021-08-02T00:00:00.00Z")));
+        address2.setValidFrom(LocalDate.of(2021, 1, 16));
+        address2.setValidUntil(LocalDate.of(2021, 8, 2));
 
         CanonicalAddress address3 = new CanonicalAddress();
         address3.setUprn(Long.valueOf("63042351"));
@@ -125,7 +124,7 @@ class AddressServiceTest {
         address3.setAddressLocality("WAKEFIELD");
         address3.setPostalCode("WF1 2LZ");
         address3.setAddressCountry("GBR");
-        address3.setValidFrom(Date.from(Instant.parse("2021-08-02T00:00:00.00Z")));
+        address3.setValidFrom(LocalDate.of(2021, 8, 2));
 
         addresses.add(address1);
         addresses.add(address2);

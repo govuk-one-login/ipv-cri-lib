@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.apache.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.http.Header;
@@ -51,7 +50,7 @@ public class ApiGatewayResponseGenerator {
     }
 
     public static APIGatewayProxyResponseEvent proxyJwtResponse(int statusCode, String payload) {
-        Map<String, String> responseHeaders = Map.of(HttpHeaders.CONTENT_TYPE, "application/jwt");
+        Map<String, String> responseHeaders = Map.of(Header.CONTENT_TYPE, "application/jwt");
         return proxyResponse(statusCode, payload, responseHeaders);
     }
 }
