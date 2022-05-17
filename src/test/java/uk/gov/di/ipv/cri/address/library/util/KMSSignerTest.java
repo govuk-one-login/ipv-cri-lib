@@ -1,10 +1,5 @@
 package uk.gov.di.ipv.cri.address.library.util;
 
-import com.amazonaws.services.kms.AWSKMS;
-import com.amazonaws.services.kms.model.MessageType;
-import com.amazonaws.services.kms.model.SignRequest;
-import com.amazonaws.services.kms.model.SignResult;
-import com.amazonaws.services.kms.model.SigningAlgorithmSpec;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -17,8 +12,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.services.kms.KmsClient;
+import software.amazon.awssdk.services.kms.model.MessageType;
+import software.amazon.awssdk.services.kms.model.SignRequest;
+import software.amazon.awssdk.services.kms.model.SignResponse;
+import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 class KMSSignerTest {
     private KMSSigner kmsSigner;
     private String kid = UUID.randomUUID().toString();
-    @Mock private AWSKMS mockKmsClient;
+    @Mock private KmsClient mockKmsClient;
 
     @BeforeEach
     void setUp() {
@@ -59,32 +59,33 @@ class KMSSignerTest {
         ArgumentCaptor<SignRequest> signRequestArgumentCaptor =
                 ArgumentCaptor.forClass(SignRequest.class);
 
-        SignResult mockSignResult = mock(SignResult.class);
-        ByteBuffer mockByteBuffer = mock(ByteBuffer.class);
+        SignResponse mockSignResponse = mock(SignResponse.class);
+        SdkBytes mockSdkBytes = mock(SdkBytes.class);
 
-        when(mockKmsClient.sign(signRequestArgumentCaptor.capture())).thenReturn(mockSignResult);
-        when(mockSignResult.getSignature()).thenReturn(mockByteBuffer);
-        when(mockByteBuffer.array()).thenReturn(data);
+        when(mockKmsClient.sign(signRequestArgumentCaptor.capture())).thenReturn(mockSignResponse);
+        when(mockSignResponse.signature()).thenReturn(mockSdkBytes);
+        when(mockSdkBytes.asByteArray()).thenReturn(data);
 
         var signed = kmsSigner.sign(mockJWSHeader, data);
 
         verify(mockKmsClient).sign(signRequestArgumentCaptor.capture());
         SignRequest capturedSignRequest = signRequestArgumentCaptor.getValue();
         assertThat(signed, notNullValue());
-        assertThat(capturedSignRequest.getKeyId(), equalTo(kid));
-        assertThat(capturedSignRequest.getMessageType(), equalTo(MessageType.DIGEST.toString()));
+        assertThat(capturedSignRequest.keyId(), equalTo(kid));
         assertThat(
-                capturedSignRequest.getSigningAlgorithm(),
+                capturedSignRequest.messageTypeAsString(), equalTo(MessageType.DIGEST.toString()));
+        assertThat(
+                capturedSignRequest.signingAlgorithmAsString(),
                 equalTo(SigningAlgorithmSpec.ECDSA_SHA_256.toString()));
     }
 
     @Test
     void shouldSignJWSObject() throws JOSEException {
-        var signResult = mock(SignResult.class);
-        when(mockKmsClient.sign(any(SignRequest.class))).thenReturn(signResult);
+        var signResponse = mock(SignResponse.class);
+        when(mockKmsClient.sign(any(SignRequest.class))).thenReturn(signResponse);
 
         byte[] bytes = new byte[10];
-        when(signResult.getSignature()).thenReturn(ByteBuffer.wrap(bytes));
+        when(signResponse.signature()).thenReturn(SdkBytes.fromByteArray(bytes));
 
         JSONObject jsonPayload = new JSONObject(Map.of("test", "test"));
 

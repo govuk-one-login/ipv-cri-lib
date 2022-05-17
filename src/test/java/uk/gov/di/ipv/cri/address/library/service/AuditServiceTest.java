@@ -1,7 +1,5 @@
 package uk.gov.di.ipv.cri.address.library.service;
 
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import uk.gov.di.ipv.cri.address.library.domain.AuditEvent;
 import uk.gov.di.ipv.cri.address.library.domain.AuditEventTypes;
 import uk.gov.di.ipv.cri.address.library.exception.SqsException;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AuditServiceTest {
     public String SQS_QUEUE_URL = "https://example-queue-url";
-    @Mock AmazonSQS mockSqs;
+    @Mock SqsClient mockSqs;
     @Mock ConfigurationService mockConfigurationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -46,11 +46,11 @@ class AuditServiceTest {
                 ArgumentCaptor.forClass(SendMessageRequest.class);
         verify(mockSqs).sendMessage(sqsSendMessageRequestCaptor.capture());
 
-        assertEquals(SQS_QUEUE_URL, sqsSendMessageRequestCaptor.getValue().getQueueUrl());
+        assertEquals(SQS_QUEUE_URL, sqsSendMessageRequestCaptor.getValue().queueUrl());
 
         AuditEvent messageBody =
                 objectMapper.readValue(
-                        sqsSendMessageRequestCaptor.getValue().getMessageBody(), AuditEvent.class);
+                        sqsSendMessageRequestCaptor.getValue().messageBody(), AuditEvent.class);
         assertEquals(AuditEventTypes.SESSION_CREATED, messageBody.getEvent());
         assertEquals(clientId, messageBody.getClientId());
         assertEquals(sessionId.toString(), messageBody.getEventId());
