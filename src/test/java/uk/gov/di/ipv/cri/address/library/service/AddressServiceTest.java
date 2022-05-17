@@ -52,7 +52,7 @@ class AddressServiceTest {
                         + "      \"streetName\": \"GRANGE FIELDS WAY\",\n"
                         + "      \"addressLocality\": \"LEEDS\",\n"
                         + "      \"postalCode\": \"LS10 4QL\",\n"
-                        + "      \"addressCountry\": \"GBR\",\n"
+                        + "      \"addressCountry\": \"GB\",\n"
                         + "      \"validFrom\": \"2010-02-26\",\n"
                         + "      \"validUntil\": \"2021-01-16\"\n"
                         + "   },\n"
@@ -63,7 +63,7 @@ class AddressServiceTest {
                         + "      \"streetName\": \"RIDINGS LANE\",\n"
                         + "      \"addressLocality\": \"WAKEFIELD\",\n"
                         + "      \"postalCode\": \"WF3 3SE\",\n"
-                        + "      \"addressCountry\": \"GBR\",\n"
+                        + "      \"addressCountry\": \"GB\",\n"
                         + "      \"validFrom\": \"2021-01-16\",\n"
                         + "      \"validUntil\": \"2021-08-02\"\n"
                         + "   },\n"
@@ -73,7 +73,7 @@ class AddressServiceTest {
                         + "      \"streetName\": \"GATEWAYS\",\n"
                         + "      \"addressLocality\": \"WAKEFIELD\",\n"
                         + "      \"postalCode\": \"WF1 2LZ\",\n"
-                        + "      \"addressCountry\": \"GBR\",\n"
+                        + "      \"addressCountry\": \"GB\",\n"
                         + "      \"validFrom\": \"2021-08-02\"\n"
                         + "   }\n"
                         + "]";
@@ -102,7 +102,7 @@ class AddressServiceTest {
         address1.setStreetName("GRANGE FIELDS WAY");
         address1.setAddressLocality("LEEDS");
         address1.setPostalCode("LS10 4QL");
-        address1.setAddressCountry("GBR");
+        address1.setAddressCountry("GB");
         address1.setValidFrom(LocalDate.of(2010, 2, 26));
         address1.setValidUntil(LocalDate.of(2021, 1, 16));
 
@@ -113,7 +113,7 @@ class AddressServiceTest {
         address2.setDependentAddressLocality("LOFTHOUSE");
         address2.setAddressLocality("WAKEFIELD");
         address2.setPostalCode("WF3 3SE");
-        address2.setAddressCountry("GBR");
+        address2.setAddressCountry("GB");
         address2.setValidFrom(LocalDate.of(2021, 1, 16));
         address2.setValidUntil(LocalDate.of(2021, 8, 2));
 
@@ -123,7 +123,7 @@ class AddressServiceTest {
         address3.setStreetName("GATEWAYS");
         address3.setAddressLocality("WAKEFIELD");
         address3.setPostalCode("WF1 2LZ");
-        address3.setAddressCountry("GBR");
+        address3.setAddressCountry("GB");
         address3.setValidFrom(LocalDate.of(2021, 8, 2));
 
         addresses.add(address1);
