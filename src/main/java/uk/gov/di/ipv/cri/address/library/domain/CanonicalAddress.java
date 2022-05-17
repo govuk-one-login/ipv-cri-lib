@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Optional;
 
@@ -19,6 +20,8 @@ public class CanonicalAddress {
     private String buildingName;
 
     @JsonAlias("dependentThoroughfare")
+    private String dependentThoroughfare;
+
     private String dependentStreetName;
 
     @JsonAlias("thoroughfareName")
@@ -155,19 +158,27 @@ public class CanonicalAddress {
         this.addressCountry = addressCountry;
     }
 
-    public Optional<Date> getValidFrom() {
-        return Optional.ofNullable(validFrom);
+    public LocalDate getValidFrom() {
+        if (validFrom != null) {
+            return new java.sql.Date(validFrom.getTime()).toLocalDate();
+        } else {
+            return null;
+        }
     }
 
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
+    public void setValidFrom(LocalDate validFrom) {
+        this.validFrom = java.sql.Date.valueOf(validFrom);
     }
 
-    public Optional<Date> getValidUntil() {
-        return Optional.ofNullable(validUntil);
+    public LocalDate getValidUntil() {
+        if (validUntil != null) {
+            return new java.sql.Date(validUntil.getTime()).toLocalDate();
+        } else {
+            return null;
+        }
     }
 
-    public void setValidUntil(Date validUntil) {
-        this.validUntil = validUntil;
+    public void setValidUntil(LocalDate validUntil) {
+        this.validUntil = java.sql.Date.valueOf(validUntil);
     }
 }

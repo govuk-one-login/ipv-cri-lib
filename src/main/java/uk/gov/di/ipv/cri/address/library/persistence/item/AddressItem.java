@@ -1,10 +1,8 @@
 package uk.gov.di.ipv.cri.address.library.persistence.item;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import uk.gov.di.ipv.cri.address.library.domain.CanonicalAddress;
-import uk.gov.di.ipv.cri.address.library.util.ListOfMapConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +23,7 @@ public class AddressItem {
         this.sessionId = sessionId;
     }
 
-    @DynamoDbConvertedBy(ListOfMapConverter.class)
+    // @DynamoDbConvertedBy(ListOfMapConverter.class)
     public List<CanonicalAddress> getAddresses() {
         return addresses;
     }
