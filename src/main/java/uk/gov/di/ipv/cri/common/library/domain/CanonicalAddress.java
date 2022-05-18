@@ -1,6 +1,5 @@
 package uk.gov.di.ipv.cri.common.library.domain;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;

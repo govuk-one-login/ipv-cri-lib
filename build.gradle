@@ -1,38 +1,18 @@
 plugins {
-	id "java-library"
-	id "jacoco"
+	id "java"
+	id "com.diffplug.spotless" version "6.1.0"
 }
-
-dependencies {
-
-	implementation 	configurations.aws,
-			configurations.lambda,
-			configurations.jackson,
-			configurations.dynamodb,
-			configurations.nimbus,
-			configurations.powertools,
-			configurations.sqs,
-			configurations.kms
-
-	testImplementation configurations.tests
-
-	testRuntimeOnly configurations.test_runtime
-}
-
-tasks.named("jar") {
-	manifest {
-		attributes("Implementation-Title": project.name,
-		"Implementation-Version": project.version)
+spotless {
+	java {
+		target "**/src/**/*.java"
+		googleJavaFormat("1.13.0").aosp()
+		importOrder "", "javax", "java", "\\#"
+		endWithNewline()
 	}
-}
-
-test {
-	useJUnitPlatform()
-	finalizedBy jacocoTestReport
-}
-jacocoTestReport {
-	dependsOn test
-	reports {
-		xml.required.set(true)
+	groovyGradle {
+		target '**/*.gradle'
+		greclipse()
+		trimTrailingWhitespace()
+		endWithNewline()
 	}
 }
