@@ -6,12 +6,13 @@ plugins {
 dependencies {
 
 	implementation configurations.lambda,
+			configurations.sqs,
+			configurations.kms,
 			configurations.jackson,
 			configurations.dynamodb,
+			configurations.gson,
 			configurations.nimbus,
-			configurations.powertools,
-			configurations.sqs,
-			configurations.kms
+			configurations.powertools
 
 	testImplementation configurations.tests
 
