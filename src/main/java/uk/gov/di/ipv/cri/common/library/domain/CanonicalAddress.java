@@ -19,34 +19,25 @@ public class CanonicalAddress {
     private String buildingNumber;
     private String buildingName;
 
-    @JsonAlias("dependentThoroughfare")
     private String dependentThoroughfare;
 
     private String dependentStreetName;
 
-    @JsonAlias("thoroughfareName")
     private String streetName;
 
-    @JsonAlias("doubleDependentLocality")
     private String doubleDependentAddressLocality;
 
-    @JsonAlias("dependentLocality")
     private String dependentAddressLocality;
 
-    @JsonAlias("postTown")
     private String addressLocality;
 
-    @JsonAlias("postcode")
     private String postalCode;
 
-    @JsonAlias("countryCode")
     private String addressCountry;
 
-    @JsonAlias("residentFrom")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date validFrom;
 
-    @JsonAlias("residentTo")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date validUntil;
 
