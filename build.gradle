@@ -5,7 +5,8 @@ plugins {
 
 dependencies {
 
-	implementation configurations.lambda,
+	implementation 	configurations.aws,
+			configurations.lambda,
 			configurations.jackson,
 			configurations.dynamodb,
 			configurations.nimbus,
