@@ -67,7 +67,7 @@ class SessionServiceTest {
                 .thenReturn(URI.create("https://www.example.com/callback"));
         when(sessionRequest.getSubject()).thenReturn("a subject");
 
-        sessionService.createAndSaveAddressSession(sessionRequest);
+        sessionService.saveSession(sessionRequest);
         verify(mockDataStore).create(sessionItemArgumentCaptor.capture());
         SessionItem capturedValue = sessionItemArgumentCaptor.getValue();
         assertNotNull(capturedValue.getSessionId());
