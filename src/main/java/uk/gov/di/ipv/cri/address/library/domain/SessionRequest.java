@@ -1,9 +1,11 @@
 package uk.gov.di.ipv.cri.address.library.domain;
 
 import com.nimbusds.jwt.SignedJWT;
+import uk.gov.di.ipv.cri.address.library.domain.sharedclaims.SharedClaims;
 
 import java.net.URI;
 import java.util.Date;
+import java.util.Objects;
 
 public class SessionRequest {
     private String issuer;
@@ -17,6 +19,7 @@ public class SessionRequest {
     private URI redirectUri;
     private String state;
     private SignedJWT signedJWT;
+    private SharedClaims sharedClaims;
 
     public String getIssuer() {
         return issuer;
@@ -104,5 +107,17 @@ public class SessionRequest {
 
     public void setJwtClientId(String jwtClientId) {
         this.jwtClientId = jwtClientId;
+    }
+
+    public SharedClaims getSharedClaims() {
+        return sharedClaims;
+    }
+
+    public void setSharedClaims(SharedClaims sharedClaims) {
+        this.sharedClaims = sharedClaims;
+    }
+
+    public boolean hasSharedClaims() {
+        return Objects.nonNull(this.sharedClaims);
     }
 }

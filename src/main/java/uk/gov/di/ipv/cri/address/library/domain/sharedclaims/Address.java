@@ -1,59 +1,32 @@
-package uk.gov.di.ipv.cri.address.library.domain;
+package uk.gov.di.ipv.cri.address.library.domain.sharedclaims;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.Objects;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@DynamoDbBean
-public class CanonicalAddress {
+public class Address {
     private Long uprn;
     private String organisationName;
     private String departmentName;
     private String subBuildingName;
     private String buildingNumber;
     private String buildingName;
-
-    @JsonAlias("dependentThoroughfare")
-    private String dependentThoroughfare;
-
     private String dependentStreetName;
-
-    @JsonAlias("thoroughfareName")
     private String streetName;
-
-    @JsonAlias("doubleDependentLocality")
     private String doubleDependentAddressLocality;
-
-    @JsonAlias("dependentLocality")
     private String dependentAddressLocality;
-
-    @JsonAlias("postTown")
     private String addressLocality;
-
-    @JsonAlias("postcode")
     private String postalCode;
-
-    @JsonAlias("countryCode")
     private String addressCountry;
 
-    @JsonAlias("residentFrom")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private Date validFrom;
+    private LocalDate validFrom;
 
-    @JsonAlias("residentTo")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private Date validUntil;
-
-    public CanonicalAddress() {
-        // Default constructor
-    }
+    private LocalDate validUntil;
 
     public Optional<Long> getUprn() {
         return Optional.ofNullable(this.uprn);
@@ -160,22 +133,18 @@ public class CanonicalAddress {
     }
 
     public LocalDate getValidFrom() {
-        return (Objects.nonNull(validFrom))
-                ? new java.sql.Date(validFrom.getTime()).toLocalDate()
-                : null;
+        return validFrom;
     }
 
     public void setValidFrom(LocalDate validFrom) {
-        this.validFrom = java.sql.Date.valueOf(validFrom);
+        this.validFrom = validFrom;
     }
 
     public LocalDate getValidUntil() {
-        return (Objects.nonNull(validUntil))
-                ? new java.sql.Date(validUntil.getTime()).toLocalDate()
-                : null;
+        return validUntil;
     }
 
     public void setValidUntil(LocalDate validUntil) {
-        this.validUntil = java.sql.Date.valueOf(validUntil);
+        this.validUntil = validUntil;
     }
 }
