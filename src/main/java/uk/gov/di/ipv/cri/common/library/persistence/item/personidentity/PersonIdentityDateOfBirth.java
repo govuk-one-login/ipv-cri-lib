@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.address.library.persistence.item.personidentity;
+package uk.gov.di.ipv.cri.common.library.persistence.item.personidentity;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 

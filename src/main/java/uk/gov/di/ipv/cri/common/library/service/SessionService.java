@@ -6,7 +6,7 @@ import uk.gov.di.ipv.cri.common.library.domain.SessionRequest;
 import uk.gov.di.ipv.cri.common.library.exception.SessionExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionNotFoundException;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.address.library.persistence.DynamoDbEnhancedClientFactory;
+import uk.gov.di.ipv.cri.common.library.persistence.DynamoDbEnhancedClientFactory;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.common.library.util.ListUtil;
 

@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.address.library.domain.sharedclaims;
+package uk.gov.di.ipv.cri.common.library.domain.sharedclaims;
 
 public class BirthDate {
     private String value;

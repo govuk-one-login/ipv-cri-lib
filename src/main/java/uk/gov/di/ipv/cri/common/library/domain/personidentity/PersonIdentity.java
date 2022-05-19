@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.address.library.domain.personidentity;
+package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 

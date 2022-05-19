@@ -1,18 +1,21 @@
-package uk.gov.di.ipv.cri.address.library.domain.sharedclaims;
+package uk.gov.di.ipv.cri.common.library.persistence.item.personidentity;
+
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 import java.time.LocalDate;
 import java.util.List;
 
-public class Name {
-    private List<NamePart> nameParts;
+@DynamoDbBean
+public class PersonIdentityName {
+    private List<PersonIdentityNamePart> nameParts;
     private LocalDate validFrom;
     private LocalDate validUntil;
 
-    public List<NamePart> getNameParts() {
+    public List<PersonIdentityNamePart> getNameParts() {
         return nameParts;
     }
 
-    public void setNameParts(List<NamePart> nameParts) {
+    public void setNameParts(List<PersonIdentityNamePart> nameParts) {
         this.nameParts = nameParts;
     }
 

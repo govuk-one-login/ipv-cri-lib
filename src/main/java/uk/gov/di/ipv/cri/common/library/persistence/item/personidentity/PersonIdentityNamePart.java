@@ -1,6 +1,9 @@
-package uk.gov.di.ipv.cri.address.library.domain.sharedclaims;
+package uk.gov.di.ipv.cri.common.library.persistence.item.personidentity;
 
-public class NamePart {
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+
+@DynamoDbBean
+public class PersonIdentityNamePart {
     private String type;
     private String value;
 

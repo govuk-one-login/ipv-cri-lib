@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.address.library.domain.sharedclaims;
+package uk.gov.di.ipv.cri.common.library.domain.sharedclaims;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

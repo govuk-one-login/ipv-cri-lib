@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.address.library.persistence;
+package uk.gov.di.ipv.cri.common.library.persistence;
 
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;

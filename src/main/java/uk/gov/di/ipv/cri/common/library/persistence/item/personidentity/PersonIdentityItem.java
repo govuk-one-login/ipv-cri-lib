@@ -1,8 +1,8 @@
-package uk.gov.di.ipv.cri.address.library.persistence.item.personidentity;
+package uk.gov.di.ipv.cri.common.library.persistence.item.personidentity;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
-import uk.gov.di.ipv.cri.address.library.domain.CanonicalAddress;
+import uk.gov.di.ipv.cri.common.library.domain.CanonicalAddress;
 
 import java.util.List;
 import java.util.UUID;

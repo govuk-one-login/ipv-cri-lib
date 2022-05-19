@@ -1,14 +1,14 @@
-package uk.gov.di.ipv.cri.address.library.service;
+package uk.gov.di.ipv.cri.common.library.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.address.library.domain.personidentity.PersonIdentity;
-import uk.gov.di.ipv.cri.address.library.domain.sharedclaims.SharedClaims;
-import uk.gov.di.ipv.cri.address.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.address.library.persistence.item.personidentity.PersonIdentityItem;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
+import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
+import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 
 import java.time.Clock;
 import java.time.Instant;

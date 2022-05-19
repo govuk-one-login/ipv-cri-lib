@@ -1,11 +1,11 @@
-package uk.gov.di.ipv.cri.address.library.service;
+package uk.gov.di.ipv.cri.common.library.service;
 
-import uk.gov.di.ipv.cri.address.library.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.address.library.domain.personidentity.PersonIdentity;
-import uk.gov.di.ipv.cri.address.library.domain.sharedclaims.SharedClaims;
-import uk.gov.di.ipv.cri.address.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.address.library.persistence.DynamoDbEnhancedClientFactory;
-import uk.gov.di.ipv.cri.address.library.persistence.item.personidentity.PersonIdentityItem;
+import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
+import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
+import uk.gov.di.ipv.cri.common.library.persistence.DynamoDbEnhancedClientFactory;
+import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
