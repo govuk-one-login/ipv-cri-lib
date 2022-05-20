@@ -16,7 +16,7 @@ import uk.gov.di.ipv.cri.address.library.domain.AuditEvent;
 import uk.gov.di.ipv.cri.address.library.domain.AuditEventTypes;
 import uk.gov.di.ipv.cri.address.library.exception.SqsException;
 
-import java.util.Date;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,11 +33,11 @@ class AuditServiceTest {
     @Mock ObjectMapper mockObjectMapper;
 
     private AuditService auditService;
-    private static Date fixedInstant;
+    private static long fixedInstant;
 
     @BeforeAll
     static void beforeAll() {
-        fixedInstant = new Date();
+        fixedInstant = Instant.now().getEpochSecond();
     }
 
     @BeforeEach

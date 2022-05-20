@@ -10,7 +10,7 @@ import uk.gov.di.ipv.cri.address.library.domain.AuditEvent;
 import uk.gov.di.ipv.cri.address.library.domain.AuditEventTypes;
 import uk.gov.di.ipv.cri.address.library.exception.SqsException;
 
-import java.util.Date;
+import java.time.Instant;
 
 public class AuditService {
     private final SqsClient sqs;
@@ -28,9 +28,7 @@ public class AuditService {
         this(
                 SqsClient.builder().build(),
                 new ConfigurationService(),
-                new ObjectMapper()
-                        .registerModule(new Jdk8Module())
-                        .registerModule(new JavaTimeModule()));
+                new ObjectMapper());
     }
 
     public void sendAuditEvent(AuditEventTypes eventType) throws SqsException {
@@ -47,7 +45,7 @@ public class AuditService {
     }
 
     private String generateMessageBody(AuditEventTypes eventType) throws JsonProcessingException {
-        AuditEvent auditEvent = new AuditEvent(new Date(), eventType);
+        AuditEvent auditEvent = new AuditEvent(Instant.now().getEpochSecond(), eventType);
         return objectMapper.writeValueAsString(auditEvent);
     }
 }
