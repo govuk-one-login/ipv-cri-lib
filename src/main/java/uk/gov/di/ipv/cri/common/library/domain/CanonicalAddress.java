@@ -156,7 +156,7 @@ public class CanonicalAddress {
     }
 
     public void setValidFrom(LocalDate validFrom) {
-        this.validFrom = java.sql.Date.valueOf(validFrom);
+        this.validFrom = Objects.nonNull(validFrom) ? java.sql.Date.valueOf(validFrom) : null;
     }
 
     public LocalDate getValidUntil() {
@@ -166,6 +166,6 @@ public class CanonicalAddress {
     }
 
     public void setValidUntil(LocalDate validUntil) {
-        this.validUntil = java.sql.Date.valueOf(validUntil);
+        this.validUntil = Objects.nonNull(validUntil) ? java.sql.Date.valueOf(validUntil) : null;
     }
 }
