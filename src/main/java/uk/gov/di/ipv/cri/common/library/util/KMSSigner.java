@@ -16,7 +16,6 @@ import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverage
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.Objects;
 import java.util.Set;
 
@@ -24,7 +23,6 @@ import static com.nimbusds.jose.JWSAlgorithm.ES256;
 
 public class KMSSigner implements JWSSigner {
 
-    private static final Base64.Encoder b64UrlEncoder = Base64.getUrlEncoder();
     private final KmsClient kmsClient;
     private final JCAContext jcaContext = new JCAContext();
     private final String keyId;
@@ -62,7 +60,7 @@ public class KMSSigner implements JWSSigner {
 
         SignResponse signResponse = kmsClient.sign(signRequest);
 
-        return new Base64URL(b64UrlEncoder.encodeToString(signResponse.signature().asByteArray()));
+        return Base64URL.encode(signResponse.signature().asByteArray());
     }
 
     @Override
