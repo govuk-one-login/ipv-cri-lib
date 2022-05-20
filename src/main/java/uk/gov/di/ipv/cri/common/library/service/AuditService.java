@@ -15,13 +15,11 @@ import java.util.Date;
 public class AuditService {
     private final SqsClient sqs;
     private final String queueUrl;
-    private ConfigurationService configurationService;
     private ObjectMapper objectMapper;
 
     public AuditService(
             SqsClient sqs, ConfigurationService configurationService, ObjectMapper objectMapper) {
         this.sqs = sqs;
-        this.configurationService = configurationService;
         this.queueUrl = configurationService.getSqsAuditEventQueueUrl();
         this.objectMapper = objectMapper;
     }

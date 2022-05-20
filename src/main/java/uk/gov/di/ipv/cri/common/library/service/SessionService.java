@@ -6,6 +6,7 @@ import uk.gov.di.ipv.cri.common.library.domain.SessionRequest;
 import uk.gov.di.ipv.cri.common.library.exception.SessionExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionNotFoundException;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
+import uk.gov.di.ipv.cri.common.library.persistence.DynamoDbEnhancedClientFactory;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.common.library.util.ListUtil;
 
@@ -26,7 +27,7 @@ public class SessionService {
                 new DataStore<>(
                         configurationService.getSessionTableName(),
                         SessionItem.class,
-                        DataStore.getClient());
+                        new DynamoDbEnhancedClientFactory().getClient());
         this.clock = Clock.systemUTC();
         this.listUtil = new ListUtil();
     }
@@ -42,8 +43,7 @@ public class SessionService {
         this.listUtil = listUtil;
     }
 
-    public UUID createAndSaveAddressSession(SessionRequest sessionRequest) {
-
+    public UUID saveSession(SessionRequest sessionRequest) {
         SessionItem sessionItem = new SessionItem();
         sessionItem.setExpiryDate(
                 clock.instant()

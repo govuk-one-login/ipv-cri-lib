@@ -8,6 +8,7 @@ import software.amazon.cloudwatchlogs.emf.model.DimensionSet;
 import software.amazon.lambda.powertools.metrics.MetricsUtils;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class EventProbe {
 
@@ -16,13 +17,10 @@ public class EventProbe {
 
     public EventProbe log(Level level, Exception e) {
         LOGGER.log(level, e);
-        if (level == Level.ERROR) {
-            if (e.getCause() != null) {
-                LOGGER.log(level, e.getCause());
-
-                if (e.getCause().getCause() != null) {
-                    LOGGER.log(level, e.getCause().getCause());
-                }
+        if (level == Level.ERROR && Objects.nonNull(e.getCause())) {
+            LOGGER.log(level, e.getCause());
+            if (Objects.nonNull(e.getCause().getCause())) {
+                LOGGER.log(level, e.getCause().getCause());
             }
         }
         return this;

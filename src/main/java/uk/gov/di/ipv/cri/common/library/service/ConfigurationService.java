@@ -37,6 +37,10 @@ public class ConfigurationService {
         return ssmProvider.get(getParameterName(SSMParameterName.SESSION_TABLE_NAME));
     }
 
+    public String getPersonIdentityTableName() {
+        return ssmProvider.get(getParameterName(SSMParameterName.PERSON_IDENTITY_TABLE_NAME));
+    }
+
     public String getAddressTableName() {
         return ssmProvider.get(getParameterName(SSMParameterName.ADDRESS_TABLE_NAME));
     }
@@ -88,7 +92,8 @@ public class ConfigurationService {
         VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
         VERIFIABLE_CREDENTIAL_ISSUER("verifiable-credential/issuer"),
         AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId"),
-        ADDRESS_TABLE_NAME("AddressTableName");
+        ADDRESS_TABLE_NAME("AddressTableName"),
+        PERSON_IDENTITY_TABLE_NAME("PersonIdentityTableName");
 
         public final String parameterName;
 

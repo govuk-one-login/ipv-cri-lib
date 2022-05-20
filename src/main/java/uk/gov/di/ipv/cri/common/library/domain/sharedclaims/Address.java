@@ -1,49 +1,32 @@
-package uk.gov.di.ipv.cri.common.library.domain;
+package uk.gov.di.ipv.cri.common.library.domain.sharedclaims;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.Objects;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@DynamoDbBean
-public class CanonicalAddress {
+public class Address {
     private Long uprn;
     private String organisationName;
     private String departmentName;
     private String subBuildingName;
     private String buildingNumber;
     private String buildingName;
-
-    private String dependentThoroughfare;
-
     private String dependentStreetName;
-
     private String streetName;
-
     private String doubleDependentAddressLocality;
-
     private String dependentAddressLocality;
-
     private String addressLocality;
-
     private String postalCode;
-
     private String addressCountry;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private Date validFrom;
+    private LocalDate validFrom;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private Date validUntil;
-
-    public CanonicalAddress() {
-        // Default constructor
-    }
+    private LocalDate validUntil;
 
     public Optional<Long> getUprn() {
         return Optional.ofNullable(this.uprn);
@@ -150,22 +133,18 @@ public class CanonicalAddress {
     }
 
     public LocalDate getValidFrom() {
-        return (Objects.nonNull(validFrom))
-                ? new java.sql.Date(validFrom.getTime()).toLocalDate()
-                : null;
+        return validFrom;
     }
 
     public void setValidFrom(LocalDate validFrom) {
-        this.validFrom = java.sql.Date.valueOf(validFrom);
+        this.validFrom = validFrom;
     }
 
     public LocalDate getValidUntil() {
-        return (Objects.nonNull(validUntil))
-                ? new java.sql.Date(validUntil.getTime()).toLocalDate()
-                : null;
+        return validUntil;
     }
 
     public void setValidUntil(LocalDate validUntil) {
-        this.validUntil = java.sql.Date.valueOf(validUntil);
+        this.validUntil = validUntil;
     }
 }
