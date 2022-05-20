@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.common.library.domain;
+package uk.gov.di.ipv.cri.common.library.persistence.item;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;

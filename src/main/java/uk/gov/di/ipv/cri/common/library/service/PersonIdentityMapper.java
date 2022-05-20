@@ -1,6 +1,5 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
-import uk.gov.di.ipv.cri.common.library.domain.CanonicalAddress;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonAddress;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonAddressType;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
@@ -8,6 +7,7 @@ import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.Address;
 import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.BirthDate;
 import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.Name;
 import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.persistence.item.CanonicalAddress;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityDateOfBirth;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityName;
