@@ -2,8 +2,6 @@ package uk.gov.di.ipv.cri.address.library.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import uk.gov.di.ipv.cri.address.library.domain.AuditEvent;
@@ -25,10 +23,7 @@ public class AuditService {
     }
 
     public AuditService() {
-        this(
-                SqsClient.builder().build(),
-                new ConfigurationService(),
-                new ObjectMapper());
+        this(SqsClient.builder().build(), new ConfigurationService(), new ObjectMapper());
     }
 
     public void sendAuditEvent(AuditEventTypes eventType) throws SqsException {
