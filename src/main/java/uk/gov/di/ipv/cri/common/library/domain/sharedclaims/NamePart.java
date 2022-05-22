@@ -1,5 +1,8 @@
 package uk.gov.di.ipv.cri.common.library.domain.sharedclaims;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class NamePart {
     private String type;
     private String value;
