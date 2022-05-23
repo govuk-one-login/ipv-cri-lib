@@ -6,6 +6,7 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.shaded.json.JSONObject;
+import com.nimbusds.jose.util.Base64URL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +20,7 @@ import software.amazon.awssdk.services.kms.model.SignRequest;
 import software.amazon.awssdk.services.kms.model.SignResponse;
 import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
 
+import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -26,6 +28,7 @@ import java.util.UUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -107,5 +110,26 @@ class KMSSignerTest {
                 assertThrows(NullPointerException.class, () -> kmsSigner.sign(mockJWSHeader, null));
 
         assertThat(exception.getMessage(), containsString("Signing input must not be null"));
+    }
+
+    @Test
+    void base64UrlSignatureShouldNotIncludePadding() throws Exception {
+        JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.ES256).build();
+        var signResponse = mock(SignResponse.class);
+        byte[] bytesThanWillNormallyHaveB64Padding = new byte[10];
+
+        when(mockKmsClient.sign(any(SignRequest.class))).thenReturn(signResponse);
+        when(signResponse.signature())
+                .thenReturn(SdkBytes.fromByteArray(bytesThanWillNormallyHaveB64Padding));
+
+        Base64URL signature = kmsSigner.sign(jwsHeader, new byte[0]);
+        String signatureString = signature.toString();
+
+        assertThat(
+                Base64.getUrlEncoder()
+                        .encodeToString(bytesThanWillNormallyHaveB64Padding)
+                        .endsWith("=="),
+                is(true));
+        assertThat(signatureString.endsWith("="), is(false));
     }
 }
