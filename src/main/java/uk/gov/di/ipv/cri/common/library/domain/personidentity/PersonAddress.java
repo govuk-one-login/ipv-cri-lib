@@ -5,7 +5,6 @@ import java.time.LocalDate;
 public class PersonAddress {
     private String buildingNumber;
     private String buildingName;
-    private String flat;
     private String street;
     private String townCity;
     private String postcode;
@@ -28,14 +27,6 @@ public class PersonAddress {
 
     public void setBuildingName(String buildingName) {
         this.buildingName = buildingName;
-    }
-
-    public String getFlat() {
-        return flat;
-    }
-
-    public void setFlat(String flat) {
-        this.flat = flat;
     }
 
     public String getStreet() {

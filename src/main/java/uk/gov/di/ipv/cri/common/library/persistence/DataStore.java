@@ -3,6 +3,7 @@ package uk.gov.di.ipv.cri.common.library.persistence;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
@@ -84,6 +85,20 @@ public class DataStore<T> {
                 QueryEnhancedRequest.builder().queryConditional(queryConditional).build();
 
         return index.query(queryEnhancedRequest).stream()
+                .flatMap(page -> page.items().stream())
+                .collect(Collectors.toList());
+    }
+
+    public List<T> getItemsByAttribute(String attributeName, String attributeValue) {
+        AttributeValue expressionValue = AttributeValue.builder().s(attributeValue).build();
+        Expression attributeFilterExpression =
+                Expression.builder()
+                        .expression("#a = :b")
+                        .putExpressionName("#a", attributeName)
+                        .putExpressionValue(":b", expressionValue)
+                        .build();
+
+        return getTable().scan(r -> r.filterExpression(attributeFilterExpression)).stream()
                 .flatMap(page -> page.items().stream())
                 .collect(Collectors.toList());
     }
