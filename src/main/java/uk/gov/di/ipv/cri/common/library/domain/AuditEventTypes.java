@@ -7,7 +7,8 @@ public enum AuditEventTypes {
 
     IPV_KBV_CRI_START, // Before a session is written to the Session table for KBV CRI
     IPV_KBV_CRI_REQUEST_SENT, // First request sent for the KBV Experian SOAP API
-    IPV_KBV_CRI_EXPERIAN_REQUEST_ENDED, // First request sent for the KBV Experian SOAP API
+    IPV_KBV_CRI_VC_ISSUED, // When the final VC is created in the issue credential lambda
+    IPV_KBV_CRI_THIRD_PARTY_REQUEST_ENDED, // last request sent for the KBV API
 
     IPV_FRAUD_CRI_START // Before a session is written to the Session table for Fraud CRI
 }
