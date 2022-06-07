@@ -1,9 +1,12 @@
-package uk.gov.di.ipv.cri.common.library.domain.sharedclaims;
+package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.time.chrono.ChronoLocalDate;
+import java.util.Objects;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -146,5 +149,31 @@ public class Address {
 
     public void setValidUntil(LocalDate validUntil) {
         this.validUntil = validUntil;
+    }
+
+    public AddressType getAddressType() {
+        if (Objects.nonNull(this.getValidUntil()) && isPastDate(this.getValidUntil())) {
+            return AddressType.PREVIOUS;
+        }
+
+        if (Objects.isNull(this.getValidUntil())
+                && (Objects.nonNull(this.getValidFrom())
+                        && isPastDateOrToday(this.getValidFrom()))) {
+            return AddressType.CURRENT;
+        }
+
+        return null;
+    }
+
+    private ChronoLocalDate getDateToday() {
+        return ChronoLocalDate.from(ZonedDateTime.now());
+    }
+
+    private boolean isPastDate(LocalDate input) {
+        return input.compareTo(getDateToday()) < 0;
+    }
+
+    private boolean isPastDateOrToday(LocalDate input) {
+        return input.compareTo(getDateToday()) <= 0;
     }
 }

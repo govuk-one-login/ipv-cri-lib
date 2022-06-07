@@ -4,14 +4,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonAddress;
-import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonAddressType;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.AddressType;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.Address;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.BirthDate;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.Name;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.NamePart;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 import uk.gov.di.ipv.cri.common.library.persistence.item.CanonicalAddress;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityDateOfBirth;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 class PersonIdentityMapperTest {
@@ -68,14 +69,14 @@ class PersonIdentityMapperTest {
         assertEquals(firstNamePart.getValue(), mappedPersonIdentity.getFirstName());
         assertEquals(surnamePart.getValue(), mappedPersonIdentity.getSurname());
         assertEquals(birthDate.getValue(), mappedPersonIdentity.getDateOfBirth());
-        PersonAddress mappedAddress = mappedPersonIdentity.getAddresses().get(0);
+        Address mappedAddress = mappedPersonIdentity.getAddresses().get(0);
         assertEquals(address.getBuildingName(), mappedAddress.getBuildingName());
         assertEquals(address.getBuildingNumber(), mappedAddress.getBuildingNumber());
-        assertEquals(address.getStreetName(), mappedAddress.getStreet());
-        assertEquals(address.getAddressLocality(), mappedAddress.getTownCity());
-        assertEquals(address.getPostalCode(), mappedAddress.getPostcode());
-        assertEquals(address.getValidFrom(), mappedAddress.getDateMovedIn());
-        assertEquals(PersonAddressType.CURRENT, mappedAddress.getAddressType());
+        assertEquals(address.getStreetName(), mappedAddress.getStreetName());
+        assertEquals(address.getAddressLocality(), mappedAddress.getAddressLocality());
+        assertEquals(address.getPostalCode(), mappedAddress.getPostalCode());
+        assertEquals(address.getValidFrom(), mappedAddress.getValidFrom());
+        assertEquals(AddressType.CURRENT, mappedAddress.getAddressType());
     }
 
     @Test
@@ -110,8 +111,7 @@ class PersonIdentityMapperTest {
     }
 
     @Test
-    void shouldMapCurrentName() {
-        LocalDate validityDate = LocalDate.of(2011, 5, 20);
+    void shouldThrowExceptionWhenMappingMultipleNames() {
         PersonIdentityNamePart firstNamePart = new PersonIdentityNamePart();
         firstNamePart.setType("GivenName");
         firstNamePart.setValue("Sarah");
@@ -120,8 +120,6 @@ class PersonIdentityMapperTest {
         surnamePart.setValue("Jones");
         PersonIdentityName previousName = new PersonIdentityName();
         previousName.setNameParts(List.of(firstNamePart, surnamePart));
-        previousName.setValidFrom(LocalDate.of(1980, 5, 24));
-        previousName.setValidUntil(validityDate);
 
         PersonIdentityNamePart currentFirstNamePart = new PersonIdentityNamePart();
         currentFirstNamePart.setType("GivenName");
@@ -131,16 +129,14 @@ class PersonIdentityMapperTest {
         currentSurnamePart.setValue("Young");
         PersonIdentityName currentName = new PersonIdentityName();
         currentName.setNameParts(List.of(currentFirstNamePart, currentSurnamePart));
-        currentName.setValidFrom(validityDate);
 
         PersonIdentityItem testPersonIdentityItem = new PersonIdentityItem();
         testPersonIdentityItem.setNames(List.of(previousName, currentName));
 
-        PersonIdentity mappedPersonIdentity =
-                personIdentityMapper.mapToPersonIdentity(testPersonIdentityItem);
-
-        assertEquals(currentFirstNamePart.getValue(), mappedPersonIdentity.getFirstName());
-        assertEquals(currentSurnamePart.getValue(), mappedPersonIdentity.getSurname());
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> personIdentityMapper.mapToPersonIdentity(testPersonIdentityItem),
+                "Unable to map person identity with multiple names");
     }
 
     @Test
@@ -166,11 +162,9 @@ class PersonIdentityMapperTest {
 
         assertEquals(2, mappedPersonIdentity.getAddresses().size());
         assertEquals(
-                PersonAddressType.CURRENT,
-                mappedPersonIdentity.getAddresses().get(0).getAddressType());
+                AddressType.CURRENT, mappedPersonIdentity.getAddresses().get(0).getAddressType());
         assertEquals(
-                PersonAddressType.PREVIOUS,
-                mappedPersonIdentity.getAddresses().get(1).getAddressType());
+                AddressType.PREVIOUS, mappedPersonIdentity.getAddresses().get(1).getAddressType());
     }
 
     @Test
@@ -184,12 +178,11 @@ class PersonIdentityMapperTest {
         surnamePart.setType("FamilyName");
         surnamePart.setValue("Smith");
         Name name = new Name();
-        name.setValidFrom(TODAY);
         name.setNameParts(List.of(firstNamePart, surnamePart));
         sharedClaims.setNames(List.of(name));
 
         BirthDate birthDate = new BirthDate();
-        birthDate.setValue(LocalDate.of(1984, 6, 27).toString());
+        birthDate.setValue(LocalDate.of(1984, 6, 27));
         sharedClaims.setBirthDates(List.of(birthDate));
 
         Address address = new Address();
@@ -206,14 +199,12 @@ class PersonIdentityMapperTest {
 
         PersonIdentityName mappedName = mappedPersonIdentityItem.getNames().get(0);
         CanonicalAddress mappedAddress = mappedPersonIdentityItem.getAddresses().get(0);
-        assertEquals(name.getValidFrom(), mappedName.getValidFrom());
         assertEquals(firstNamePart.getValue(), mappedName.getNameParts().get(0).getValue());
         assertEquals(firstNamePart.getType(), mappedName.getNameParts().get(0).getType());
         assertEquals(surnamePart.getValue(), mappedName.getNameParts().get(1).getValue());
         assertEquals(surnamePart.getType(), mappedName.getNameParts().get(1).getType());
         assertEquals(
-                LocalDate.parse(birthDate.getValue()),
-                mappedPersonIdentityItem.getBirthDates().get(0).getValue());
+                birthDate.getValue(), mappedPersonIdentityItem.getBirthDates().get(0).getValue());
         assertEquals(address.getAddressLocality(), mappedAddress.getAddressLocality());
         assertEquals(address.getBuildingName(), mappedAddress.getBuildingName());
         assertEquals(address.getBuildingNumber(), mappedAddress.getBuildingNumber());
@@ -221,5 +212,70 @@ class PersonIdentityMapperTest {
         assertEquals(address.getPostalCode(), mappedAddress.getPostalCode());
         assertEquals(TODAY, mappedAddress.getValidFrom());
         assertNull(mappedAddress.getValidUntil());
+    }
+
+    @Test
+    void shouldMapPersonIdentityItemToPersonIdentityDetailed() {
+        PersonIdentityNamePart firstNamePart = new PersonIdentityNamePart();
+        firstNamePart.setType("GivenName");
+        firstNamePart.setValue("Jon");
+        PersonIdentityNamePart surnamePart = new PersonIdentityNamePart();
+        surnamePart.setType("FamilyName");
+        surnamePart.setValue("Smith");
+        PersonIdentityName name = new PersonIdentityName();
+        name.setNameParts(List.of(firstNamePart, surnamePart));
+
+        PersonIdentityDateOfBirth birthDate = new PersonIdentityDateOfBirth();
+        birthDate.setValue(LocalDate.of(1980, 10, 20));
+
+        CanonicalAddress address = new CanonicalAddress();
+        address.setAddressCountry("GB");
+        address.setAddressLocality("locality");
+        address.setBuildingNumber("buildingNum");
+        address.setBuildingName("buildingName");
+        address.setDepartmentName("deptName");
+        address.setDependentAddressLocality("depAddressLocality");
+        address.setDependentStreetName("depStreetName");
+        address.setDoubleDependentAddressLocality("doubleDepAddressLocality");
+        address.setOrganisationName("orgName");
+        address.setPostalCode("postcode");
+        address.setStreetName("street");
+        address.setSubBuildingName("subBuildingName");
+        address.setUprn(2394501657L);
+        address.setValidFrom(LocalDate.of(2011, 10, 21));
+        address.setValidUntil(LocalDate.of(2017, 11, 25));
+
+        PersonIdentityItem testPersonIdentityItem = new PersonIdentityItem();
+        testPersonIdentityItem.setNames(List.of(name));
+        testPersonIdentityItem.setBirthDates(List.of(birthDate));
+        testPersonIdentityItem.setAddresses(List.of(address));
+
+        PersonIdentityDetailed mappedPersonIdentity =
+                personIdentityMapper.mapToPersonIdentityDetailed(testPersonIdentityItem);
+
+        List<NamePart> mappedNameParts = mappedPersonIdentity.getNames().get(0).getNameParts();
+        assertEquals(firstNamePart.getValue(), mappedNameParts.get(0).getValue());
+        assertEquals(firstNamePart.getType(), mappedNameParts.get(0).getType());
+        assertEquals(surnamePart.getValue(), mappedNameParts.get(1).getValue());
+        assertEquals(surnamePart.getType(), mappedNameParts.get(1).getType());
+        assertEquals(birthDate.getValue(), mappedPersonIdentity.getBirthDates().get(0).getValue());
+        Address mappedAddress = mappedPersonIdentity.getAddresses().get(0);
+        assertEquals(address.getAddressCountry(), mappedAddress.getAddressCountry());
+        assertEquals(address.getAddressLocality(), mappedAddress.getAddressLocality());
+
+        assertEquals(address.getBuildingNumber(), mappedAddress.getBuildingNumber());
+        assertEquals(address.getBuildingName(), mappedAddress.getBuildingName());
+        assertEquals(address.getDepartmentName(), mappedAddress.getDepartmentName());
+        assertEquals(
+                address.getDependentAddressLocality(), mappedAddress.getDependentAddressLocality());
+        assertEquals(address.getDependentStreetName(), mappedAddress.getDependentStreetName());
+        assertEquals(
+                address.getDoubleDependentAddressLocality(),
+                mappedAddress.getDoubleDependentAddressLocality());
+        assertEquals(address.getOrganisationName(), mappedAddress.getOrganisationName());
+        assertEquals(address.getPostalCode(), mappedAddress.getPostalCode());
+        assertEquals(address.getStreetName(), mappedAddress.getStreetName());
+        assertEquals(address.getSubBuildingName(), mappedAddress.getSubBuildingName());
+        assertEquals(address.getUprn(), mappedAddress.getUprn());
     }
 }

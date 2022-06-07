@@ -1,28 +1,25 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
-import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonAddress;
-import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonAddressType;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.Address;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.BirthDate;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.Name;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 import uk.gov.di.ipv.cri.common.library.persistence.item.CanonicalAddress;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityDateOfBirth;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityName;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityNamePart;
 
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.time.chrono.ChronoLocalDate;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 class PersonIdentityMapper {
+
     private enum NamePartType {
         GIVEN_NAME("GivenName"),
         FAMILY_NAME("FamilyName");
@@ -61,10 +58,90 @@ class PersonIdentityMapper {
         }
 
         if (notNullAndNotEmpty(personIdentityItem.getAddresses())) {
-            mapAddresses(personIdentityItem.getAddresses(), personIdentity);
+            personIdentity.setAddresses(mapCanonicalAddresses(personIdentityItem.getAddresses()));
         }
 
         return personIdentity;
+    }
+
+    PersonIdentityDetailed mapToPersonIdentityDetailed(PersonIdentityItem personIdentityItem) {
+        List<Name> names = Collections.emptyList();
+        if (notNullAndNotEmpty(personIdentityItem.getNames())) {
+            names = mapPersonIdentityNames(personIdentityItem.getNames());
+        }
+
+        List<BirthDate> dobs = Collections.emptyList();
+        if (notNullAndNotEmpty(personIdentityItem.getBirthDates())) {
+            dobs = mapPersonIdentityBirthDates(personIdentityItem.getBirthDates());
+        }
+
+        List<Address> addresses = Collections.emptyList();
+        if (notNullAndNotEmpty(personIdentityItem.getAddresses())) {
+            addresses = mapCanonicalAddresses(personIdentityItem.getAddresses());
+        }
+
+        return new PersonIdentityDetailed(names, dobs, addresses);
+    }
+
+    private List<Address> mapCanonicalAddresses(List<CanonicalAddress> addresses) {
+        return addresses.stream()
+                .map(
+                        address -> {
+                            Address mappedAddress = new Address();
+                            mappedAddress.setAddressCountry(address.getAddressCountry());
+                            mappedAddress.setAddressLocality(address.getAddressLocality());
+                            mappedAddress.setBuildingName(address.getBuildingName());
+                            mappedAddress.setBuildingNumber(address.getBuildingNumber());
+                            mappedAddress.setDepartmentName(address.getDepartmentName());
+                            mappedAddress.setDependentAddressLocality(
+                                    address.getDependentAddressLocality());
+                            mappedAddress.setDependentStreetName(address.getDependentStreetName());
+                            mappedAddress.setDoubleDependentAddressLocality(
+                                    address.getDoubleDependentAddressLocality());
+                            mappedAddress.setOrganisationName(address.getOrganisationName());
+                            mappedAddress.setPostalCode(address.getPostalCode());
+                            mappedAddress.setStreetName(address.getStreetName());
+                            mappedAddress.setSubBuildingName(address.getSubBuildingName());
+                            mappedAddress.setUprn(address.getUprn().orElse(null));
+                            mappedAddress.setValidFrom(address.getValidFrom());
+                            mappedAddress.setValidUntil(address.getValidUntil());
+                            return mappedAddress;
+                        })
+                .collect(Collectors.toList());
+    }
+
+    private List<BirthDate> mapPersonIdentityBirthDates(
+            List<PersonIdentityDateOfBirth> birthDates) {
+        return birthDates.stream()
+                .map(
+                        birthDate -> {
+                            BirthDate mappedBirthDate = new BirthDate();
+                            mappedBirthDate.setValue(birthDate.getValue());
+                            return mappedBirthDate;
+                        })
+                .collect(Collectors.toList());
+    }
+
+    private List<Name> mapPersonIdentityNames(List<PersonIdentityName> names) {
+        return names.stream()
+                .map(
+                        name -> {
+                            Name mappedName = new Name();
+                            List<NamePart> mappedNameParts =
+                                    name.getNameParts().stream()
+                                            .map(
+                                                    namePart -> {
+                                                        NamePart mappedNamePart = new NamePart();
+                                                        mappedNamePart.setType(namePart.getType());
+                                                        mappedNamePart.setValue(
+                                                                namePart.getValue());
+                                                        return mappedNamePart;
+                                                    })
+                                            .collect(Collectors.toList());
+                            mappedName.setNameParts(mappedNameParts);
+                            return mappedName;
+                        })
+                .collect(Collectors.toList());
     }
 
     private <T> boolean notNullAndNotEmpty(List<T> items) {
@@ -75,20 +152,7 @@ class PersonIdentityMapper {
         if (names.size() == 1) {
             return names.get(0);
         }
-        Optional<PersonIdentityName> currentName =
-                names.stream()
-                        .filter(
-                                n ->
-                                        Objects.nonNull(n.getValidFrom())
-                                                && isPastDateOrToday(n.getValidFrom()))
-                        .sorted(Comparator.comparing(PersonIdentityName::getValidFrom).reversed())
-                        .findFirst();
-        return currentName.orElseThrow(
-                () -> new IllegalArgumentException("Unable to find current name. Cannot map name"));
-    }
-
-    private ChronoLocalDate getDateToday() {
-        return ChronoLocalDate.from(ZonedDateTime.now());
+        throw new IllegalArgumentException("Unable to map person identity with multiple names");
     }
 
     private void mapName(PersonIdentityName name, PersonIdentity personIdentity) {
@@ -124,57 +188,12 @@ class PersonIdentityMapper {
                 .collect(Collectors.toList());
     }
 
-    private void mapAddresses(
-            List<CanonicalAddress> sourceAddresses, PersonIdentity personIdentity) {
-        List<PersonAddress> personAddresses =
-                sourceAddresses.stream()
-                        .map(
-                                sourceAddress -> {
-                                    PersonAddress personAddress = new PersonAddress();
-                                    personAddress.setBuildingNumber(
-                                            sourceAddress.getBuildingNumber());
-                                    personAddress.setBuildingName(sourceAddress.getBuildingName());
-                                    personAddress.setStreet(sourceAddress.getStreetName());
-                                    personAddress.setTownCity(sourceAddress.getAddressLocality());
-                                    personAddress.setPostcode(sourceAddress.getPostalCode());
-                                    personAddress.setAddressType(getAddressType(sourceAddress));
-                                    personAddress.setDateMovedIn(sourceAddress.getValidFrom());
-                                    personAddress.setDateMovedOut(sourceAddress.getValidUntil());
-                                    return personAddress;
-                                })
-                        .collect(Collectors.toList());
-
-        personIdentity.setAddresses(personAddresses);
-    }
-
-    private boolean isPastDate(LocalDate input) {
-        return input.compareTo(getDateToday()) < 0;
-    }
-
-    private boolean isPastDateOrToday(LocalDate input) {
-        return input.compareTo(getDateToday()) <= 0;
-    }
-
-    private PersonAddressType getAddressType(CanonicalAddress address) {
-        if (Objects.nonNull(address.getValidUntil()) && isPastDate(address.getValidUntil())) {
-            return PersonAddressType.PREVIOUS;
-        }
-
-        if (Objects.isNull(address.getValidUntil())
-                && (Objects.nonNull(address.getValidFrom())
-                        && isPastDateOrToday(address.getValidFrom()))) {
-            return PersonAddressType.CURRENT;
-        }
-
-        return null;
-    }
-
     private List<PersonIdentityDateOfBirth> mapBirthDates(List<BirthDate> birthDates) {
         return birthDates.stream()
                 .map(
                         bd -> {
                             PersonIdentityDateOfBirth dob = new PersonIdentityDateOfBirth();
-                            dob.setValue(LocalDate.parse(bd.getValue()));
+                            dob.setValue(bd.getValue());
                             return dob;
                         })
                 .collect(Collectors.toList());
@@ -185,8 +204,6 @@ class PersonIdentityMapper {
                 .map(
                         n -> {
                             PersonIdentityName name = new PersonIdentityName();
-                            name.setValidFrom(n.getValidFrom());
-                            name.setValidUntil(n.getValidUntil());
                             if (notNullAndNotEmpty(n.getNameParts())) {
                                 name.setNameParts(
                                         n.getNameParts().stream()

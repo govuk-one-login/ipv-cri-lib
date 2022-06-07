@@ -10,7 +10,7 @@ public class PersonIdentity {
     private String firstName;
     private String middleNames;
     private String surname;
-    private List<PersonAddress> addresses;
+    private List<Address> addresses;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
@@ -51,11 +51,11 @@ public class PersonIdentity {
         this.dateOfBirth = dateOfBirth;
     }
 
-    public List<PersonAddress> getAddresses() {
+    public List<Address> getAddresses() {
         return addresses;
     }
 
-    public void setAddresses(List<PersonAddress> addresses) {
+    public void setAddresses(List<Address> addresses) {
         this.addresses = addresses;
     }
 }
