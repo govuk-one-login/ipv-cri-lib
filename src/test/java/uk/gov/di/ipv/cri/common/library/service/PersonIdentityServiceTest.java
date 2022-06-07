@@ -6,7 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 

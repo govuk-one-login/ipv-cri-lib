@@ -13,7 +13,7 @@ import java.time.Instant;
 public class AuditService {
     private final SqsClient sqs;
     private final String queueUrl;
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public AuditService(
             SqsClient sqs, ConfigurationService configurationService, ObjectMapper objectMapper) {

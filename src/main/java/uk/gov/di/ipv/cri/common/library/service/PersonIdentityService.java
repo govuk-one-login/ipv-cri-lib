@@ -2,7 +2,8 @@ package uk.gov.di.ipv.cri.common.library.service;
 
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.common.library.persistence.DynamoDbEnhancedClientFactory;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
@@ -53,8 +54,16 @@ public class PersonIdentityService {
     }
 
     public PersonIdentity getPersonIdentity(UUID sessionId) {
-        PersonIdentityItem personIdentityItem =
-                this.personIdentityDataStore.getItem(String.valueOf(sessionId));
+        PersonIdentityItem personIdentityItem = getById(sessionId);
         return personIdentityMapper.mapToPersonIdentity(personIdentityItem);
+    }
+
+    public PersonIdentityDetailed getPersonIdentityDetailed(UUID sessionId) {
+        PersonIdentityItem personIdentityItem = getById(sessionId);
+        return personIdentityMapper.mapToPersonIdentityDetailed(personIdentityItem);
+    }
+
+    private PersonIdentityItem getById(UUID sessionId) {
+        return this.personIdentityDataStore.getItem(String.valueOf(sessionId));
     }
 }

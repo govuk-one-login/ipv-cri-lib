@@ -1,7 +1,7 @@
 package uk.gov.di.ipv.cri.common.library.domain;
 
 import com.nimbusds.jwt.SignedJWT;
-import uk.gov.di.ipv.cri.common.library.domain.sharedclaims.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 
 import java.net.URI;
 import java.util.Date;
