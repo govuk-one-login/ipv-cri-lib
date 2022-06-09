@@ -37,7 +37,7 @@ public class EventProbe {
             LOGGER.error(e.toString());
 
             try (StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw)) {
+                    PrintWriter pw = new PrintWriter(sw)) {
                 e.printStackTrace(pw);
                 String stacktrace = sw.toString();
                 LOGGER.error(stacktrace);
