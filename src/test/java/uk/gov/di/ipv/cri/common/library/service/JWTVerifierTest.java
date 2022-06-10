@@ -34,8 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 class JWTVerifierTest {
-
-    public static final ClientID CLIENT_ID = new ClientID("ipv-core-stub");
+    private static final ClientID CLIENT_ID = new ClientID("ipv-core-stub");
     private JWTVerifier jwtVerifier;
     private Instant now = Instant.now();
 
