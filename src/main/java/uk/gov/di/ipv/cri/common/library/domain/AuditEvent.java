@@ -9,12 +9,12 @@ public class AuditEvent {
     private final long timestamp;
 
     @JsonProperty("event_name")
-    private final AuditEventTypes event;
+    private final String event;
 
     @JsonCreator
     public AuditEvent(
             @JsonProperty(value = "timestamp", required = true) long timestamp,
-            @JsonProperty(value = "event_name", required = true) AuditEventTypes event) {
+            @JsonProperty(value = "event_name", required = true) String event) {
         this.timestamp = timestamp;
         this.event = event;
     }
@@ -28,7 +28,7 @@ public class AuditEvent {
         return timestamp;
     }
 
-    public AuditEventTypes getEvent() {
+    public String getEvent() {
         return event;
     }
 }

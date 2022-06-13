@@ -134,6 +134,10 @@ public class ConfigurationService {
         return System.getenv("SQS_AUDIT_EVENT_QUEUE_URL");
     }
 
+    public String getSqsAuditEventPrefix() {
+        return System.getenv("SQS_AUDIT_EVENT_PREFIX");
+    }
+
     public String getKmsEncryptionKeyId() {
         return ssmProvider.get(
                 getParameterName(SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID));
