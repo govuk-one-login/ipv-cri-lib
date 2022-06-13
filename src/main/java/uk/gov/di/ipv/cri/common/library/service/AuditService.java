@@ -11,7 +11,6 @@ import uk.gov.di.ipv.cri.common.library.domain.AuditEventType;
 import uk.gov.di.ipv.cri.common.library.exception.SqsException;
 
 import java.time.Clock;
-import java.time.Instant;
 
 public class AuditService {
     private final SqsClient sqs;
@@ -23,11 +22,18 @@ public class AuditService {
 
     @ExcludeFromGeneratedCoverageReport
     public AuditService() {
-        this(SqsClient.builder().build(), new ConfigurationService(), new ObjectMapper(), Clock.systemUTC());
+        this(
+                SqsClient.builder().build(),
+                new ConfigurationService(),
+                new ObjectMapper(),
+                Clock.systemUTC());
     }
 
     public AuditService(
-            SqsClient sqs, ConfigurationService configurationService, ObjectMapper objectMapper, Clock clock) {
+            SqsClient sqs,
+            ConfigurationService configurationService,
+            ObjectMapper objectMapper,
+            Clock clock) {
         this.sqs = sqs;
         this.queueUrl = configurationService.getSqsAuditEventQueueUrl();
         this.objectMapper = objectMapper;
@@ -56,10 +62,8 @@ public class AuditService {
     }
 
     private String generateMessageBody(String eventType) throws JsonProcessingException {
-        AuditEvent auditEvent = new AuditEvent(
-                clock.instant().getEpochSecond(),
-                eventPrefix + "_" + eventType
-        );
+        AuditEvent auditEvent =
+                new AuditEvent(clock.instant().getEpochSecond(), eventPrefix + "_" + eventType);
         return objectMapper.writeValueAsString(auditEvent);
     }
 }

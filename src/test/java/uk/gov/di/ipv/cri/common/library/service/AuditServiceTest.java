@@ -2,7 +2,6 @@ package uk.gov.di.ipv.cri.common.library.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -47,12 +46,14 @@ class AuditServiceTest {
         Instant fixedInstant = Instant.now();
         when(mockClock.instant()).thenReturn(fixedInstant);
 
-        auditService = new AuditService(mockSqs, mockConfigurationService, mockObjectMapper, mockClock);
+        auditService =
+                new AuditService(mockSqs, mockConfigurationService, mockObjectMapper, mockClock);
 
         ArgumentCaptor<SendMessageRequest> sqsSendMessageRequestCaptor =
                 ArgumentCaptor.forClass(SendMessageRequest.class);
 
-        AuditEvent auditEvent = new AuditEvent(fixedInstant.getEpochSecond(), AuditEventType.START.toString());
+        AuditEvent auditEvent =
+                new AuditEvent(fixedInstant.getEpochSecond(), AuditEventType.START.toString());
         String messageAuditEvent = new ObjectMapper().writeValueAsString(auditEvent);
 
         when(mockObjectMapper.writeValueAsString(any(AuditEvent.class)))
@@ -77,12 +78,15 @@ class AuditServiceTest {
         Instant fixedInstant = Instant.now();
         when(mockClock.instant()).thenReturn(fixedInstant);
 
-        auditService = new AuditService(mockSqs, mockConfigurationService, mockObjectMapper, mockClock);
+        auditService =
+                new AuditService(mockSqs, mockConfigurationService, mockObjectMapper, mockClock);
 
         ArgumentCaptor<SendMessageRequest> sqsSendMessageRequestCaptor =
                 ArgumentCaptor.forClass(SendMessageRequest.class);
 
-        AuditEvent auditEvent = new AuditEvent(fixedInstant.getEpochSecond(), SQS_PREFIX + "_" + AuditEventType.START);
+        AuditEvent auditEvent =
+                new AuditEvent(
+                        fixedInstant.getEpochSecond(), SQS_PREFIX + "_" + AuditEventType.START);
         String messageAuditEvent = new ObjectMapper().writeValueAsString(auditEvent);
         when(mockObjectMapper.writeValueAsString(any(AuditEvent.class)))
                 .thenReturn(messageAuditEvent);
@@ -110,6 +114,6 @@ class AuditServiceTest {
                 IllegalArgumentException.class,
                 () ->
                         new AuditService(
-                                        mockSqs, mockConfigurationService, mockObjectMapper, mockClock));
+                                mockSqs, mockConfigurationService, mockObjectMapper, mockClock));
     }
 }
