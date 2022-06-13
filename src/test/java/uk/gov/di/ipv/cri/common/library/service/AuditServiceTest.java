@@ -20,6 +20,7 @@ import java.time.Instant;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -93,5 +94,18 @@ class AuditServiceTest {
                 capturedValue.messageBody(),
                 containsString(SQS_PREFIX + "_" + AuditEventType.START));
         assertEquals(SQS_QUEUE_URL, capturedValue.queueUrl());
+    }
+
+    @Test
+    void ShouldThrowErrorWhenNoPrefix() throws SqsException {
+        when(mockConfigurationService.getSqsAuditEventQueueUrl()).thenReturn(SQS_QUEUE_URL);
+        when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn("");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        auditService =
+                                new AuditService(
+                                        mockSqs, mockConfigurationService, new ObjectMapper()));
     }
 }
