@@ -140,7 +140,7 @@ public class JWTVerifier {
             new DefaultJWTClaimsVerifier<>(expectedClaimValues, requiredClaims)
                     .verify(signedJWT.getJWTClaimsSet(), null);
         } catch (BadJWTException | ParseException e) {
-            throw new SessionValidationException(e.getMessage());
+            throw new SessionValidationException(e.getMessage(), e);
         }
     }
 
