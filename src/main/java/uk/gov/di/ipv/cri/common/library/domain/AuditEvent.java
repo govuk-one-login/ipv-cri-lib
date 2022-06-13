@@ -19,13 +19,6 @@ public class AuditEvent {
         this.event = event;
     }
 
-    @JsonCreator
-    public AuditEvent(
-            @JsonProperty(value = "timestamp", required = true) long timestamp,
-            @JsonProperty(value = "event_name", required = true) AuditEventType event) {
-        this(timestamp, event.toString());
-    }
-
     @Override
     public String toString() {
         return "AuditEvent{" + "timestamp=" + timestamp + ", event=" + event + '}';

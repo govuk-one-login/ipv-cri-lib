@@ -7,9 +7,4 @@ public enum AuditEventType {
     VC_ISSUED, // When the final VC is created in the issue credential lambda
     THIRD_PARTY_REQUEST_ENDED, // When a third party requests are ended
 
-    // Note: The following events are not used in the current implementation, but are here for
-    // future use
-    THIRD_PARTY_REQUEST_STARTED, // When third party requests are started
-    THIRD_PARTY_REQUEST_SENT, // When a third party call is actually sent
-    ERROR_RAISED, // When an error is raised in the lambda
 }

@@ -15,6 +15,7 @@ import uk.gov.di.ipv.cri.common.library.domain.AuditEvent;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEventType;
 import uk.gov.di.ipv.cri.common.library.exception.SqsException;
 
+import java.time.Clock;
 import java.time.Instant;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,32 +29,30 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuditServiceTest {
-    public String SQS_QUEUE_URL = "https://example-queue-url";
+    private final String SQS_QUEUE_URL = "https://example-queue-url";
 
-    public String SQS_PREFIX = "TEST";
+    private final String SQS_PREFIX = "TEST";
 
-    @Mock SqsClient mockSqs;
-    @Mock ConfigurationService mockConfigurationService;
-    @Mock ObjectMapper mockObjectMapper;
+    @Mock private SqsClient mockSqs;
+    @Mock private ConfigurationService mockConfigurationService;
+    @Mock private ObjectMapper mockObjectMapper;
 
+    @Mock private Clock mockClock;
     private AuditService auditService;
-    private static long fixedInstant;
-
-    @BeforeAll
-    static void beforeAll() {
-        fixedInstant = Instant.now().getEpochSecond();
-    }
 
     @Test
     void shouldSendMessageToSqsQueue() throws JsonProcessingException, SqsException {
         when(mockConfigurationService.getSqsAuditEventQueueUrl()).thenReturn(SQS_QUEUE_URL);
         when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn(SQS_PREFIX);
-        auditService = new AuditService(mockSqs, mockConfigurationService, mockObjectMapper);
+        Instant fixedInstant = Instant.now();
+        when(mockClock.instant()).thenReturn(fixedInstant);
+
+        auditService = new AuditService(mockSqs, mockConfigurationService, mockObjectMapper, mockClock);
 
         ArgumentCaptor<SendMessageRequest> sqsSendMessageRequestCaptor =
                 ArgumentCaptor.forClass(SendMessageRequest.class);
 
-        AuditEvent auditEvent = new AuditEvent(fixedInstant, AuditEventType.START);
+        AuditEvent auditEvent = new AuditEvent(fixedInstant.getEpochSecond(), AuditEventType.START.toString());
         String messageAuditEvent = new ObjectMapper().writeValueAsString(auditEvent);
 
         when(mockObjectMapper.writeValueAsString(any(AuditEvent.class)))
@@ -72,15 +71,21 @@ class AuditServiceTest {
     }
 
     @Test
-    void shouldCorrectlyAddPrefix() throws SqsException {
+    void shouldCorrectlyAddPrefix() throws SqsException, JsonProcessingException {
         when(mockConfigurationService.getSqsAuditEventQueueUrl()).thenReturn(SQS_QUEUE_URL);
         when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn(SQS_PREFIX);
-        auditService = new AuditService(mockSqs, mockConfigurationService, new ObjectMapper());
+        Instant fixedInstant = Instant.now();
+        when(mockClock.instant()).thenReturn(fixedInstant);
+
+        auditService = new AuditService(mockSqs, mockConfigurationService, mockObjectMapper, mockClock);
 
         ArgumentCaptor<SendMessageRequest> sqsSendMessageRequestCaptor =
                 ArgumentCaptor.forClass(SendMessageRequest.class);
 
-        AuditEvent auditEvent = new AuditEvent(fixedInstant, AuditEventType.START);
+        AuditEvent auditEvent = new AuditEvent(fixedInstant.getEpochSecond(), SQS_PREFIX + "_" + AuditEventType.START);
+        String messageAuditEvent = new ObjectMapper().writeValueAsString(auditEvent);
+        when(mockObjectMapper.writeValueAsString(any(AuditEvent.class)))
+                .thenReturn(messageAuditEvent);
 
         SendMessageResponse mockSendMessageResponse = mock(SendMessageResponse.class);
         when(mockSqs.sendMessage(sqsSendMessageRequestCaptor.capture()))
@@ -97,15 +102,14 @@ class AuditServiceTest {
     }
 
     @Test
-    void ShouldThrowErrorWhenNoPrefix() throws SqsException {
+    void ConstructorShouldThrowErrorWhenNoPrefix() throws SqsException {
         when(mockConfigurationService.getSqsAuditEventQueueUrl()).thenReturn(SQS_QUEUE_URL);
         when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn("");
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        auditService =
-                                new AuditService(
-                                        mockSqs, mockConfigurationService, new ObjectMapper()));
+                        new AuditService(
+                                        mockSqs, mockConfigurationService, mockObjectMapper, mockClock));
     }
 }
