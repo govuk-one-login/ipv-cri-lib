@@ -8,46 +8,82 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
 
+import java.time.Clock;
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ConfigurationServiceTest {
-
-    @Mock SSMProvider ssmProvider;
-    @Mock SecretsProvider secretsProvider;
+    private static final String TEST_STACK_NAME = "stack-name";
+    private static final String PARAM_NAME_FORMAT = "/%s/%s";
+    @Mock private SSMProvider mockSsmProvider;
+    @Mock private SecretsProvider mockSecretsProvider;
+    @Mock private Clock mockClock;
     private ConfigurationService configurationService;
 
     @BeforeEach
     void setUp() {
-        configurationService = new ConfigurationService(ssmProvider, secretsProvider, "stack-name");
+        configurationService =
+                new ConfigurationService(
+                        mockSsmProvider, mockSecretsProvider, TEST_STACK_NAME, mockClock);
     }
 
     @Test
-    void shouldGetAccessTokenTableName() {
-        when(ssmProvider.get(
-                        "/stack-name/"
-                                + ConfigurationService.SSMParameterName.SESSION_TABLE_NAME
-                                        .parameterName))
-                .thenReturn("the table name");
-        assertEquals("the table name", configurationService.getSessionTableName());
+    void shouldGetParamValueByName() {
+        String paramName = "param-name";
+        String paramValue = "param-value";
+        String fullParamName = String.format(PARAM_NAME_FORMAT, TEST_STACK_NAME, paramName);
+        when(mockSsmProvider.get(fullParamName)).thenReturn(paramValue);
+        assertEquals(paramValue, configurationService.getParameterValue(paramName));
+        verify(mockSsmProvider).get(fullParamName);
     }
 
     @Test
-    void shouldGetBearerAccessTokenTtl() {
-        when(ssmProvider.get(
-                        "/stack-name/"
-                                + ConfigurationService.SSMParameterName.SESSION_TTL.parameterName))
-                .thenReturn("10");
-        assertEquals(10, configurationService.getSessionTtl());
+    void shouldGetSecretValueByName() {
+        String secretName = "my-secret-name";
+        String secretValue = "secret-value";
+        String fullSecretName = String.format(PARAM_NAME_FORMAT, TEST_STACK_NAME, secretName);
+        when(mockSecretsProvider.get(fullSecretName)).thenReturn(secretValue);
+        assertEquals(secretValue, configurationService.getSecretValue(secretName));
+        verify(mockSecretsProvider).get(fullSecretName);
+    }
+
+    @Test
+    void shouldGetSessionExpirationEpoch() {
+        long sessionTtl = 10;
+        when(mockSsmProvider.get(
+                        String.format(
+                                PARAM_NAME_FORMAT,
+                                TEST_STACK_NAME,
+                                ConfigurationService.SSMParameterName.SESSION_TTL.parameterName)))
+                .thenReturn(String.valueOf(sessionTtl));
+        when(mockClock.instant()).thenReturn(Instant.ofEpochSecond(1655203417));
+        assertEquals(1655203427, configurationService.getSessionExpirationEpoch());
+    }
+
+    @Test
+    void shouldGetSessionTtl() {
+        long sessionTtl = 10;
+        when(mockSsmProvider.get(
+                        String.format(
+                                PARAM_NAME_FORMAT,
+                                TEST_STACK_NAME,
+                                ConfigurationService.SSMParameterName.SESSION_TTL.parameterName)))
+                .thenReturn(String.valueOf(sessionTtl));
+        assertEquals(sessionTtl, configurationService.getSessionTtl());
     }
 
     @Test
     void shouldGetOrdnanceSurveyAPIKey() {
-        when(secretsProvider.get(
-                        "/stack-name/"
-                                + ConfigurationService.SSMParameterName.ORDNANCE_SURVEY_API_KEY
-                                        .parameterName))
+        when(mockSecretsProvider.get(
+                        String.format(
+                                PARAM_NAME_FORMAT,
+                                TEST_STACK_NAME,
+                                ConfigurationService.SSMParameterName.ORDNANCE_SURVEY_API_KEY
+                                        .parameterName)))
                 .thenReturn("1234567890");
 
         assertEquals("1234567890", configurationService.getOsApiKey());

@@ -57,8 +57,10 @@ class SessionServiceTest {
     }
 
     @Test
-    void shouldCallCreateOnAddressSessionDataStore() {
-        when(mockConfigurationService.getSessionTtl()).thenReturn(1L);
+    void shouldCallCreateOnSessionDataStore() {
+        final long sessionExpirationEpoch = 10L;
+        when(mockConfigurationService.getSessionExpirationEpoch())
+                .thenReturn(sessionExpirationEpoch);
         SessionRequest sessionRequest = mock(SessionRequest.class);
 
         when(sessionRequest.getClientId()).thenReturn("a client id");
@@ -71,7 +73,7 @@ class SessionServiceTest {
         verify(mockDataStore).create(sessionItemArgumentCaptor.capture());
         SessionItem capturedValue = sessionItemArgumentCaptor.getValue();
         assertNotNull(capturedValue.getSessionId());
-        assertThat(capturedValue.getExpiryDate(), equalTo(fixedInstant.getEpochSecond() + 1));
+        assertThat(capturedValue.getExpiryDate(), equalTo(sessionExpirationEpoch));
         assertThat(capturedValue.getClientId(), equalTo("a client id"));
         assertThat(capturedValue.getState(), equalTo("state"));
         assertThat(capturedValue.getSubject(), equalTo("a subject"));
@@ -81,7 +83,7 @@ class SessionServiceTest {
     }
 
     @Test
-    void shouldGetAddressSessionItemByAuthorizationCodeIndexSuccessfully() {
+    void shouldGetSessionItemByAuthorizationCodeIndexSuccessfully() {
         String authCodeValue = UUID.randomUUID().toString();
         SessionItem item = new SessionItem();
         item.setSessionId(UUID.randomUUID());
@@ -99,7 +101,7 @@ class SessionServiceTest {
     }
 
     @Test
-    void shouldGetAddressSessionItemByTokenIndexSuccessfully() {
+    void shouldGetSessionItemByTokenIndexSuccessfully() {
         AccessToken accessToken = new BearerAccessToken();
         String serialisedAccessToken = accessToken.toAuthorizationHeader();
         SessionItem item = new SessionItem();
@@ -127,7 +129,7 @@ class SessionServiceTest {
     }
 
     @Test
-    void saveAddressesThrowsSessionNotFound() {
+    void saveThrowsSessionNotFound() {
         when(mockDataStore.getItem(SESSION_ID)).thenReturn(null);
         assertThrows(
                 SessionNotFoundException.class, () -> sessionService.validateSessionId(SESSION_ID));

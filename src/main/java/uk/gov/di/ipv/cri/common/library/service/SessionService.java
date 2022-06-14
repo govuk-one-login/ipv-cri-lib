@@ -11,10 +11,10 @@ import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.common.library.util.ListUtil;
 
 import java.time.Clock;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 public class SessionService {
+    private static final String SESSION_TABLE_PARAM_NAME = "SessionTableName";
     private final ConfigurationService configurationService;
     private final DataStore<SessionItem> dataStore;
     private final ListUtil listUtil;
@@ -25,7 +25,7 @@ public class SessionService {
         this.configurationService = new ConfigurationService();
         this.dataStore =
                 new DataStore<>(
-                        configurationService.getSessionTableName(),
+                        configurationService.getParameterValue(SESSION_TABLE_PARAM_NAME),
                         SessionItem.class,
                         new DynamoDbEnhancedClientFactory().getClient());
         this.clock = Clock.systemUTC();
@@ -45,10 +45,7 @@ public class SessionService {
 
     public UUID saveSession(SessionRequest sessionRequest) {
         SessionItem sessionItem = new SessionItem();
-        sessionItem.setExpiryDate(
-                clock.instant()
-                        .plus(configurationService.getSessionTtl(), ChronoUnit.SECONDS)
-                        .getEpochSecond());
+        sessionItem.setExpiryDate(configurationService.getSessionExpirationEpoch());
         sessionItem.setState(sessionRequest.getState());
         sessionItem.setClientId(sessionRequest.getClientId());
         sessionItem.setRedirectUri(sessionRequest.getRedirectUri());

@@ -8,15 +8,13 @@ import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.common.library.persistence.DynamoDbEnhancedClientFactory;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 
-import java.time.Clock;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 public class PersonIdentityService {
+    private static final String PERSON_IDENTITY_TABLE_PARAM_NAME = "PersonIdentityTableName";
     private final PersonIdentityMapper personIdentityMapper;
     private final ConfigurationService configurationService;
     private final DataStore<PersonIdentityItem> personIdentityDataStore;
-    private final Clock clock;
 
     @ExcludeFromGeneratedCoverageReport
     public PersonIdentityService() {
@@ -24,31 +22,25 @@ public class PersonIdentityService {
         this.personIdentityMapper = new PersonIdentityMapper();
         this.personIdentityDataStore =
                 new DataStore<>(
-                        configurationService.getPersonIdentityTableName(),
+                        configurationService.getParameterValue(PERSON_IDENTITY_TABLE_PARAM_NAME),
                         PersonIdentityItem.class,
                         new DynamoDbEnhancedClientFactory().getClient());
-        this.clock = Clock.systemUTC();
     }
 
     public PersonIdentityService(
             PersonIdentityMapper personIdentityMapper,
             ConfigurationService configurationService,
-            DataStore<PersonIdentityItem> personIdentityDataStore,
-            Clock clock) {
+            DataStore<PersonIdentityItem> personIdentityDataStore) {
         this.personIdentityMapper = personIdentityMapper;
         this.configurationService = configurationService;
         this.personIdentityDataStore = personIdentityDataStore;
-        this.clock = clock;
     }
 
     public void savePersonIdentity(UUID sessionId, SharedClaims sharedClaims) {
         PersonIdentityItem personIdentityItem =
                 personIdentityMapper.mapToPersonIdentityItem(sharedClaims);
         personIdentityItem.setSessionId(sessionId);
-        personIdentityItem.setExpiryDate(
-                clock.instant()
-                        .plus(configurationService.getSessionTtl(), ChronoUnit.SECONDS)
-                        .getEpochSecond());
+        personIdentityItem.setExpiryDate(configurationService.getSessionExpirationEpoch());
 
         this.personIdentityDataStore.create(personIdentityItem);
     }
