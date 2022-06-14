@@ -10,9 +10,6 @@ import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,28 +23,25 @@ class PersonIdentityServiceTest {
     @Mock private PersonIdentityMapper mockPersonIdentityMapper;
     @Mock private ConfigurationService mockConfigurationService;
     @Mock private DataStore<PersonIdentityItem> mockPersonIdentityDataStore;
-    @Mock private Clock mockClock;
     @InjectMocks private PersonIdentityService personIdentityService;
 
     @Test
     void shouldSavePersonIdentity() {
-        long sessionTtl = 30L;
+        final long sessionExpirationEpoch = 1655203777L;
         SharedClaims testSharedClaims = new SharedClaims();
         PersonIdentityItem testPersonIdentityItem = mock(PersonIdentityItem.class);
-        Instant instant = Instant.now();
 
         when(mockPersonIdentityMapper.mapToPersonIdentityItem(testSharedClaims))
                 .thenReturn(testPersonIdentityItem);
-        when(mockConfigurationService.getSessionTtl()).thenReturn(sessionTtl);
-        when(mockClock.instant()).thenReturn(instant);
+        when(mockConfigurationService.getSessionExpirationEpoch())
+                .thenReturn(sessionExpirationEpoch);
 
         personIdentityService.savePersonIdentity(TEST_SESSION_ID, testSharedClaims);
 
         verify(mockPersonIdentityMapper).mapToPersonIdentityItem(testSharedClaims);
         verify(testPersonIdentityItem).setSessionId(TEST_SESSION_ID);
-        verify(mockConfigurationService).getSessionTtl();
-        verify(testPersonIdentityItem)
-                .setExpiryDate(instant.plus(sessionTtl, ChronoUnit.SECONDS).getEpochSecond());
+        verify(mockConfigurationService).getSessionExpirationEpoch();
+        verify(testPersonIdentityItem).setExpiryDate(sessionExpirationEpoch);
         verify(mockPersonIdentityDataStore).create(testPersonIdentityItem);
     }
 

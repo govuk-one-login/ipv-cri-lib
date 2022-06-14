@@ -3,29 +3,27 @@ package uk.gov.di.ipv.cri.common.library.service;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
+import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 
 import java.net.URI;
+import java.time.Clock;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 public class ConfigurationService {
 
-    private static final long DEFAULT_SESSION_ADDRESS_TTL_IN_SECS = 172800L;
+    private static final String PARAMETER_NAME_FORMAT = "/%s/%s";
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
-    private static final long DEFAULT_MAXIMUM_JWT_TTL = 3600L;
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
+    private final Clock clock;
 
-    public ConfigurationService(
-            SSMProvider ssmProvider, SecretsProvider secretsProvider, String parameterPrefix) {
-        this.ssmProvider = ssmProvider;
-        this.secretsProvider = secretsProvider;
-        this.parameterPrefix = parameterPrefix;
-    }
-
+    @ExcludeFromGeneratedCoverageReport
     public ConfigurationService() {
+        this.clock = Clock.systemUTC();
         this.ssmProvider = ParamManager.getSsmProvider();
         this.secretsProvider = ParamManager.getSecretsProvider();
         this.parameterPrefix =
@@ -33,25 +31,40 @@ public class ConfigurationService {
                         System.getenv("AWS_STACK_NAME"), "env var AWS_STACK_NAME required");
     }
 
-    public String getSessionTableName() {
-        return ssmProvider.get(getParameterName(SSMParameterName.SESSION_TABLE_NAME));
-    }
-
-    public String getPersonIdentityTableName() {
-        return ssmProvider.get(getParameterName(SSMParameterName.PERSON_IDENTITY_TABLE_NAME));
+    public ConfigurationService(
+            SSMProvider ssmProvider,
+            SecretsProvider secretsProvider,
+            String parameterPrefix,
+            Clock clock) {
+        this.ssmProvider = ssmProvider;
+        this.secretsProvider = secretsProvider;
+        this.parameterPrefix = parameterPrefix;
+        this.clock = clock;
     }
 
     public String getAddressTableName() {
         return ssmProvider.get(getParameterName(SSMParameterName.ADDRESS_TABLE_NAME));
     }
 
-    public long getSessionTtl() {
-        return Optional.ofNullable(ssmProvider.get(getParameterName(SSMParameterName.SESSION_TTL)))
-                .map(Long::valueOf)
-                .orElse(DEFAULT_SESSION_ADDRESS_TTL_IN_SECS);
+    public String getParameterValue(String parameterName) {
+        return ssmProvider.get(
+                String.format(PARAMETER_NAME_FORMAT, parameterPrefix, parameterName));
     }
 
-    public String getParameterName(SSMParameterName parameterName) {
+    public String getSecretValue(String secretName) {
+        return secretsProvider.get(
+                String.format(PARAMETER_NAME_FORMAT, parameterPrefix, secretName));
+    }
+
+    public long getSessionTtl() {
+        return Long.valueOf(ssmProvider.get(getParameterName(SSMParameterName.SESSION_TTL)));
+    }
+
+    public long getSessionExpirationEpoch() {
+        return clock.instant().plus(getSessionTtl(), ChronoUnit.SECONDS).getEpochSecond();
+    }
+
+    private String getParameterName(SSMParameterName parameterName) {
         return String.format("/%s/%s", parameterPrefix, parameterName.parameterName);
     }
 
@@ -83,7 +96,6 @@ public class ConfigurationService {
     }
 
     public enum SSMParameterName {
-        SESSION_TABLE_NAME("SessionTableName"),
         SESSION_TTL("SessionTtl"),
         ORDNANCE_SURVEY_API_KEY("OrdnanceSurveyAPIKey"),
         ORDNANCE_SURVEY_API_URL("OrdnanceSurveyAPIURL"),
@@ -92,8 +104,7 @@ public class ConfigurationService {
         VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
         VERIFIABLE_CREDENTIAL_ISSUER("verifiable-credential/issuer"),
         AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId"),
-        ADDRESS_TABLE_NAME("AddressTableName"),
-        PERSON_IDENTITY_TABLE_NAME("PersonIdentityTableName");
+        ADDRESS_TABLE_NAME("AddressTableName");
 
         public final String parameterName;
 
@@ -115,10 +126,7 @@ public class ConfigurationService {
     }
 
     public long getMaxJwtTtl() {
-        return Optional.ofNullable(
-                        ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)))
-                .map(Long::valueOf)
-                .orElse(DEFAULT_MAXIMUM_JWT_TTL);
+        return Long.valueOf(ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)));
     }
 
     public String getVerifiableCredentialIssuer() {
