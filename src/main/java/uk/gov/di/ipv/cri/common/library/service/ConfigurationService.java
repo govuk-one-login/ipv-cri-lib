@@ -15,9 +15,7 @@ import java.util.Optional;
 public class ConfigurationService {
 
     private static final String PARAMETER_NAME_FORMAT = "/%s/%s";
-    private static final long DEFAULT_SESSION_TTL_IN_SECS = 172800L;
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
-    private static final long DEFAULT_MAXIMUM_JWT_TTL = 3600L;
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
@@ -59,9 +57,7 @@ public class ConfigurationService {
     }
 
     public long getSessionTtl() {
-        return Optional.ofNullable(ssmProvider.get(getParameterName(SSMParameterName.SESSION_TTL)))
-                .map(Long::valueOf)
-                .orElse(DEFAULT_SESSION_TTL_IN_SECS);
+        return Long.valueOf(ssmProvider.get(getParameterName(SSMParameterName.SESSION_TTL)));
     }
 
     public long getSessionExpirationEpoch() {
@@ -130,10 +126,7 @@ public class ConfigurationService {
     }
 
     public long getMaxJwtTtl() {
-        return Optional.ofNullable(
-                        ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)))
-                .map(Long::valueOf)
-                .orElse(DEFAULT_MAXIMUM_JWT_TTL);
+        return Long.valueOf(ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)));
     }
 
     public String getVerifiableCredentialIssuer() {
