@@ -13,11 +13,14 @@ public class SessionItem {
     public static final String ACCESS_TOKEN_INDEX = "access-token-index";
     private UUID sessionId;
     private long expiryDate;
+    private long createdDate;
     private String clientId;
     private String state;
     private URI redirectUri;
     private String authorizationCode;
+    private long authorizationCodeExpiryDate;
     private String accessToken;
+    private long accessTokenExpiryDate;
     private String subject;
 
     public SessionItem() {
@@ -91,6 +94,22 @@ public class SessionItem {
         return subject;
     }
 
+    public long getAuthorizationCodeExpiryDate() {
+        return authorizationCodeExpiryDate;
+    }
+
+    public void setAuthorizationCodeExpiryDate(long authorizationCodeExpiryDate) {
+        this.authorizationCodeExpiryDate = authorizationCodeExpiryDate;
+    }
+
+    public long getAccessTokenExpiryDate() {
+        return accessTokenExpiryDate;
+    }
+
+    public void setAccessTokenExpiryDate(long accessTokenExpiryDate) {
+        this.accessTokenExpiryDate = accessTokenExpiryDate;
+    }
+
     @Override
     public String toString() {
         return new StringBuilder()
@@ -113,7 +132,18 @@ public class SessionItem {
                 .append(", authorizationCode='")
                 .append(authorizationCode)
                 .append('\'')
+                .append(", authorizationCodeExpiryDate='")
+                .append(authorizationCodeExpiryDate)
+                .append('\'')
                 .append('}')
                 .toString();
+    }
+
+    public long getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(long createdDate) {
+        this.createdDate = createdDate;
     }
 }
