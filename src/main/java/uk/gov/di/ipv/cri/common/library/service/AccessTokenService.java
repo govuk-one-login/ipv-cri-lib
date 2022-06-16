@@ -26,6 +26,7 @@ import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.net.URI;
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,15 +40,18 @@ public class AccessTokenService {
     public static final String REDIRECT_URI = "redirect_uri";
     private final ConfigurationService configurationService;
     private final JWTVerifier jwtVerifier;
+    private final Clock clock;
 
-    public AccessTokenService(ConfigurationService configurationService, JWTVerifier jwtVerifier) {
+    public AccessTokenService(
+            ConfigurationService configurationService, JWTVerifier jwtVerifier, Clock clock) {
         this.configurationService = configurationService;
         this.jwtVerifier = jwtVerifier;
+        this.clock = clock;
     }
 
     @ExcludeFromGeneratedCoverageReport
     public AccessTokenService() {
-        this(new ConfigurationService(), new JWTVerifier());
+        this(new ConfigurationService(), new JWTVerifier(), Clock.systemUTC());
     }
 
     public String getAuthorizationCode(TokenRequest tokenRequest) {
@@ -63,11 +67,18 @@ public class AccessTokenService {
         return new AccessTokenResponse(new Tokens(accessToken, null)).toSuccessResponse();
     }
 
-    public SessionItem updateSessionAccessToken(
+    public void updateSessionAccessToken(
             SessionItem sessionItem, AccessTokenResponse tokenResponse) {
+        // Set the access token
         sessionItem.setAccessToken(
                 tokenResponse.getTokens().getBearerAccessToken().toAuthorizationHeader());
-        return sessionItem;
+
+        // Set the access token expiry
+        sessionItem.setAccessTokenExpiryDate(
+                configurationService.getBearerAccessTokenExpirationEpoch());
+
+        // Expire the authorization code immediately, as it can only be used once
+        sessionItem.setAuthorizationCodeExpiryDate(clock.instant().getEpochSecond());
     }
 
     public TokenRequest createTokenRequest(String requestBody)

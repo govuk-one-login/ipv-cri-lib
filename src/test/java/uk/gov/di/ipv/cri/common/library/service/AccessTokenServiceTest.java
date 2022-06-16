@@ -23,6 +23,8 @@ import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.net.URI;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -43,6 +45,8 @@ import static org.mockito.Mockito.when;
 class AccessTokenServiceTest {
     @Mock private ConfigurationService mockConfigurationService;
     @Mock private JWTVerifier mockJwtVerifier;
+
+    @Mock private Clock mockClock;
     @InjectMocks private AccessTokenService accessTokenService;
 
     private final String SAMPLE_JWT =
@@ -245,6 +249,8 @@ class AccessTokenServiceTest {
 
     @Test
     void shouldCallWriteTokenAndUpdateDataStore() {
+        var fixedInstant = Instant.parse("2020-01-01T00:00:00.00Z");
+
         AccessTokenResponse accessTokenResponse = mock(AccessTokenResponse.class);
         SessionItem sessionItem = new SessionItem();
 
@@ -253,6 +259,7 @@ class AccessTokenServiceTest {
         BearerAccessToken mockBearerAccessToken = mock(BearerAccessToken.class);
         when(mockTokens.getBearerAccessToken()).thenReturn(mockBearerAccessToken);
         when(mockBearerAccessToken.toAuthorizationHeader()).thenReturn("some-authorization-header");
+        when(mockClock.instant()).thenReturn(fixedInstant);
         accessTokenService.updateSessionAccessToken(sessionItem, accessTokenResponse);
 
         assertThat(
@@ -262,6 +269,13 @@ class AccessTokenServiceTest {
                                 .getTokens()
                                 .getBearerAccessToken()
                                 .toAuthorizationHeader()));
+
+        assertEquals(sessionItem.getAuthorizationCodeExpiryDate(), fixedInstant.getEpochSecond());
+
+        assertThat(
+                sessionItem.getAccessTokenExpiryDate(),
+                equalTo(mockConfigurationService.getBearerAccessTokenExpirationEpoch()));
+
         assertThat(accessTokenResponse, notNullValue());
     }
 
