@@ -11,6 +11,8 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.domain.SessionRequest;
+import uk.gov.di.ipv.cri.common.library.exception.AccessTokenExpiredException;
+import uk.gov.di.ipv.cri.common.library.exception.AuthorizationCodeExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionNotFoundException;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
@@ -83,11 +85,17 @@ class SessionServiceTest {
     }
 
     @Test
-    void shouldGetSessionItemByAuthorizationCodeIndexSuccessfully() {
+    void shouldGetSessionItemByAuthorizationCodeIndexSuccessfully()
+            throws AuthorizationCodeExpiredException, SessionExpiredException,
+                    SessionNotFoundException {
+
         String authCodeValue = UUID.randomUUID().toString();
         SessionItem item = new SessionItem();
         item.setSessionId(UUID.randomUUID());
         item.setAuthorizationCode(authCodeValue);
+        item.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
+        item.setAuthorizationCodeExpiryDate(
+                Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
         List<SessionItem> items = List.of(item);
 
         when(mockListUtil.getOneItemOrThrowError(items)).thenReturn(item);
@@ -101,17 +109,21 @@ class SessionServiceTest {
     }
 
     @Test
-    void shouldGetSessionItemByTokenIndexSuccessfully() {
+    void shouldGetSessionItemByTokenIndexSuccessfully()
+            throws AccessTokenExpiredException, SessionExpiredException, SessionNotFoundException {
         AccessToken accessToken = new BearerAccessToken();
         String serialisedAccessToken = accessToken.toAuthorizationHeader();
         SessionItem item = new SessionItem();
         item.setSessionId(UUID.randomUUID());
         item.setAccessToken(serialisedAccessToken);
+        item.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
+        item.setAccessTokenExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
         List<SessionItem> items = List.of(item);
 
         when(mockListUtil.getOneItemOrThrowError(items)).thenReturn(item);
         when(mockDataStore.getItemByIndex(SessionItem.ACCESS_TOKEN_INDEX, serialisedAccessToken))
                 .thenReturn(items);
+        when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
 
         SessionItem sessionItem = sessionService.getSessionByAccessToken(accessToken);
         assertThat(item.getSessionId(), equalTo(sessionItem.getSessionId()));
@@ -133,6 +145,48 @@ class SessionServiceTest {
         when(mockDataStore.getItem(SESSION_ID)).thenReturn(null);
         assertThrows(
                 SessionNotFoundException.class, () -> sessionService.validateSessionId(SESSION_ID));
+    }
+
+    @Test
+    void shouldThrowAuthorizationCodeExpiredException() {
+        String authorizationCode = UUID.randomUUID().toString();
+        SessionItem item = new SessionItem();
+        item.setSessionId(UUID.randomUUID());
+        item.setAuthorizationCode(authorizationCode);
+        item.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
+        item.setAuthorizationCodeExpiryDate(
+                Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond());
+        List<SessionItem> items = List.of(item);
+
+        when(mockListUtil.getOneItemOrThrowError(items)).thenReturn(item);
+        when(mockDataStore.getItemByIndex(SessionItem.AUTHORIZATION_CODE_INDEX, authorizationCode))
+                .thenReturn(items);
+        when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
+
+        assertThrows(
+                AuthorizationCodeExpiredException.class,
+                () -> sessionService.getSessionByAuthorisationCode(authorizationCode));
+    }
+
+    @Test
+    void shouldThrowAccessTokenExpiredException() {
+        AccessToken accessToken = new BearerAccessToken();
+        String serialisedAccessToken = accessToken.toAuthorizationHeader();
+        SessionItem item = new SessionItem();
+        item.setSessionId(UUID.randomUUID());
+        item.setAccessToken(serialisedAccessToken);
+        item.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
+        item.setAccessTokenExpiryDate(Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond());
+        List<SessionItem> items = List.of(item);
+
+        when(mockListUtil.getOneItemOrThrowError(items)).thenReturn(item);
+        when(mockDataStore.getItemByIndex(SessionItem.ACCESS_TOKEN_INDEX, serialisedAccessToken))
+                .thenReturn(items);
+        when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
+
+        assertThrows(
+                AccessTokenExpiredException.class,
+                () -> sessionService.getSessionByAccessToken(accessToken));
     }
 
     @Test

@@ -16,6 +16,7 @@ public class ConfigurationService {
 
     private static final String PARAMETER_NAME_FORMAT = "/%s/%s";
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
+    private static final Long AUTHORIZATION_CODE_TTL_IN_SECS = 600L;
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
@@ -57,11 +58,21 @@ public class ConfigurationService {
     }
 
     public long getSessionTtl() {
-        return Long.valueOf(ssmProvider.get(getParameterName(SSMParameterName.SESSION_TTL)));
+        return Long.parseLong(ssmProvider.get(getParameterName(SSMParameterName.SESSION_TTL)));
+    }
+
+    public long getAuthorizationCodeTtl() {
+        return Optional.ofNullable(System.getenv("AUTHORIZATION_CODE_TTL"))
+                .map(Long::parseLong)
+                .orElse(AUTHORIZATION_CODE_TTL_IN_SECS);
     }
 
     public long getSessionExpirationEpoch() {
         return clock.instant().plus(getSessionTtl(), ChronoUnit.SECONDS).getEpochSecond();
+    }
+
+    public long getAuthorizationCodeExpirationEpoch() {
+        return clock.instant().plus(getAuthorizationCodeTtl(), ChronoUnit.SECONDS).getEpochSecond();
     }
 
     private String getParameterName(SSMParameterName parameterName) {
@@ -87,8 +98,12 @@ public class ConfigurationService {
 
     public long getBearerAccessTokenTtl() {
         return Optional.ofNullable(System.getenv("BEARER_TOKEN_TTL"))
-                .map(Long::valueOf)
+                .map(Long::parseLong)
                 .orElse(DEFAULT_BEARER_TOKEN_TTL_IN_SECS);
+    }
+
+    public long getBearerAccessTokenExpirationEpoch() {
+        return clock.instant().plus(getBearerAccessTokenTtl(), ChronoUnit.SECONDS).getEpochSecond();
     }
 
     public String getAccessTokensTableName() {
@@ -126,7 +141,7 @@ public class ConfigurationService {
     }
 
     public long getMaxJwtTtl() {
-        return Long.valueOf(ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)));
+        return Long.parseLong(ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)));
     }
 
     public String getVerifiableCredentialIssuer() {
