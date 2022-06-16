@@ -1,8 +1,14 @@
 package uk.gov.di.ipv.cri.common.library.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AuditEvent {
 
     @JsonProperty("timestamp")
@@ -13,6 +19,9 @@ public class AuditEvent {
 
     @JsonProperty("component_id")
     private final String issuer;
+
+    @JsonProperty("restricted")
+    private Map<String, String> restricted = new HashMap<>();
 
     @JsonCreator
     public AuditEvent(
@@ -42,5 +51,17 @@ public class AuditEvent {
 
     public String getEvent() {
         return event;
+    }
+
+    public Map<String, String> getRestricted() {
+        return Collections.unmodifiableMap(restricted);
+    }
+
+    public boolean addRestricted(String key, String value) {
+        if (key != null && !key.isBlank() && value != null && !value.isBlank()) {
+            return restricted.put(key, value) == null;
+        } else {
+            return false;
+        }
     }
 }
