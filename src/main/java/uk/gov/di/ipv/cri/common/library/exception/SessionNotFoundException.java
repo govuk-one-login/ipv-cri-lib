@@ -1,6 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.exception;
 
-public class SessionNotFoundException extends Exception {
+public class SessionNotFoundException extends RuntimeException {
 
     public SessionNotFoundException(String message) {
         super(message);

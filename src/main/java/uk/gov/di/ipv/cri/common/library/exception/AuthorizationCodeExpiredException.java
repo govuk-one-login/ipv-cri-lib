@@ -1,6 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.exception;
 
-public class AuthorizationCodeExpiredException extends Exception {
+public class AuthorizationCodeExpiredException extends RuntimeException {
 
     public AuthorizationCodeExpiredException(String message) {
         super(message);

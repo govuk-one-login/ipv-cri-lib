@@ -1,6 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.exception;
 
-public class AccessTokenExpiredException extends Exception {
+public class AccessTokenExpiredException extends RuntimeException {
 
     public AccessTokenExpiredException(String message) {
         super(message);
