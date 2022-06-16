@@ -25,7 +25,11 @@ public enum ErrorResponse {
     MISSING_AUTHORIZATION_HEADER(1022, "Missing Authorization Header"),
     TOKEN_VALIDATION_ERROR(1023, "Token validation error"),
     VERIFIABLE_CREDENTIAL_ERROR(1024, "Verifiable Credential error"),
-    GENERIC_SERVER_ERROR(1025, "Request failed due to a server error");
+    GENERIC_SERVER_ERROR(1025, "Request failed due to a server error"),
+    ACCESS_TOKEN_EXPIRED(1026, "Access token expired"),
+    AUTHORIZATION_CODE_EXPIRED(1027, "Authorization code expired"),
+    SESSION_EXPIRED(1028, "Session expired"),
+    SESSION_NOT_FOUND(1029, "Session not found");
 
     private final int code;
     private final String message;
