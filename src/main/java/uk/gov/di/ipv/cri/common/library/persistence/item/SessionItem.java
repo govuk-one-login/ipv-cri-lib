@@ -110,40 +110,29 @@ public class SessionItem {
         this.accessTokenExpiryDate = accessTokenExpiryDate;
     }
 
-    @Override
-    public String toString() {
-        return new StringBuilder()
-                .append("AddressSessionItem{")
-                .append("sessionId=")
-                .append(sessionId)
-                .append(", expiryDate=")
-                .append(expiryDate)
-                .append(", clientId='")
-                .append(clientId)
-                .append('\'')
-                .append(", state='")
-                .append(state)
-                .append('\'')
-                .append(", redirectUri=")
-                .append(redirectUri)
-                .append(", accessToken='")
-                .append(accessToken)
-                .append('\'')
-                .append(", authorizationCode='")
-                .append(authorizationCode)
-                .append('\'')
-                .append(", authorizationCodeExpiryDate='")
-                .append(authorizationCodeExpiryDate)
-                .append('\'')
-                .append('}')
-                .toString();
-    }
-
     public long getCreatedDate() {
         return createdDate;
     }
 
     public void setCreatedDate(long createdDate) {
         this.createdDate = createdDate;
+    }
+
+    @Override
+    public String toString() {
+        return "SessionItem{"
+                + "sessionId="
+                + sessionId
+                + ", createdDate="
+                + createdDate
+                + ", clientId='"
+                + clientId
+                + '\''
+                + ", state='"
+                + state
+                + '\''
+                + ", redirectUri="
+                + redirectUri
+                + '}';
     }
 }
