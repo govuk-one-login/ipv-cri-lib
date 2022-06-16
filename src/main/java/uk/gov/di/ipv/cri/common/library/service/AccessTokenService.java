@@ -26,7 +26,6 @@ import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.net.URI;
-import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,18 +39,15 @@ public class AccessTokenService {
     public static final String REDIRECT_URI = "redirect_uri";
     private final ConfigurationService configurationService;
     private final JWTVerifier jwtVerifier;
-    private final Clock clock;
 
-    public AccessTokenService(
-            ConfigurationService configurationService, JWTVerifier jwtVerifier, Clock clock) {
+    public AccessTokenService(ConfigurationService configurationService, JWTVerifier jwtVerifier) {
         this.configurationService = configurationService;
         this.jwtVerifier = jwtVerifier;
-        this.clock = clock;
     }
 
     @ExcludeFromGeneratedCoverageReport
     public AccessTokenService() {
-        this(new ConfigurationService(), new JWTVerifier(), Clock.systemUTC());
+        this(new ConfigurationService(), new JWTVerifier());
     }
 
     public String getAuthorizationCode(TokenRequest tokenRequest) {
@@ -78,7 +74,7 @@ public class AccessTokenService {
                 configurationService.getBearerAccessTokenExpirationEpoch());
 
         // Expire the authorization code immediately, as it can only be used once
-        sessionItem.setAuthorizationCodeExpiryDate(clock.instant().getEpochSecond());
+        sessionItem.setAuthorizationCode(null);
     }
 
     public TokenRequest createTokenRequest(String requestBody)

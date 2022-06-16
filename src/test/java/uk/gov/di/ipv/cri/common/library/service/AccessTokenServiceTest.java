@@ -45,8 +45,6 @@ import static org.mockito.Mockito.when;
 class AccessTokenServiceTest {
     @Mock private ConfigurationService mockConfigurationService;
     @Mock private JWTVerifier mockJwtVerifier;
-
-    @Mock private Clock mockClock;
     @InjectMocks private AccessTokenService accessTokenService;
 
     private final String SAMPLE_JWT =
@@ -253,13 +251,13 @@ class AccessTokenServiceTest {
 
         AccessTokenResponse accessTokenResponse = mock(AccessTokenResponse.class);
         SessionItem sessionItem = new SessionItem();
+        sessionItem.setAuthorizationCode("12345");
 
         Tokens mockTokens = mock(Tokens.class);
         when(accessTokenResponse.getTokens()).thenReturn(mockTokens);
         BearerAccessToken mockBearerAccessToken = mock(BearerAccessToken.class);
         when(mockTokens.getBearerAccessToken()).thenReturn(mockBearerAccessToken);
         when(mockBearerAccessToken.toAuthorizationHeader()).thenReturn("some-authorization-header");
-        when(mockClock.instant()).thenReturn(fixedInstant);
         accessTokenService.updateSessionAccessToken(sessionItem, accessTokenResponse);
 
         assertThat(
@@ -270,7 +268,7 @@ class AccessTokenServiceTest {
                                 .getBearerAccessToken()
                                 .toAuthorizationHeader()));
 
-        assertEquals(sessionItem.getAuthorizationCodeExpiryDate(), fixedInstant.getEpochSecond());
+        assertNull(sessionItem.getAuthorizationCode());
 
         assertThat(
                 sessionItem.getAccessTokenExpiryDate(),
