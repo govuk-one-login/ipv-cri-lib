@@ -109,11 +109,7 @@ public class SessionService {
         }
 
         // Re-fetch our session directly to avoid problems with projections
-        sessionItem = getSession(String.valueOf(sessionItem.getSessionId()));
-
-        if (sessionItem.getExpiryDate() < clock.instant().getEpochSecond()) {
-            throw new SessionExpiredException("session expired");
-        }
+        sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
 
         if (sessionItem.getAccessTokenExpiryDate() < clock.instant().getEpochSecond()) {
             throw new AccessTokenExpiredException("access code expired");
@@ -142,11 +138,7 @@ public class SessionService {
         }
 
         // Re-fetch our session directly to avoid problems with projections
-        sessionItem = getSession(String.valueOf(sessionItem.getSessionId()));
-
-        if (sessionItem.getExpiryDate() < clock.instant().getEpochSecond()) {
-            throw new SessionExpiredException("session expired");
-        }
+        sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
 
         if (sessionItem.getAuthorizationCodeExpiryDate() < clock.instant().getEpochSecond()) {
             throw new AuthorizationCodeExpiredException("authorization code expired");
