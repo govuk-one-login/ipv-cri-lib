@@ -71,6 +71,8 @@ class AuditServiceTest {
         verify(mockSqs).sendMessage(capturedValue);
 
         assertEquals(messageAuditEvent, capturedValue.messageBody());
+        assertThat(capturedValue.messageBody(), containsString("component_id"));
+        assertThat(capturedValue.messageBody(), containsString("https://cri-issuer"));
         assertEquals(SQS_QUEUE_URL, capturedValue.queueUrl());
     }
 
