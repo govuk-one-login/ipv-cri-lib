@@ -53,7 +53,10 @@ class AuditServiceTest {
                 ArgumentCaptor.forClass(SendMessageRequest.class);
 
         AuditEvent auditEvent =
-                new AuditEvent(fixedInstant.getEpochSecond(), AuditEventType.START.toString());
+                new AuditEvent(
+                        fixedInstant.getEpochSecond(),
+                        AuditEventType.START.toString(),
+                        "https://cri-issuer");
         String messageAuditEvent = new ObjectMapper().writeValueAsString(auditEvent);
 
         when(mockObjectMapper.writeValueAsString(any(AuditEvent.class)))
@@ -68,6 +71,8 @@ class AuditServiceTest {
         verify(mockSqs).sendMessage(capturedValue);
 
         assertEquals(messageAuditEvent, capturedValue.messageBody());
+        assertThat(capturedValue.messageBody(), containsString("component_id"));
+        assertThat(capturedValue.messageBody(), containsString("https://cri-issuer"));
         assertEquals(SQS_QUEUE_URL, capturedValue.queueUrl());
     }
 
@@ -86,7 +91,9 @@ class AuditServiceTest {
 
         AuditEvent auditEvent =
                 new AuditEvent(
-                        fixedInstant.getEpochSecond(), SQS_PREFIX + "_" + AuditEventType.START);
+                        fixedInstant.getEpochSecond(),
+                        SQS_PREFIX + "_" + AuditEventType.START,
+                        "https://cri-issuer");
         String messageAuditEvent = new ObjectMapper().writeValueAsString(auditEvent);
         when(mockObjectMapper.writeValueAsString(any(AuditEvent.class)))
                 .thenReturn(messageAuditEvent);

@@ -17,6 +17,7 @@ public class AuditService {
     private final String queueUrl;
     private final ObjectMapper objectMapper;
     private final String eventPrefix;
+    private final String issuer;
 
     private final Clock clock;
 
@@ -38,6 +39,7 @@ public class AuditService {
         this.queueUrl = configurationService.getSqsAuditEventQueueUrl();
         this.objectMapper = objectMapper;
         this.eventPrefix = configurationService.getSqsAuditEventPrefix();
+        this.issuer = configurationService.getVerifiableCredentialIssuer();
         if (StringUtils.isBlank(eventPrefix)) {
             throw new IllegalArgumentException("SQS event prefix is not set");
         }
@@ -63,7 +65,8 @@ public class AuditService {
 
     private String generateMessageBody(String eventType) throws JsonProcessingException {
         AuditEvent auditEvent =
-                new AuditEvent(clock.instant().getEpochSecond(), eventPrefix + "_" + eventType);
+                new AuditEvent(
+                        clock.instant().getEpochSecond(), eventPrefix + "_" + eventType, issuer);
         return objectMapper.writeValueAsString(auditEvent);
     }
 }
