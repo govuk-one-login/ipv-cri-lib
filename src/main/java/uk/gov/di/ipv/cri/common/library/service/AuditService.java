@@ -11,6 +11,7 @@ import uk.gov.di.ipv.cri.common.library.domain.AuditEventType;
 import uk.gov.di.ipv.cri.common.library.exception.SqsException;
 
 import java.time.Clock;
+import java.util.Map;
 
 public class AuditService {
     private final SqsClient sqs;
@@ -47,15 +48,21 @@ public class AuditService {
     }
 
     public void sendAuditEvent(AuditEventType eventType) throws SqsException {
-        sendAuditEvent(eventType.toString());
+        sendAuditEvent(eventType.toString(), null);
     }
 
-    public void sendAuditEvent(String eventType) throws SqsException {
+    public void sendAuditEvent(AuditEventType eventType, Map<String, String> restricted)
+            throws SqsException {
+        sendAuditEvent(eventType.toString(), restricted);
+    }
+
+    public void sendAuditEvent(String eventType, Map<String, String> restricted)
+            throws SqsException {
         try {
             SendMessageRequest sendMessageRequest =
                     SendMessageRequest.builder()
                             .queueUrl(queueUrl)
-                            .messageBody(generateMessageBody(eventType))
+                            .messageBody(generateMessageBody(eventType, restricted))
                             .build();
             sqs.sendMessage(sendMessageRequest);
         } catch (JsonProcessingException e) {
@@ -63,10 +70,14 @@ public class AuditService {
         }
     }
 
-    private String generateMessageBody(String eventType) throws JsonProcessingException {
+    private String generateMessageBody(String eventType, Map<String, String> restricted)
+            throws JsonProcessingException {
         AuditEvent auditEvent =
                 new AuditEvent(
                         clock.instant().getEpochSecond(), eventPrefix + "_" + eventType, issuer);
+        if (restricted != null) {
+            restricted.entrySet().forEach(e -> auditEvent.addRestricted(e.getKey(), e.getValue()));
+        }
         return objectMapper.writeValueAsString(auditEvent);
     }
 }
