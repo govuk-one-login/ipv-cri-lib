@@ -16,6 +16,7 @@ import uk.gov.di.ipv.cri.common.library.exception.SqsException;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -122,5 +123,28 @@ class AuditServiceTest {
                 () ->
                         new AuditService(
                                 mockSqs, mockConfigurationService, mockObjectMapper, mockClock));
+    }
+
+    @Test
+    void shouldAddRestrictedMap() throws SqsException, JsonProcessingException {
+        when(mockConfigurationService.getSqsAuditEventQueueUrl()).thenReturn(SQS_QUEUE_URL);
+        when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn(SQS_PREFIX);
+        when(mockClock.instant()).thenReturn(Instant.now());
+
+        auditService =
+                new AuditService(mockSqs, mockConfigurationService, new ObjectMapper(), mockClock);
+
+        ArgumentCaptor<SendMessageRequest> sqsSendMessageRequestCaptor =
+                ArgumentCaptor.forClass(SendMessageRequest.class);
+        SendMessageResponse mockSendMessageResponse = mock(SendMessageResponse.class);
+        when(mockSqs.sendMessage(sqsSendMessageRequestCaptor.capture()))
+                .thenReturn(mockSendMessageResponse);
+
+        auditService.sendAuditEvent(AuditEventType.START, Map.of("foo", "bar"));
+        SendMessageRequest capturedValue = sqsSendMessageRequestCaptor.getValue();
+        verify(mockSqs).sendMessage(capturedValue);
+
+        assertThat(capturedValue.messageBody(), containsString("foo"));
+        assertEquals(SQS_QUEUE_URL, capturedValue.queueUrl());
     }
 }
