@@ -15,7 +15,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
-import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,14 +31,6 @@ public class DataStore<T> {
         this.tableName = tableName;
         this.typeParameterClass = typeParameterClass;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
-    }
-
-    public static DynamoDbEnhancedClient getClient(URI endpointOverride) {
-        DynamoDbClientBuilder clientBuilder =
-                getDynamoDbClientBuilder(
-                        DynamoDbClient.builder().endpointOverride(endpointOverride));
-
-        return DynamoDbEnhancedClient.builder().dynamoDbClient(clientBuilder.build()).build();
     }
 
     public static DynamoDbEnhancedClient getClient() {
