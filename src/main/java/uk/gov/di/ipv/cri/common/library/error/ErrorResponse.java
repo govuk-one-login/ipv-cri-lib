@@ -48,4 +48,8 @@ public enum ErrorResponse {
     public String getMessage() {
         return message;
     }
+
+    public String getErrorSummary() {
+        return getCode() + ": " + getMessage();
+    }
 }
