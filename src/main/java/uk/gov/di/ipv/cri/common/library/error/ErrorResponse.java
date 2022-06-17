@@ -49,8 +49,7 @@ public enum ErrorResponse {
         return message;
     }
 
-    @Override
-    public String toString() {
+    public String getErrorSummary() {
         return getCode() + ": " + getMessage();
     }
 }
