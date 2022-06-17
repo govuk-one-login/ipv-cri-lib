@@ -13,11 +13,14 @@ public class SessionItem {
     public static final String ACCESS_TOKEN_INDEX = "access-token-index";
     private UUID sessionId;
     private long expiryDate;
+    private long createdDate;
     private String clientId;
     private String state;
     private URI redirectUri;
     private String authorizationCode;
+    private long authorizationCodeExpiryDate;
     private String accessToken;
+    private long accessTokenExpiryDate;
     private String subject;
 
     public SessionItem() {
@@ -91,29 +94,45 @@ public class SessionItem {
         return subject;
     }
 
+    public long getAuthorizationCodeExpiryDate() {
+        return authorizationCodeExpiryDate;
+    }
+
+    public void setAuthorizationCodeExpiryDate(long authorizationCodeExpiryDate) {
+        this.authorizationCodeExpiryDate = authorizationCodeExpiryDate;
+    }
+
+    public long getAccessTokenExpiryDate() {
+        return accessTokenExpiryDate;
+    }
+
+    public void setAccessTokenExpiryDate(long accessTokenExpiryDate) {
+        this.accessTokenExpiryDate = accessTokenExpiryDate;
+    }
+
+    public long getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(long createdDate) {
+        this.createdDate = createdDate;
+    }
+
     @Override
     public String toString() {
-        return new StringBuilder()
-                .append("AddressSessionItem{")
-                .append("sessionId=")
-                .append(sessionId)
-                .append(", expiryDate=")
-                .append(expiryDate)
-                .append(", clientId='")
-                .append(clientId)
-                .append('\'')
-                .append(", state='")
-                .append(state)
-                .append('\'')
-                .append(", redirectUri=")
-                .append(redirectUri)
-                .append(", accessToken='")
-                .append(accessToken)
-                .append('\'')
-                .append(", authorizationCode='")
-                .append(authorizationCode)
-                .append('\'')
-                .append('}')
-                .toString();
+        return "SessionItem{"
+                + "sessionId="
+                + sessionId
+                + ", createdDate="
+                + createdDate
+                + ", clientId='"
+                + clientId
+                + '\''
+                + ", state='"
+                + state
+                + '\''
+                + ", redirectUri="
+                + redirectUri
+                + '}';
     }
 }

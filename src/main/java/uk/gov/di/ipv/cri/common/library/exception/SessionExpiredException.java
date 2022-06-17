@@ -1,6 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.exception;
 
-public class SessionExpiredException extends Exception {
+public class SessionExpiredException extends RuntimeException {
 
     public SessionExpiredException(String message) {
         super(message);

@@ -23,6 +23,7 @@ import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -31,7 +32,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -245,8 +248,11 @@ class AccessTokenServiceTest {
 
     @Test
     void shouldCallWriteTokenAndUpdateDataStore() {
+        var fixedInstant = Instant.parse("2020-01-01T00:00:00.00Z");
+
         AccessTokenResponse accessTokenResponse = mock(AccessTokenResponse.class);
         SessionItem sessionItem = new SessionItem();
+        sessionItem.setAuthorizationCode("12345");
 
         Tokens mockTokens = mock(Tokens.class);
         when(accessTokenResponse.getTokens()).thenReturn(mockTokens);
@@ -262,6 +268,13 @@ class AccessTokenServiceTest {
                                 .getTokens()
                                 .getBearerAccessToken()
                                 .toAuthorizationHeader()));
+
+        assertNull(sessionItem.getAuthorizationCode());
+
+        assertThat(
+                sessionItem.getAccessTokenExpiryDate(),
+                equalTo(mockConfigurationService.getBearerAccessTokenExpirationEpoch()));
+
         assertThat(accessTokenResponse, notNullValue());
     }
 

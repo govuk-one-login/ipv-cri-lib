@@ -63,11 +63,18 @@ public class AccessTokenService {
         return new AccessTokenResponse(new Tokens(accessToken, null)).toSuccessResponse();
     }
 
-    public SessionItem updateSessionAccessToken(
+    public void updateSessionAccessToken(
             SessionItem sessionItem, AccessTokenResponse tokenResponse) {
+        // Set the access token
         sessionItem.setAccessToken(
                 tokenResponse.getTokens().getBearerAccessToken().toAuthorizationHeader());
-        return sessionItem;
+
+        // Set the access token expiry
+        sessionItem.setAccessTokenExpiryDate(
+                configurationService.getBearerAccessTokenExpirationEpoch());
+
+        // Expire the authorization code immediately, as it can only be used once
+        sessionItem.setAuthorizationCode(null);
     }
 
     public TokenRequest createTokenRequest(String requestBody)
