@@ -75,17 +75,4 @@ class ConfigurationServiceTest {
                 .thenReturn(String.valueOf(sessionTtl));
         assertEquals(sessionTtl, configurationService.getSessionTtl());
     }
-
-    @Test
-    void shouldGetOrdnanceSurveyAPIKey() {
-        when(mockSecretsProvider.get(
-                        String.format(
-                                PARAM_NAME_FORMAT,
-                                TEST_STACK_NAME,
-                                ConfigurationService.SSMParameterName.ORDNANCE_SURVEY_API_KEY
-                                        .parameterName)))
-                .thenReturn("1234567890");
-
-        assertEquals("1234567890", configurationService.getOsApiKey());
-    }
 }

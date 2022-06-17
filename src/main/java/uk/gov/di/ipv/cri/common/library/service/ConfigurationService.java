@@ -5,7 +5,6 @@ import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 
-import java.net.URI;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -21,6 +20,20 @@ public class ConfigurationService {
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
     private final Clock clock;
+
+    public enum SSMParameterName {
+        SESSION_TTL("SessionTtl"),
+        MAXIMUM_JWT_TTL("MaxJwtTtl"),
+        VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
+        VERIFIABLE_CREDENTIAL_ISSUER("verifiable-credential/issuer"),
+        AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId");
+
+        public final String parameterName;
+
+        SSMParameterName(String parameterName) {
+            this.parameterName = parameterName;
+        }
+    }
 
     @ExcludeFromGeneratedCoverageReport
     public ConfigurationService() {
@@ -43,10 +56,6 @@ public class ConfigurationService {
         this.clock = clock;
     }
 
-    public String getAddressTableName() {
-        return ssmProvider.get(getParameterName(SSMParameterName.ADDRESS_TABLE_NAME));
-    }
-
     public String getParameterValue(String parameterName) {
         return ssmProvider.get(
                 String.format(PARAMETER_NAME_FORMAT, parameterPrefix, parameterName));
@@ -57,8 +66,17 @@ public class ConfigurationService {
                 String.format(PARAMETER_NAME_FORMAT, parameterPrefix, secretName));
     }
 
+    public Map<String, String> getParametersForPath(String path) {
+        String format = String.format(PARAMETER_NAME_FORMAT, parameterPrefix, path);
+        return ssmProvider.recursive().getMultiple(format.replace("//", "/"));
+    }
+
     public long getSessionTtl() {
         return Long.parseLong(ssmProvider.get(getParameterName(SSMParameterName.SESSION_TTL)));
+    }
+
+    public long getSessionExpirationEpoch() {
+        return clock.instant().plus(getSessionTtl(), ChronoUnit.SECONDS).getEpochSecond();
     }
 
     public long getAuthorizationCodeTtl() {
@@ -67,33 +85,8 @@ public class ConfigurationService {
                 .orElse(AUTHORIZATION_CODE_TTL_IN_SECS);
     }
 
-    public long getSessionExpirationEpoch() {
-        return clock.instant().plus(getSessionTtl(), ChronoUnit.SECONDS).getEpochSecond();
-    }
-
     public long getAuthorizationCodeExpirationEpoch() {
         return clock.instant().plus(getAuthorizationCodeTtl(), ChronoUnit.SECONDS).getEpochSecond();
-    }
-
-    private String getParameterName(SSMParameterName parameterName) {
-        return String.format("/%s/%s", parameterPrefix, parameterName.parameterName);
-    }
-
-    public Map<String, String> getParametersForPath(String path) {
-        String format = String.format("/%s/%s", parameterPrefix, path);
-        return ssmProvider.recursive().getMultiple(format.replace("//", "/"));
-    }
-
-    public URI getDynamoDbEndpointOverride() {
-        String dynamoDbEndpointOverride = System.getenv("DYNAMODB_ENDPOINT_OVERRIDE");
-        if (dynamoDbEndpointOverride != null && !dynamoDbEndpointOverride.isEmpty()) {
-            return URI.create(System.getenv("DYNAMODB_ENDPOINT_OVERRIDE"));
-        }
-        return null;
-    }
-
-    public String getAddressAuthCodesTableName() {
-        return System.getenv("ADDRESS_AUTH_CODES_TABLE_NAME");
     }
 
     public long getBearerAccessTokenTtl() {
@@ -104,40 +97,6 @@ public class ConfigurationService {
 
     public long getBearerAccessTokenExpirationEpoch() {
         return clock.instant().plus(getBearerAccessTokenTtl(), ChronoUnit.SECONDS).getEpochSecond();
-    }
-
-    public String getAccessTokensTableName() {
-        return System.getenv("ADDRESS_ACCESS_TOKENS_TABLE_NAME");
-    }
-
-    public enum SSMParameterName {
-        SESSION_TTL("SessionTtl"),
-        ORDNANCE_SURVEY_API_KEY("OrdnanceSurveyAPIKey"),
-        ORDNANCE_SURVEY_API_URL("OrdnanceSurveyAPIURL"),
-        ADDRESS_CRI_AUDIENCE("AddressCriAudience"),
-        MAXIMUM_JWT_TTL("MaxJwtTtl"),
-        VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
-        VERIFIABLE_CREDENTIAL_ISSUER("verifiable-credential/issuer"),
-        AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId"),
-        ADDRESS_TABLE_NAME("AddressTableName");
-
-        public final String parameterName;
-
-        SSMParameterName(String parameterName) {
-            this.parameterName = parameterName;
-        }
-    }
-
-    public String getOsApiKey() {
-        return secretsProvider.get(getParameterName(SSMParameterName.ORDNANCE_SURVEY_API_KEY));
-    }
-
-    public String getOsPostcodeAPIUrl() {
-        return ssmProvider.get(getParameterName(SSMParameterName.ORDNANCE_SURVEY_API_URL));
-    }
-
-    public String getAddressCriAudienceIdentifier() {
-        return ssmProvider.get(getParameterName(SSMParameterName.ADDRESS_CRI_AUDIENCE));
     }
 
     public long getMaxJwtTtl() {
@@ -164,5 +123,9 @@ public class ConfigurationService {
     public String getKmsEncryptionKeyId() {
         return ssmProvider.get(
                 getParameterName(SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID));
+    }
+
+    private String getParameterName(SSMParameterName parameterName) {
+        return String.format(PARAMETER_NAME_FORMAT, parameterPrefix, parameterName.parameterName);
     }
 }
