@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.awssdk.annotations.SdkTestInternalApi;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.AddressType;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
@@ -305,7 +304,8 @@ class PersonIdentityMapperTest {
         address.setPostalCode("postcode");
         address.setValidFrom(TODAY);
 
-        PersonIdentityDetailed testPersonIdentity = new PersonIdentityDetailed(List.of(name), List.of(birthDate), List.of(address));
+        PersonIdentityDetailed testPersonIdentity =
+                new PersonIdentityDetailed(List.of(name), List.of(birthDate), List.of(address));
 
         PersonIdentity mappedPersonIdentity =
                 this.personIdentityMapper.mapToPersonIdentity(testPersonIdentity);

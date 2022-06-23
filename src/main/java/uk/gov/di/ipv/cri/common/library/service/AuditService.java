@@ -2,6 +2,7 @@ package uk.gov.di.ipv.cri.common.library.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.utils.StringUtils;
@@ -27,7 +28,7 @@ public class AuditService {
         this(
                 SqsClient.builder().build(),
                 new ConfigurationService(),
-                new ObjectMapper(),
+                new ObjectMapper().registerModule(new JavaTimeModule()),
                 Clock.systemUTC());
     }
 
