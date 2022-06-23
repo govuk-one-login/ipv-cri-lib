@@ -118,7 +118,7 @@ class PersonIdentityMapper {
                             mappedAddress.setPostalCode(address.getPostalCode());
                             mappedAddress.setStreetName(address.getStreetName());
                             mappedAddress.setSubBuildingName(address.getSubBuildingName());
-                            mappedAddress.setUprn(address.getUprn().orElse(null));
+                            mappedAddress.setUprn(address.getUprn());
                             mappedAddress.setValidFrom(address.getValidFrom());
                             mappedAddress.setValidUntil(address.getValidUntil());
                             return mappedAddress;
@@ -270,7 +270,7 @@ class PersonIdentityMapper {
                 .map(
                         a -> {
                             CanonicalAddress canonicalAddress = new CanonicalAddress();
-                            canonicalAddress.setUprn(a.getUprn().orElse(null));
+                            canonicalAddress.setUprn(a.getUprn());
                             canonicalAddress.setOrganisationName(a.getOrganisationName());
                             canonicalAddress.setDepartmentName(a.getDepartmentName());
                             canonicalAddress.setSubBuildingName(a.getSubBuildingName());

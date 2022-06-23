@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.Objects;
-import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Address {
@@ -32,8 +31,8 @@ public class Address {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate validUntil;
 
-    public Optional<Long> getUprn() {
-        return Optional.ofNullable(this.uprn);
+    public Long getUprn() {
+        return this.uprn;
     }
 
     public void setUprn(Long uprn) {

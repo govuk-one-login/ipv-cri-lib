@@ -7,7 +7,6 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Objects;
-import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @DynamoDbBean
@@ -45,8 +44,8 @@ public class CanonicalAddress {
         // Default constructor
     }
 
-    public Optional<Long> getUprn() {
-        return Optional.ofNullable(this.uprn);
+    public Long getUprn() {
+        return this.uprn;
     }
 
     public void setUprn(Long uprn) {
