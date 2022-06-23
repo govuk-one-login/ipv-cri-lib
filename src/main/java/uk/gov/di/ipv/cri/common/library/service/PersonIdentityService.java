@@ -55,6 +55,11 @@ public class PersonIdentityService {
         return personIdentityMapper.mapToPersonIdentityDetailed(personIdentityItem);
     }
 
+    public PersonIdentity convertToPersonIdentitySummary(
+            PersonIdentityDetailed personIdentityDetailed) {
+        return personIdentityMapper.mapToPersonIdentity(personIdentityDetailed);
+    }
+
     private PersonIdentityItem getById(UUID sessionId) {
         return this.personIdentityDataStore.getItem(String.valueOf(sessionId));
     }
