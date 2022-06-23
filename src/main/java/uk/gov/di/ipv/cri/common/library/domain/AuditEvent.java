@@ -1,9 +1,12 @@
 package uk.gov.di.ipv.cri.common.library.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 
-public class AuditEvent {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class AuditEvent<T> {
 
     @JsonProperty("timestamp")
     private final long timestamp;
@@ -13,6 +16,9 @@ public class AuditEvent {
 
     @JsonProperty("component_id")
     private final String issuer;
+
+    private PersonIdentityDetailed restricted;
+    private T extensions;
 
     @JsonCreator
     public AuditEvent(
@@ -42,5 +48,21 @@ public class AuditEvent {
 
     public String getEvent() {
         return event;
+    }
+
+    public PersonIdentityDetailed getRestricted() {
+        return restricted;
+    }
+
+    public void setRestricted(PersonIdentityDetailed restricted) {
+        this.restricted = restricted;
+    }
+
+    public T getExtensions() {
+        return extensions;
+    }
+
+    public void setExtensions(T extensions) {
+        this.extensions = extensions;
     }
 }

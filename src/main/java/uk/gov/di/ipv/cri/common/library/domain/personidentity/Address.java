@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDate;
@@ -151,6 +152,7 @@ public class Address {
         this.validUntil = validUntil;
     }
 
+    @JsonIgnore
     public AddressType getAddressType() {
         if (Objects.nonNull(this.getValidUntil()) && isPastDate(this.getValidUntil())) {
             return AddressType.PREVIOUS;

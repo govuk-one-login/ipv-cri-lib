@@ -8,9 +8,11 @@ import software.amazon.awssdk.utils.StringUtils;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEvent;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEventType;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.exception.SqsException;
 
 import java.time.Clock;
+import java.util.Objects;
 
 public class AuditService {
     private final SqsClient sqs;
@@ -18,7 +20,6 @@ public class AuditService {
     private final ObjectMapper objectMapper;
     private final String eventPrefix;
     private final String issuer;
-
     private final Clock clock;
 
     @ExcludeFromGeneratedCoverageReport
@@ -47,26 +48,73 @@ public class AuditService {
     }
 
     public void sendAuditEvent(AuditEventType eventType) throws SqsException {
-        sendAuditEvent(eventType.toString());
+        String messageBody = generateMessageBody(eventType.toString(), null, null);
+        sendAuditEventWithMessageBody(messageBody);
     }
 
     public void sendAuditEvent(String eventType) throws SqsException {
+        String messageBody = generateMessageBody(eventType, null, null);
+        sendAuditEventWithMessageBody(messageBody);
+    }
+
+    public void sendAuditEvent(AuditEventType eventType, PersonIdentityDetailed restricted)
+            throws SqsException {
+        String messageBody = generateMessageBody(eventType.toString(), restricted, null);
+        sendAuditEventWithMessageBody(messageBody);
+    }
+
+    public void sendAuditEvent(String eventType, PersonIdentityDetailed restricted)
+            throws SqsException {
+        String messageBody = generateMessageBody(eventType, restricted, null);
+        sendAuditEventWithMessageBody(messageBody);
+    }
+
+    public <T> void sendAuditEvent(AuditEventType eventType, T extensions) throws SqsException {
+        String messageBody = generateMessageBody(eventType.toString(), null, extensions);
+        sendAuditEventWithMessageBody(messageBody);
+    }
+
+    public <T> void sendAuditEvent(String eventType, T extensions) throws SqsException {
+        String messageBody = generateMessageBody(eventType, null, extensions);
+        sendAuditEventWithMessageBody(messageBody);
+    }
+
+    public <T> void sendAuditEvent(
+            AuditEventType eventType, PersonIdentityDetailed restricted, T extensions)
+            throws SqsException {
+        String messageBody = generateMessageBody(eventType.toString(), restricted, extensions);
+        sendAuditEventWithMessageBody(messageBody);
+    }
+
+    public <T> void sendAuditEvent(
+            String eventType, PersonIdentityDetailed restricted, T extensions) throws SqsException {
+        String messageBody = generateMessageBody(eventType, restricted, extensions);
+        sendAuditEventWithMessageBody(messageBody);
+    }
+
+    private <T> String generateMessageBody(
+            String eventType, PersonIdentityDetailed restricted, T extensions) throws SqsException {
         try {
-            SendMessageRequest sendMessageRequest =
-                    SendMessageRequest.builder()
-                            .queueUrl(queueUrl)
-                            .messageBody(generateMessageBody(eventType))
-                            .build();
-            sqs.sendMessage(sendMessageRequest);
+            AuditEvent<T> auditEvent =
+                    new AuditEvent<>(
+                            clock.instant().getEpochSecond(),
+                            eventPrefix + "_" + eventType,
+                            issuer);
+            if (Objects.nonNull(restricted)) {
+                auditEvent.setRestricted(restricted);
+            }
+            if (Objects.nonNull(extensions)) {
+                auditEvent.setExtensions(extensions);
+            }
+            return objectMapper.writeValueAsString(auditEvent);
         } catch (JsonProcessingException e) {
             throw new SqsException(e);
         }
     }
 
-    private String generateMessageBody(String eventType) throws JsonProcessingException {
-        AuditEvent auditEvent =
-                new AuditEvent(
-                        clock.instant().getEpochSecond(), eventPrefix + "_" + eventType, issuer);
-        return objectMapper.writeValueAsString(auditEvent);
+    private void sendAuditEventWithMessageBody(String messageBody) {
+        SendMessageRequest sendMessageRequest =
+                SendMessageRequest.builder().queueUrl(queueUrl).messageBody(messageBody).build();
+        sqs.sendMessage(sendMessageRequest);
     }
 }

@@ -16,6 +16,7 @@ import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonId
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class PersonIdentityMapper {
@@ -61,6 +62,21 @@ class PersonIdentityMapper {
             personIdentity.setAddresses(mapCanonicalAddresses(personIdentityItem.getAddresses()));
         }
 
+        return personIdentity;
+    }
+
+    PersonIdentity mapToPersonIdentity(PersonIdentityDetailed personIdentityDetailed) {
+        PersonIdentity personIdentity = new PersonIdentity();
+        if (notNullAndNotEmpty(personIdentityDetailed.getNames())) {
+            Name currentName = getCurrentName(personIdentityDetailed.getNames());
+            mapName(currentName, personIdentity);
+        }
+        if (notNullAndNotEmpty(personIdentityDetailed.getBirthDates())) {
+            personIdentity.setDateOfBirth(personIdentityDetailed.getBirthDates().get(0).getValue());
+        }
+        if (notNullAndNotEmpty(personIdentityDetailed.getAddresses())) {
+            personIdentity.setAddresses(personIdentityDetailed.getAddresses());
+        }
         return personIdentity;
     }
 
@@ -148,11 +164,34 @@ class PersonIdentityMapper {
         return Objects.nonNull(items) && !items.isEmpty();
     }
 
-    private PersonIdentityName getCurrentName(List<PersonIdentityName> names) {
+    private <T> T getCurrentName(List<T> names) {
         if (names.size() == 1) {
             return names.get(0);
         }
         throw new IllegalArgumentException("Unable to map person identity with multiple names");
+    }
+
+    private void mapName(Name name, PersonIdentity personIdentity) {
+        List<NamePart> givenNameParts =
+                name.getNameParts().stream()
+                        .filter(
+                                namePart ->
+                                        namePart.getType()
+                                                .equalsIgnoreCase(NamePartType.GIVEN_NAME.value))
+                        .collect(Collectors.toList());
+        List<NamePart> familyNameParts =
+                name.getNameParts().stream()
+                        .filter(
+                                namePart ->
+                                        namePart.getType()
+                                                .equalsIgnoreCase(NamePartType.FAMILY_NAME.value))
+                        .collect(Collectors.toList());
+
+        personIdentity.setFirstName(givenNameParts.get(0).getValue());
+        if (givenNameParts.size() > 1) {
+            personIdentity.setMiddleNames(mapMiddleNames(givenNameParts, NamePart::getValue));
+        }
+        personIdentity.setSurname(familyNameParts.get(0).getValue());
     }
 
     private void mapName(PersonIdentityName name, PersonIdentity personIdentity) {
@@ -172,13 +211,17 @@ class PersonIdentityMapper {
         personIdentity.setFirstName(givenNameParts.get(0).getValue());
         if (givenNameParts.size() > 1) {
             personIdentity.setMiddleNames(
-                    String.join(
-                            " ",
-                            givenNameParts.subList(1, givenNameParts.size()).stream()
-                                    .map(PersonIdentityNamePart::getValue)
-                                    .toArray(String[]::new)));
+                    mapMiddleNames(givenNameParts, PersonIdentityNamePart::getValue));
         }
         personIdentity.setSurname(familyNameParts.get(0).getValue());
+    }
+
+    private <T> String mapMiddleNames(List<T> nameParts, Function<T, String> mappingFunction) {
+        return String.join(
+                " ",
+                nameParts.subList(1, nameParts.size()).stream()
+                        .map(mappingFunction)
+                        .toArray(String[]::new));
     }
 
     private List<PersonIdentityNamePart> getNamePartsByType(
