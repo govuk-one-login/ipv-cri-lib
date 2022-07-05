@@ -1,9 +1,11 @@
 package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PersonIdentityDetailed {
     @JsonProperty("name")
     private final List<Name> names;

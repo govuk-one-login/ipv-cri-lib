@@ -18,6 +18,7 @@ public class AuditEvent<T> {
     private final String issuer;
 
     private PersonIdentityDetailed restricted;
+    private AuditEventUser user;
     private T extensions;
 
     @JsonCreator
@@ -64,5 +65,13 @@ public class AuditEvent<T> {
 
     public void setExtensions(T extensions) {
         this.extensions = extensions;
+    }
+
+    public AuditEventUser getUser() {
+        return user;
+    }
+
+    public void setUser(AuditEventUser user) {
+        this.user = user;
     }
 }
