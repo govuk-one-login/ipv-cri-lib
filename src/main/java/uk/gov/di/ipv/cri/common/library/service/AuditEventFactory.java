@@ -60,8 +60,10 @@ public class AuditEventFactory {
         }
 
         if (requestHeaders.containsKey(CLIENT_IP_HEADER_KEY)) {
-            (Objects.nonNull(userInfo) ? userInfo : (userInfo = new AuditEventUser()))
-                    .setIpAddress(requestHeaders.get(CLIENT_IP_HEADER_KEY));
+            if (Objects.isNull(userInfo)) {
+                userInfo = new AuditEventUser();
+            }
+            userInfo.setIpAddress(requestHeaders.get(CLIENT_IP_HEADER_KEY));
         }
 
         return userInfo;
