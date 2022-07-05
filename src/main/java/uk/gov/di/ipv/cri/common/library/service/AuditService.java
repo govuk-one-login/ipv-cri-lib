@@ -8,114 +8,96 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.utils.StringUtils;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEvent;
+import uk.gov.di.ipv.cri.common.library.domain.AuditEventContext;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEventType;
-import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.exception.SqsException;
 
 import java.time.Clock;
-import java.util.Objects;
 
 public class AuditService {
     private final SqsClient sqs;
     private final String queueUrl;
     private final ObjectMapper objectMapper;
-    private final String eventPrefix;
-    private final String issuer;
-    private final Clock clock;
+    private final AuditEventFactory auditEventFactory;
 
     @ExcludeFromGeneratedCoverageReport
     public AuditService() {
-        this(
-                SqsClient.builder().build(),
-                new ConfigurationService(),
-                new ObjectMapper().registerModule(new JavaTimeModule()),
-                Clock.systemUTC());
+        ConfigurationService configurationService = new ConfigurationService();
+        this.auditEventFactory = new AuditEventFactory(configurationService, Clock.systemUTC());
+        this.sqs = SqsClient.builder().build();
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        this.queueUrl = configurationService.getSqsAuditEventQueueUrl();
+        requireNonBlankQueueUrl();
     }
 
     public AuditService(
             SqsClient sqs,
             ConfigurationService configurationService,
             ObjectMapper objectMapper,
-            Clock clock) {
+            AuditEventFactory auditEventFactory) {
         this.sqs = sqs;
-        this.queueUrl = configurationService.getSqsAuditEventQueueUrl();
         this.objectMapper = objectMapper;
-        this.eventPrefix = configurationService.getSqsAuditEventPrefix();
-        this.issuer = configurationService.getVerifiableCredentialIssuer();
-        if (StringUtils.isBlank(eventPrefix)) {
-            throw new IllegalArgumentException("SQS event prefix is not set");
+        this.auditEventFactory = auditEventFactory;
+        this.queueUrl = configurationService.getSqsAuditEventQueueUrl();
+        requireNonBlankQueueUrl();
+    }
+
+    private void requireNonBlankQueueUrl() {
+        if (StringUtils.isBlank(this.queueUrl)) {
+            throw new IllegalStateException(
+                    "Null or empty queue url provided by configuration service");
         }
-        this.clock = clock;
     }
 
     public void sendAuditEvent(AuditEventType eventType) throws SqsException {
-        String messageBody = generateMessageBody(eventType.toString(), null, null);
-        sendAuditEventWithMessageBody(messageBody);
+        sendAuditEvent(eventType.toString(), null, null);
     }
 
     public void sendAuditEvent(String eventType) throws SqsException {
-        String messageBody = generateMessageBody(eventType, null, null);
-        sendAuditEventWithMessageBody(messageBody);
+        sendAuditEvent(eventType, null, null);
     }
 
-    public void sendAuditEvent(AuditEventType eventType, PersonIdentityDetailed restricted)
+    public void sendAuditEvent(AuditEventType eventType, AuditEventContext context)
             throws SqsException {
-        String messageBody = generateMessageBody(eventType.toString(), restricted, null);
-        sendAuditEventWithMessageBody(messageBody);
+        sendAuditEvent(eventType.toString(), context, null);
     }
 
-    public void sendAuditEvent(String eventType, PersonIdentityDetailed restricted)
+    public void sendAuditEvent(String eventType, AuditEventContext context) throws SqsException {
+        AuditEvent<Object> auditEvent = auditEventFactory.create(eventType, context, null);
+        sendAuditEvent(auditEvent);
+    }
+
+    public <T> void sendAuditEvent(
+            AuditEventType eventType, AuditEventContext context, T extensions) throws SqsException {
+        sendAuditEvent(eventType.toString(), context, extensions);
+    }
+
+    public <T> void sendAuditEvent(String eventType, AuditEventContext context, T extensions)
             throws SqsException {
-        String messageBody = generateMessageBody(eventType, restricted, null);
-        sendAuditEventWithMessageBody(messageBody);
+        AuditEvent<T> audiEvent = auditEventFactory.create(eventType, context, extensions);
+        sendAuditEvent(audiEvent);
     }
 
     public <T> void sendAuditEvent(AuditEventType eventType, T extensions) throws SqsException {
-        String messageBody = generateMessageBody(eventType.toString(), null, extensions);
-        sendAuditEventWithMessageBody(messageBody);
+        sendAuditEvent(eventType.toString(), extensions);
     }
 
     public <T> void sendAuditEvent(String eventType, T extensions) throws SqsException {
-        String messageBody = generateMessageBody(eventType, null, extensions);
-        sendAuditEventWithMessageBody(messageBody);
+        AuditEvent<T> audiEvent = auditEventFactory.create(eventType, null, extensions);
+        sendAuditEvent(audiEvent);
     }
 
-    public <T> void sendAuditEvent(
-            AuditEventType eventType, PersonIdentityDetailed restricted, T extensions)
-            throws SqsException {
-        String messageBody = generateMessageBody(eventType.toString(), restricted, extensions);
-        sendAuditEventWithMessageBody(messageBody);
-    }
-
-    public <T> void sendAuditEvent(
-            String eventType, PersonIdentityDetailed restricted, T extensions) throws SqsException {
-        String messageBody = generateMessageBody(eventType, restricted, extensions);
-        sendAuditEventWithMessageBody(messageBody);
-    }
-
-    private <T> String generateMessageBody(
-            String eventType, PersonIdentityDetailed restricted, T extensions) throws SqsException {
+    private <T> void sendAuditEvent(AuditEvent<T> auditEvent) throws SqsException {
         try {
-            AuditEvent<T> auditEvent =
-                    new AuditEvent<>(
-                            clock.instant().getEpochSecond(),
-                            eventPrefix + "_" + eventType,
-                            issuer);
-            if (Objects.nonNull(restricted)) {
-                auditEvent.setRestricted(restricted);
-            }
-            if (Objects.nonNull(extensions)) {
-                auditEvent.setExtensions(extensions);
-            }
-            return objectMapper.writeValueAsString(auditEvent);
+            String serialisedAuditEvent = objectMapper.writeValueAsString(auditEvent);
+            SendMessageRequest sendMessageRequest =
+                    SendMessageRequest.builder()
+                            .queueUrl(queueUrl)
+                            .messageBody(serialisedAuditEvent)
+                            .build();
+            sqs.sendMessage(sendMessageRequest);
         } catch (JsonProcessingException e) {
             throw new SqsException(e);
         }
-    }
-
-    private void sendAuditEventWithMessageBody(String messageBody) {
-        SendMessageRequest sendMessageRequest =
-                SendMessageRequest.builder().queueUrl(queueUrl).messageBody(messageBody).build();
-        sqs.sendMessage(sendMessageRequest);
     }
 }

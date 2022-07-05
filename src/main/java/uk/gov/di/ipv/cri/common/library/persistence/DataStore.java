@@ -20,17 +20,14 @@ import java.util.stream.Collectors;
 
 public class DataStore<T> {
 
-    private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
-    private final String tableName;
-    private final Class<T> typeParameterClass;
+    private final DynamoDbTable<T> table;
 
     public DataStore(
             String tableName,
             Class<T> typeParameterClass,
             DynamoDbEnhancedClient dynamoDbEnhancedClient) {
-        this.tableName = tableName;
-        this.typeParameterClass = typeParameterClass;
-        this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
+        this.table =
+                dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(typeParameterClass));
     }
 
     public static DynamoDbEnhancedClient getClient() {
@@ -40,12 +37,7 @@ public class DataStore<T> {
     }
 
     public void create(T item) {
-        getTable().putItem(item);
-    }
-
-    public DynamoDbTable<T> getTable() {
-        return dynamoDbEnhancedClient.table(
-                tableName, TableSchema.fromBean(this.typeParameterClass));
+        this.table.putItem(item);
     }
 
     public T getItem(String partitionValue, String sortValue) {
@@ -58,7 +50,7 @@ public class DataStore<T> {
     }
 
     public List<T> getItems(String partitionValue) {
-        return getTable()
+        return this.table
                 .query(
                         QueryConditional.keyEqualTo(
                                 Key.builder().partitionValue(partitionValue).build()))
@@ -68,7 +60,7 @@ public class DataStore<T> {
     }
 
     public List<T> getItemByIndex(String indexName, String value) throws DynamoDbException {
-        DynamoDbIndex<T> index = getTable().index(indexName);
+        DynamoDbIndex<T> index = this.table.index(indexName);
         var attVal = AttributeValue.builder().s(value).build();
         var queryConditional =
                 QueryConditional.keyEqualTo(Key.builder().partitionValue(attVal).build());
@@ -89,13 +81,13 @@ public class DataStore<T> {
                         .putExpressionValue(":b", expressionValue)
                         .build();
 
-        return getTable().scan(r -> r.filterExpression(attributeFilterExpression)).stream()
+        return this.table.scan(r -> r.filterExpression(attributeFilterExpression)).stream()
                 .flatMap(page -> page.items().stream())
                 .collect(Collectors.toList());
     }
 
     public T update(T item) {
-        return getTable().updateItem(item);
+        return this.table.updateItem(item);
     }
 
     public T delete(String partitionValue, String sortValue) {
@@ -107,11 +99,11 @@ public class DataStore<T> {
     }
 
     private T getItemByKey(Key key) {
-        return getTable().getItem(key);
+        return this.table.getItem(key);
     }
 
     private T delete(Key key) {
-        return getTable().deleteItem(key);
+        return this.table.deleteItem(key);
     }
 
     private static DynamoDbClientBuilder getDynamoDbClientBuilder(DynamoDbClientBuilder builder) {
