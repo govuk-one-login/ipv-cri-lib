@@ -27,6 +27,17 @@ public class PersonIdentityService {
                         new DynamoDbEnhancedClientFactory().getClient());
     }
 
+    @ExcludeFromGeneratedCoverageReport
+    public PersonIdentityService(ConfigurationService configurationService) {
+        this(
+                new PersonIdentityMapper(),
+                configurationService,
+                new DataStore<>(
+                        configurationService.getParameterValue(PERSON_IDENTITY_TABLE_PARAM_NAME),
+                        PersonIdentityItem.class,
+                        new DynamoDbEnhancedClientFactory().getClient()));
+    }
+
     public PersonIdentityService(
             PersonIdentityMapper personIdentityMapper,
             ConfigurationService configurationService,

@@ -34,6 +34,18 @@ public class SessionService {
         this.listUtil = new ListUtil();
     }
 
+    @ExcludeFromGeneratedCoverageReport
+    public SessionService(ConfigurationService configurationService) {
+        this(
+                new DataStore<>(
+                        configurationService.getParameterValue(SESSION_TABLE_PARAM_NAME),
+                        SessionItem.class,
+                        new DynamoDbEnhancedClientFactory().getClient()),
+                configurationService,
+                Clock.systemUTC(),
+                new ListUtil());
+    }
+
     public SessionService(
             DataStore<SessionItem> dataStore,
             ConfigurationService configurationService,

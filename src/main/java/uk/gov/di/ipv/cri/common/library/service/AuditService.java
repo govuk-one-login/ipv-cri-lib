@@ -30,6 +30,16 @@ public class AuditService {
         requireNonBlankQueueUrl();
     }
 
+    @ExcludeFromGeneratedCoverageReport
+    public AuditService(ConfigurationService configurationService) {
+        this(
+                SqsClient.builder().build(),
+                configurationService,
+                new ObjectMapper().registerModule(new JavaTimeModule()),
+                new AuditEventFactory(configurationService, Clock.systemUTC()));
+        requireNonBlankQueueUrl();
+    }
+
     public AuditService(
             SqsClient sqs,
             ConfigurationService configurationService,
