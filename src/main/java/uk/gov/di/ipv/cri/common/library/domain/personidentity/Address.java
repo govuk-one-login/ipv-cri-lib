@@ -153,17 +153,13 @@ public class Address {
 
     @JsonIgnore
     public AddressType getAddressType() {
-        if (Objects.nonNull(this.getValidUntil()) && isPastDate(this.getValidUntil())) {
-            return AddressType.PREVIOUS;
-        }
-
         if (Objects.isNull(this.getValidUntil())
                 && (Objects.nonNull(this.getValidFrom())
                         && isPastDateOrToday(this.getValidFrom()))) {
             return AddressType.CURRENT;
         }
 
-        return null;
+        return AddressType.PREVIOUS;
     }
 
     private ChronoLocalDate getDateToday() {
