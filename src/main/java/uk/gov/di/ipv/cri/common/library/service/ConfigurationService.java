@@ -1,5 +1,8 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
+import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
@@ -38,11 +41,20 @@ public class ConfigurationService {
     @ExcludeFromGeneratedCoverageReport
     public ConfigurationService() {
         this.clock = Clock.systemUTC();
-        this.ssmProvider = ParamManager.getSsmProvider();
-        this.secretsProvider = ParamManager.getSecretsProvider();
+        this.ssmProvider =
+                ParamManager.getSsmProvider(
+                        SsmClient.builder().httpClient(UrlConnectionHttpClient.create()).build());
+        this.secretsProvider =
+                ParamManager.getSecretsProvider(
+                        SecretsManagerClient.builder()
+                                .httpClient(UrlConnectionHttpClient.create())
+                                .build());
         this.parameterPrefix =
-                Objects.requireNonNull(
-                        System.getenv("AWS_STACK_NAME"), "env var AWS_STACK_NAME required");
+                Optional.ofNullable(System.getenv("SECRET_PREFIX"))
+                        .orElse(
+                                Objects.requireNonNull(
+                                        System.getenv("AWS_STACK_NAME"),
+                                        "env var SECRET_PREFIX or AWS_STACK_NAME required"));
     }
 
     public ConfigurationService(
