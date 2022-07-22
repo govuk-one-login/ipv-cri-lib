@@ -3,6 +3,7 @@ package uk.gov.di.ipv.cri.common.library.util;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.MapMessage;
 import software.amazon.cloudwatchlogs.emf.logger.MetricsLogger;
 import software.amazon.cloudwatchlogs.emf.model.DimensionSet;
 import software.amazon.lambda.powertools.metrics.MetricsUtils;
@@ -20,6 +21,11 @@ public class EventProbe {
         if (level == Level.ERROR) {
             logErrorCause(throwable);
         }
+        return this;
+    }
+
+    public EventProbe log(Level level, MapMessage mapMessage) {
+        LOGGER.log(level, mapMessage);
         return this;
     }
 
