@@ -70,6 +70,8 @@ class SessionServiceTest {
         when(sessionRequest.getRedirectUri())
                 .thenReturn(URI.create("https://www.example.com/callback"));
         when(sessionRequest.getSubject()).thenReturn("a subject");
+        when(sessionRequest.getPersistentSessionId()).thenReturn("a persistent session id");
+        when(sessionRequest.getClientSessionId()).thenReturn("a client session id");
 
         sessionService.saveSession(sessionRequest);
         verify(mockDataStore).create(sessionItemArgumentCaptor.capture());
@@ -79,6 +81,8 @@ class SessionServiceTest {
         assertThat(capturedValue.getClientId(), equalTo("a client id"));
         assertThat(capturedValue.getState(), equalTo("state"));
         assertThat(capturedValue.getSubject(), equalTo("a subject"));
+        assertThat(capturedValue.getPersistentSessionId(), equalTo("a persistent session id"));
+        assertThat(capturedValue.getClientSessionId(), equalTo("a client session id"));
         assertThat(
                 capturedValue.getRedirectUri(),
                 equalTo(URI.create("https://www.example.com/callback")));

@@ -20,6 +20,8 @@ public class SessionRequest {
     private String state;
     private SignedJWT signedJWT;
     private SharedClaims sharedClaims;
+    private String persistentSessionId;
+    private String clientSessionId;
 
     public String getIssuer() {
         return issuer;
@@ -119,5 +121,21 @@ public class SessionRequest {
 
     public boolean hasSharedClaims() {
         return Objects.nonNull(this.sharedClaims);
+    }
+
+    public String getPersistentSessionId() {
+        return persistentSessionId;
+    }
+
+    public void setPersistentSessionId(String persistentSessionId) {
+        this.persistentSessionId = persistentSessionId;
+    }
+
+    public String getClientSessionId() {
+        return clientSessionId;
+    }
+
+    public void setClientSessionId(String clientSessionId) {
+        this.clientSessionId = clientSessionId;
     }
 }

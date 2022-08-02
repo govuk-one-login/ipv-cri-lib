@@ -14,6 +14,12 @@ public class AuditEventUser {
     @JsonProperty("session_id")
     private String sessionId;
 
+    @JsonProperty("persistent_session_id")
+    private String persistentSessionId;
+
+    @JsonProperty("govuk_signin_journey_id")
+    private String clientSessionId;
+
     public String getUserId() {
         return userId;
     }
@@ -36,5 +42,21 @@ public class AuditEventUser {
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public String getPersistentSessionId() {
+        return persistentSessionId;
+    }
+
+    public void setPersistentSessionId(String persistentSessionId) {
+        this.persistentSessionId = persistentSessionId;
+    }
+
+    public String getClientSessionId() {
+        return clientSessionId;
+    }
+
+    public void setClientSessionId(String clientSessionId) {
+        this.clientSessionId = clientSessionId;
     }
 }

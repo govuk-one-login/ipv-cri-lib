@@ -68,6 +68,8 @@ class AuditEventFactoryTest {
         long timestamp = 1656947224L;
         String userId = String.valueOf(UUID.randomUUID());
         UUID sessionId = UUID.randomUUID();
+        String persistentSessionId = UUID.randomUUID().toString();
+        String clientSessionId = UUID.randomUUID().toString();
         String clientIpAddress = "81.145.61.43";
         when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn(TEST_AUDIT_EVENT_PREFIX);
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_VC_ISSUER);
@@ -79,6 +81,8 @@ class AuditEventFactoryTest {
         SessionItem sessionItem = mock(SessionItem.class);
         when(sessionItem.getSubject()).thenReturn(userId);
         when(sessionItem.getSessionId()).thenReturn(sessionId);
+        when(sessionItem.getPersistentSessionId()).thenReturn(persistentSessionId);
+        when(sessionItem.getClientSessionId()).thenReturn(clientSessionId);
         AuditEventContext auditEventContext =
                 new AuditEventContext(personIdentity, requestHeaders, sessionItem);
         AuditEventFactory auditEventFactory =
@@ -94,6 +98,9 @@ class AuditEventFactoryTest {
         assertEquals(userId, auditEvent.getUser().getUserId());
         assertEquals(clientIpAddress, auditEvent.getUser().getIpAddress());
         assertEquals(String.valueOf(sessionId), auditEvent.getUser().getSessionId());
+        assertEquals(persistentSessionId, auditEvent.getUser().getPersistentSessionId());
+        assertEquals(clientSessionId, auditEvent.getUser().getClientSessionId());
+
         assertEquals(auditEventExtensions, auditEvent.getExtensions());
 
         verify(mockClock).instant();
@@ -127,6 +134,8 @@ class AuditEventFactoryTest {
         assertEquals(clientIpAddress, auditEvent.getUser().getIpAddress());
         assertNull(auditEvent.getUser().getUserId());
         assertNull(auditEvent.getUser().getSessionId());
+        assertNull(auditEvent.getUser().getPersistentSessionId());
+        assertNull(auditEvent.getUser().getClientSessionId());
         assertNull(auditEvent.getExtensions());
     }
 }
