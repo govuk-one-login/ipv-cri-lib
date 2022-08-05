@@ -28,7 +28,11 @@ class ConfigurationServiceTest {
     void setUp() {
         configurationService =
                 new ConfigurationService(
-                        mockSsmProvider, mockSecretsProvider, TEST_STACK_NAME, mockClock);
+                        mockSsmProvider,
+                        mockSecretsProvider,
+                        TEST_STACK_NAME,
+                        TEST_STACK_NAME,
+                        mockClock);
     }
 
     @Test
@@ -42,10 +46,28 @@ class ConfigurationServiceTest {
     }
 
     @Test
-    void shouldGetSecretValueByName() {
+    void shouldGetSecretValueByNameThatHasTheStackName() {
         String secretName = "my-secret-name";
         String secretValue = "secret-value";
         String fullSecretName = String.format(PARAM_NAME_FORMAT, TEST_STACK_NAME, secretName);
+        when(mockSecretsProvider.get(fullSecretName)).thenReturn(secretValue);
+        assertEquals(secretValue, configurationService.getSecretValue(secretName));
+        verify(mockSecretsProvider).get(fullSecretName);
+    }
+
+    @Test
+    void shouldGetSecretValueByNameThatTheSecretPrefixProvided() {
+        String secretPrefix = "customSecretPrefix";
+        configurationService =
+                new ConfigurationService(
+                        mockSsmProvider,
+                        mockSecretsProvider,
+                        TEST_STACK_NAME,
+                        secretPrefix,
+                        mockClock);
+        String secretName = "my-secret-name";
+        String secretValue = "secret-value";
+        String fullSecretName = String.format(PARAM_NAME_FORMAT, secretPrefix, secretName);
         when(mockSecretsProvider.get(fullSecretName)).thenReturn(secretValue);
         assertEquals(secretValue, configurationService.getSecretValue(secretName));
         verify(mockSecretsProvider).get(fullSecretName);
