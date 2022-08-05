@@ -22,6 +22,8 @@ public class SessionItem {
     private String accessToken;
     private long accessTokenExpiryDate;
     private String subject;
+    private String persistentSessionId;
+    private String clientSessionId;
 
     public SessionItem() {
         sessionId = UUID.randomUUID();
@@ -116,6 +118,22 @@ public class SessionItem {
 
     public void setCreatedDate(long createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public String getPersistentSessionId() {
+        return persistentSessionId;
+    }
+
+    public void setPersistentSessionId(String persistentSessionId) {
+        this.persistentSessionId = persistentSessionId;
+    }
+
+    public String getClientSessionId() {
+        return clientSessionId;
+    }
+
+    public void setClientSessionId(String clientSessionId) {
+        this.clientSessionId = clientSessionId;
     }
 
     @Override

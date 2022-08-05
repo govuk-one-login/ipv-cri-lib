@@ -57,6 +57,8 @@ public class AuditEventFactory {
             userInfo = new AuditEventUser();
             userInfo.setSessionId(String.valueOf(sessionItem.getSessionId()));
             userInfo.setUserId(sessionItem.getSubject());
+            userInfo.setPersistentSessionId(sessionItem.getPersistentSessionId());
+            userInfo.setClientSessionId(sessionItem.getClientSessionId());
         }
 
         if (requestHeaders.containsKey(CLIENT_IP_HEADER_KEY)) {

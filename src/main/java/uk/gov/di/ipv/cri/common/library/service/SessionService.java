@@ -65,6 +65,8 @@ public class SessionService {
         sessionItem.setClientId(sessionRequest.getClientId());
         sessionItem.setRedirectUri(sessionRequest.getRedirectUri());
         sessionItem.setSubject(sessionRequest.getSubject());
+        sessionItem.setPersistentSessionId(sessionRequest.getPersistentSessionId());
+        sessionItem.setClientSessionId(sessionRequest.getClientSessionId());
 
         dataStore.create(sessionItem);
 
