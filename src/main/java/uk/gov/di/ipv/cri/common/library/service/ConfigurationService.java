@@ -1,5 +1,9 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
+import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
@@ -8,7 +12,6 @@ import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverage
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 public class ConfigurationService {
@@ -19,6 +22,7 @@ public class ConfigurationService {
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
+    private final String secretPrefix;
     private final Clock clock;
 
     public enum SSMParameterName {
@@ -37,22 +41,35 @@ public class ConfigurationService {
 
     @ExcludeFromGeneratedCoverageReport
     public ConfigurationService() {
-        this.clock = Clock.systemUTC();
-        this.ssmProvider = ParamManager.getSsmProvider();
-        this.secretsProvider = ParamManager.getSecretsProvider();
-        this.parameterPrefix =
-                Objects.requireNonNull(
-                        System.getenv("AWS_STACK_NAME"), "env var AWS_STACK_NAME required");
+        // the following environment variables are defined in the global section of the template.yml
+        // file
+        this(
+                ParamManager.getSsmProvider(
+                        SsmClient.builder()
+                                .region(Region.of(System.getenv("AWS_REGION")))
+                                .httpClient(UrlConnectionHttpClient.create())
+                                .build()),
+                ParamManager.getSecretsProvider(
+                        SecretsManagerClient.builder()
+                                .region(Region.of(System.getenv("AWS_REGION")))
+                                .httpClient(UrlConnectionHttpClient.create())
+                                .build()),
+                System.getenv("AWS_STACK_NAME"),
+                Optional.ofNullable(System.getenv("SECRET_PREFIX"))
+                        .orElse(System.getenv("AWS_STACK_NAME")),
+                Clock.systemUTC());
     }
 
-    public ConfigurationService(
+    ConfigurationService(
             SSMProvider ssmProvider,
             SecretsProvider secretsProvider,
             String parameterPrefix,
+            String secretPrefix,
             Clock clock) {
         this.ssmProvider = ssmProvider;
         this.secretsProvider = secretsProvider;
         this.parameterPrefix = parameterPrefix;
+        this.secretPrefix = secretPrefix;
         this.clock = clock;
     }
 
@@ -62,8 +79,7 @@ public class ConfigurationService {
     }
 
     public String getSecretValue(String secretName) {
-        return secretsProvider.get(
-                String.format(PARAMETER_NAME_FORMAT, parameterPrefix, secretName));
+        return secretsProvider.get(String.format(PARAMETER_NAME_FORMAT, secretPrefix, secretName));
     }
 
     public Map<String, String> getParametersForPath(String path) {
