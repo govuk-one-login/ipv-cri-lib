@@ -153,14 +153,20 @@ public class Address {
 
     @JsonIgnore
     public AddressType getAddressType() {
-        if (Objects.nonNull(this.getValidUntil()) && isPastDate(this.getValidUntil())) {
-            return AddressType.PREVIOUS;
+
+        boolean validFromIsSpecified = Objects.nonNull(this.getValidFrom());
+        boolean validUntilIsSpecified = Objects.nonNull(this.getValidUntil());
+
+        if (!validUntilIsSpecified
+                && (!validFromIsSpecified || isPastDateOrToday(this.getValidFrom()))) {
+            return AddressType.CURRENT;
         }
 
-        if (Objects.isNull(this.getValidUntil())
-                && (Objects.nonNull(this.getValidFrom())
-                        && isPastDateOrToday(this.getValidFrom()))) {
-            return AddressType.CURRENT;
+        if ((validUntilIsSpecified && isPastDateOrToday(this.getValidUntil()))
+                && (!validFromIsSpecified
+                        || isPastDate(this.getValidFrom())
+                                && this.getValidUntil().isAfter(this.getValidFrom()))) {
+            return AddressType.PREVIOUS;
         }
 
         return null;
