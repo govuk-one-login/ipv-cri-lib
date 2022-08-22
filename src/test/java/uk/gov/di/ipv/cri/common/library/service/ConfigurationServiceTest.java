@@ -19,6 +19,8 @@ import static org.mockito.Mockito.when;
 class ConfigurationServiceTest {
     private static final String TEST_STACK_NAME = "stack-name";
     private static final String PARAM_NAME_FORMAT = "/%s/%s";
+    private static final String PARAM_NAME = "param-name";
+    private static final String PARAM_VALUE = "param-value";
     @Mock private SSMProvider mockSsmProvider;
     @Mock private SecretsProvider mockSecretsProvider;
     @Mock private Clock mockClock;
@@ -31,17 +33,16 @@ class ConfigurationServiceTest {
                         mockSsmProvider,
                         mockSecretsProvider,
                         TEST_STACK_NAME,
+                        null,
                         TEST_STACK_NAME,
                         mockClock);
     }
 
     @Test
     void shouldGetParamValueByName() {
-        String paramName = "param-name";
-        String paramValue = "param-value";
-        String fullParamName = String.format(PARAM_NAME_FORMAT, TEST_STACK_NAME, paramName);
-        when(mockSsmProvider.get(fullParamName)).thenReturn(paramValue);
-        assertEquals(paramValue, configurationService.getParameterValue(paramName));
+        String fullParamName = String.format(PARAM_NAME_FORMAT, TEST_STACK_NAME, PARAM_NAME);
+        when(mockSsmProvider.get(fullParamName)).thenReturn(PARAM_VALUE);
+        assertEquals(PARAM_VALUE, configurationService.getParameterValue(PARAM_NAME));
         verify(mockSsmProvider).get(fullParamName);
     }
 
@@ -63,6 +64,7 @@ class ConfigurationServiceTest {
                         mockSsmProvider,
                         mockSecretsProvider,
                         TEST_STACK_NAME,
+                        null,
                         secretPrefix,
                         mockClock);
         String secretName = "my-secret-name";
@@ -96,5 +98,35 @@ class ConfigurationServiceTest {
                                 ConfigurationService.SSMParameterName.SESSION_TTL.parameterName)))
                 .thenReturn(String.valueOf(sessionTtl));
         assertEquals(sessionTtl, configurationService.getSessionTtl());
+    }
+
+    @Test
+    void shouldGetCommonParameterValueUsingCommonPrefix() {
+        String commonParamPrefix = "common-param-prefix";        
+        configurationService =
+                new ConfigurationService(
+                        mockSsmProvider,
+                        mockSecretsProvider,
+                        TEST_STACK_NAME,
+                        commonParamPrefix,
+                        TEST_STACK_NAME,
+                        mockClock);
+
+        when(mockSsmProvider.get(
+                String.format(
+                        PARAM_NAME_FORMAT,
+                        commonParamPrefix,
+                        PARAM_NAME)))
+                .thenReturn(PARAM_VALUE);
+        assertEquals(PARAM_VALUE, configurationService.getCommonParameterValue(PARAM_NAME));
+        verify(mockSsmProvider).get(
+                String.format(PARAM_NAME_FORMAT, commonParamPrefix, PARAM_NAME));
+    }
+
+    @Test
+    void shouldGetParameterByAbsoluteName() {
+        when(mockSsmProvider.get(PARAM_NAME)).thenReturn(PARAM_VALUE);
+        assertEquals(PARAM_VALUE, configurationService.getParameterValueByAbsoluteName(PARAM_NAME));
+        verify(mockSsmProvider).get(PARAM_NAME);
     }
 }

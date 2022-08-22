@@ -22,7 +22,8 @@ public class PersonIdentityService {
         this.personIdentityMapper = new PersonIdentityMapper();
         this.personIdentityDataStore =
                 new DataStore<>(
-                        configurationService.getParameterValue(PERSON_IDENTITY_TABLE_PARAM_NAME),
+                        configurationService.getCommonParameterValue(
+                                PERSON_IDENTITY_TABLE_PARAM_NAME),
                         PersonIdentityItem.class,
                         new DynamoDbEnhancedClientFactory().getClient());
     }
@@ -33,7 +34,8 @@ public class PersonIdentityService {
                 new PersonIdentityMapper(),
                 configurationService,
                 new DataStore<>(
-                        configurationService.getParameterValue(PERSON_IDENTITY_TABLE_PARAM_NAME),
+                        configurationService.getCommonParameterValue(
+                                PERSON_IDENTITY_TABLE_PARAM_NAME),
                         PersonIdentityItem.class,
                         new DynamoDbEnhancedClientFactory().getClient()));
     }
