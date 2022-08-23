@@ -102,7 +102,7 @@ class ConfigurationServiceTest {
 
     @Test
     void shouldGetCommonParameterValueUsingCommonPrefix() {
-        String commonParamPrefix = "common-param-prefix";        
+        String commonParamPrefix = "common-param-prefix";
         configurationService =
                 new ConfigurationService(
                         mockSsmProvider,
@@ -112,15 +112,11 @@ class ConfigurationServiceTest {
                         TEST_STACK_NAME,
                         mockClock);
 
-        when(mockSsmProvider.get(
-                String.format(
-                        PARAM_NAME_FORMAT,
-                        commonParamPrefix,
-                        PARAM_NAME)))
+        when(mockSsmProvider.get(String.format(PARAM_NAME_FORMAT, commonParamPrefix, PARAM_NAME)))
                 .thenReturn(PARAM_VALUE);
         assertEquals(PARAM_VALUE, configurationService.getCommonParameterValue(PARAM_NAME));
-        verify(mockSsmProvider).get(
-                String.format(PARAM_NAME_FORMAT, commonParamPrefix, PARAM_NAME));
+        verify(mockSsmProvider)
+                .get(String.format(PARAM_NAME_FORMAT, commonParamPrefix, PARAM_NAME));
     }
 
     @Test
