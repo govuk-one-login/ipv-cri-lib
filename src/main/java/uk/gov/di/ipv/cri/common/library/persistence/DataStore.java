@@ -6,8 +6,12 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -21,6 +25,8 @@ import java.util.stream.Collectors;
 public class DataStore<T> {
 
     private final DynamoDbTable<T> table;
+    private final Class<T> typeParameterClass;
+    private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
 
     public DataStore(
             String tableName,
@@ -28,6 +34,8 @@ public class DataStore<T> {
             DynamoDbEnhancedClient dynamoDbEnhancedClient) {
         this.table =
                 dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(typeParameterClass));
+        this.typeParameterClass = typeParameterClass;
+        this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
     }
 
     public static DynamoDbEnhancedClient getClient() {
@@ -38,6 +46,18 @@ public class DataStore<T> {
 
     public void create(T item) {
         this.table.putItem(item);
+    }
+
+    public void createItems(List<T> items) {
+        WriteBatch putItemsBatch = createPutItemsWriteBatch(items);
+        BatchWriteResult batchWriteResult = persistBatch(putItemsBatch);
+        List<T> unprocessedItems = batchWriteResult.unprocessedPutItemsForTable(this.table);
+        do {
+            if (unprocessedItems.size() != 0) {
+                batchWriteResult = persistBatch(createPutItemsWriteBatch(unprocessedItems));
+                unprocessedItems = batchWriteResult.unprocessedPutItemsForTable(this.table);
+            }
+        } while (unprocessedItems.size() > 0);
     }
 
     public T getItem(String partitionValue, String sortValue) {
@@ -104,6 +124,21 @@ public class DataStore<T> {
 
     private T delete(Key key) {
         return this.table.deleteItem(key);
+    }
+
+    private WriteBatch createPutItemsWriteBatch(List<T> items) {
+        WriteBatch.Builder<T> builder =
+                WriteBatch.builder(this.typeParameterClass).mappedTableResource(this.table);
+        for (T item : items) {
+            builder.addPutItem(
+                    PutItemEnhancedRequest.builder(this.typeParameterClass).item(item).build());
+        }
+        return builder.build();
+    }
+
+    private BatchWriteResult persistBatch(WriteBatch writeBatch) {
+        return this.dynamoDbEnhancedClient.batchWriteItem(
+                BatchWriteItemEnhancedRequest.builder().writeBatches(writeBatch).build());
     }
 
     private static DynamoDbClientBuilder getDynamoDbClientBuilder(DynamoDbClientBuilder builder) {
