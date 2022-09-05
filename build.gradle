@@ -3,6 +3,7 @@ plugins {
 	id "org.sonarqube"
 	id "com.diffplug.spotless"
 	id "jacoco"
+	id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
 }
 
 defaultTasks 'clean', 'spotlessApply', 'build'
@@ -30,6 +31,8 @@ repositories {
 java {
 	sourceCompatibility = JavaVersion.VERSION_11
 	targetCompatibility = JavaVersion.VERSION_11
+	withJavadocJar()
+	withSourcesJar()
 }
 
 
@@ -164,5 +167,71 @@ clean.doFirst {
 gradle.projectsEvaluated {
 	tasks.withType(JavaCompile) {
 		options.compilerArgs << "-Xlint:unchecked"
+	}
+}
+
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
+
+def buildVersion = "1.0.5"
+group = "uk.gov.account"
+version = "$buildVersion"
+
+nexusPublishing {
+	useStaging = true
+	repositories {
+		sonatype {
+			// because we registered in Sonatype after 24 Feb 2021, we provide these URIs
+			// see: https://github.com/gradle-nexus/publish-plugin/blob/master/README.md
+			nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+			snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+			username = System.getenv("SONATYPE_USERNAME")
+			password = System.getenv("SONATYPE_PASSWORD")
+		}
+	}
+}
+
+signing {
+	useInMemoryPgpKeys(
+			System.getenv("MAVEN_CENTRAL_SIGNING_KEY"),
+			System.getenv("MAVEN_CENTRAL_SIGNING_KEY_PASSWORD")
+			)
+	sign publishing.publications
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			pom {
+				name = 'Digital Identity Credential Issuer common libraries'
+				packaging = 'jar'
+				description = 'Digital Identity Credential Issuer common libraries'
+				url = 'https://github.com/alphagov/di-ipv-cri-lib'
+				artifactId = 'cri-common-lib'
+
+				scm {
+					url = 'https://github.com/alphagov/di-ipv-cri-lib'
+					connection = 'scm:git:git://github.com/alphagov/di-ipv-cri-lib.git'
+					developerConnection = 'scm:git:ssh://git@github.com:alphagov/di-ipv-cri-lib.git'
+				}
+
+				licenses {
+					license {
+						name = 'MIT Licence'
+						url = 'https://github.com/alphagov/di-ipv-cri-lib/blob/main/LICENSE'
+						distribution = 'repo'
+					}
+				}
+
+				developers {
+					developer {
+						name = 'GDS Developers'
+					}
+				}
+			}
+		}
 	}
 }
