@@ -9,6 +9,7 @@ import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 
+import java.net.URI;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -143,5 +144,34 @@ public class ConfigurationService {
 
     private String getParameterName(SSMParameterName parameterName) {
         return String.format(PARAMETER_NAME_FORMAT, parameterPrefix, parameterName.parameterName);
+    }
+
+    public String getEnvironmentVariable(EnvironmentVariable environmentVariable) {
+        return System.getenv(environmentVariable.name());
+    }
+
+    // TODO: can this be removed?
+    // was used by AccessTokenService in Passport CRI, but is redundant with the use of
+    // getSessionTtl()
+    public String getSsmParameter(SSMParameterName configurationVariable) {
+        return ssmProvider.get(
+                String.format(
+                        configurationVariable.toString(),
+                        getEnvironmentVariable(EnvironmentVariable.ENVIRONMENT)));
+    }
+
+    public URI getDynamoDbEndpointOverride() {
+        String dynamoDbEndpointOverride =
+                getEnvironmentVariable(EnvironmentVariable.DYNAMODB_ENDPOINT_OVERRIDE);
+        if (dynamoDbEndpointOverride != null && !dynamoDbEndpointOverride.isEmpty()) {
+            return URI.create(dynamoDbEndpointOverride);
+        }
+        return null;
+    }
+
+    public long getAccessTokenExpirySeconds() {
+        return Optional.ofNullable(getEnvironmentVariable(EnvironmentVariable.BEARER_TOKEN_TTL))
+                .map(Long::valueOf)
+                .orElse(DEFAULT_BEARER_TOKEN_TTL_IN_SECS);
     }
 }

@@ -11,6 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
+import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
 
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ class DataStoreTest {
 
     @Mock private DynamoDbEnhancedClient mockDynamoDbEnhancedClient;
     @Mock private DynamoDbTable<SessionItem> mockDynamoDbTable;
+    @Mock private ConfigurationService mockConfigurationService;
 
     private SessionItem sessionItem;
     private DataStore<SessionItem> dataStore;
@@ -39,7 +41,12 @@ class DataStoreTest {
         sessionItem = new SessionItem();
         String accessToken = UUID.randomUUID().toString();
 
-        dataStore = new DataStore<>(TEST_TABLE_NAME, SessionItem.class, mockDynamoDbEnhancedClient);
+        dataStore =
+                new DataStore<>(
+                        TEST_TABLE_NAME,
+                        SessionItem.class,
+                        mockDynamoDbEnhancedClient,
+                        mockConfigurationService);
     }
 
     @Test

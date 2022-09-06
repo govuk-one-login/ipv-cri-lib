@@ -1,26 +1,28 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.AccessTokenResponse;
-import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import com.nimbusds.oauth2.sdk.OAuth2Error;
-import com.nimbusds.oauth2.sdk.TokenRequest;
-import com.nimbusds.oauth2.sdk.TokenResponse;
+import com.nimbusds.oauth2.sdk.*;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.JWTAuthentication;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
+import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.exception.AccessTokenValidationException;
 import uk.gov.di.ipv.cri.common.library.exception.ClientConfigurationException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
+import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
+import uk.gov.di.ipv.cri.common.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
+import uk.gov.di.ipv.cri.common.library.validation.ValidationResult;
 
 import java.net.URI;
 import java.time.Instant;
@@ -32,9 +34,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -44,6 +44,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AccessTokenServiceTest {
+    private static final String TEST_TABLE_NAME = "test-auth-code-table";
+    @Mock private DataStore<AccessTokenItem> mockDataStore;
     @Mock private ConfigurationService mockConfigurationService;
     @Mock private JWTVerifier mockJwtVerifier;
     @InjectMocks private AccessTokenService accessTokenService;
@@ -53,6 +55,12 @@ class AccessTokenServiceTest {
 
     private final String JWT_MISSING_JTI =
             "eyJraWQiOiJpcHYtY29yZS1zdHViIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJpcHYtY29yZS1zdHViIiwiYXVkIjoiaHR0cHM6XC9cL2Rldi5hZGRyZXNzLmNyaS5hY2NvdW50Lmdvdi51ayIsIm5iZiI6MTY1MDU0MDkyNSwic2hhcmVkX2NsYWltcyI6eyJAY29udGV4dCI6WyJodHRwczpcL1wvd3d3LnczLm9yZ1wvMjAxOFwvY3JlZGVudGlhbHNcL3YxIiwiaHR0cHM6XC9cL3ZvY2FiLmxvbmRvbi5jbG91ZGFwcHMuZGlnaXRhbFwvY29udGV4dHNcL2lkZW50aXR5LXYxLmpzb25sZCJdLCJhZGRyZXNzZXMiOlt7InN0cmVldDEiOiI4Iiwic3RyZWV0MiI6IkhBRExFWSBST0FEIiwidG93bkNpdHkiOiJCQVRIIiwiY3VycmVudEFkZHJlc3MiOnRydWUsInBvc3RDb2RlIjoiQkEyIDVBQSJ9XSwibmFtZSI6W3sibmFtZVBhcnRzIjpbeyJ2YWx1ZSI6IktFTk5FVEgiLCJ0eXBlIjoiR2l2ZW5OYW1lIn0seyJ2YWx1ZSI6IkRFQ0VSUVVFSVJBIiwidHlwZSI6IkZhbWlseU5hbWUifV19XSwiYmlydGhEYXRlIjpbeyJ2YWx1ZSI6IjE5NjQtMDktMTkifV19LCJpc3MiOiJpcHYtY29yZS1zdHViIiwicmVkaXJlY3RfdXJpIjoiaHR0cHM6XC9cL2RpLWlwdi1jb3JlLXN0dWIubG9uZG9uLmNsb3VkYXBwcy5kaWdpdGFsXC9jYWxsYmFjayIsImV4cCI6MTY1MDU0NDUyNSwiaWF0IjoxNjUwNTQwOTI1fQ.qbT49i9CPImPMXj7_U_W5IKmqlyAMidXWcVajMxEsFmPvQCbfkGDJYUun2dnKeyUpkTNXdxBRgTjrl0ZyODxnaIrW4ZZD3dzm-9EoMoFFHKtttmYiucyVM65ZnCaDDu3IUVQulZ-5ADX8bn-pghIqd95NDE_oM8HDlGExcdtZuwOK-fPI4txABGPbgGV6it3HoXaeZr1JyLzJHunTM6mnYOvi50GULh0VPGDsOgNC5Mf61JPkzBvHJbnS9WcKzFIpl7zyfbyDJ9WWl5G88fBdErSjFdI5R0-gc3Cy3m3QYm76dwDfFZax7inbKnK1yyC8cBb8mvr3f5M9s6Mmckd9KFBymYid8M0acTbQi5XPBxOmIr0zeJZ85YQxtyvKswpASoWT6ap-VmglfBQ6MQ0Ql6VydLyYOuo4ZFLNX3uOD4TDEf-TCVKLO2sL3-GEQ4gZP59lHXQr4LD8aGnp_ikWLXBDk2toGcfXcUfA6Ph-67rKWjtDYYqanh4fqM-3dUmUVBkbq0341dHl_Y5igdvkxu7Gbj9X64sdurHE_ALnBTUHyMnjWLfbu_WmYM3qq4CHVrjNw-TgpQZxHHxhHJkUPmVn_gsoaVyb2TPAvecQ0iDbXhzXVR3Jw0tlhZgDtfz-8zEZyae5g6DRMsd6mWMhCx8LFWcsJtbm4_OCQ_Y6zU";
+
+    @BeforeEach
+    void setUp() {
+        this.accessTokenService =
+                new AccessTokenService(mockDataStore, mockConfigurationService, mockJwtVerifier);
+    }
 
     @Test
     void shouldThrowExceptionForMissingJTI()
@@ -478,5 +486,176 @@ class AccessTokenServiceTest {
                 containsString(
                         "Invalid client_assertion JWT: Invalid serialized unsecured/JWS/JWE object: Missing part delimiters"));
         verify(mockJwtVerifier, never()).verifyAccessTokenJWT(any(), any(), any());
+    }
+
+    @Test
+    void shouldReturnSuccessfulTokenResponseOnSuccessfulExchange() {
+        long testTokenTtl = 2400L;
+        when(mockConfigurationService.getAccessTokenExpirySeconds()).thenReturn(testTokenTtl);
+
+        TokenResponse response = accessTokenService.createToken();
+
+        assertInstanceOf(AccessTokenResponse.class, response);
+        assertNotNull(response.toSuccessResponse().getTokens().getAccessToken().getValue());
+        assertEquals(
+                testTokenTtl,
+                response.toSuccessResponse().getTokens().getBearerAccessToken().getLifetime());
+        assertEquals(
+                AccessTokenService.DEFAULT_SCOPE,
+                response.toSuccessResponse().getTokens().getBearerAccessToken().getScope());
+    }
+
+    @Test
+    void shouldReturnValidationErrorWhenInvalidGrantTypeProvided() {
+        ValidationResult<ErrorObject> validationResult =
+                accessTokenService.validateAuthorizationGrant(
+                        new RefreshTokenGrant(new RefreshToken()));
+
+        assertNotNull(validationResult);
+        assertFalse(validationResult.isValid());
+        assertEquals(OAuth2Error.UNSUPPORTED_GRANT_TYPE, validationResult.getError());
+    }
+
+    @Test
+    void shouldPersistAccessToken() {
+        String testResourceId = UUID.randomUUID().toString();
+        String testPassportSessionId = UUID.randomUUID().toString();
+        AccessToken accessToken = new BearerAccessToken(3600L, null);
+        AccessTokenResponse accessTokenResponse =
+                new AccessTokenResponse(new Tokens(accessToken, null));
+        ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
+                ArgumentCaptor.forClass(AccessTokenItem.class);
+
+        accessTokenService.persistAccessToken(
+                accessTokenResponse, testResourceId, testPassportSessionId);
+
+        verify(mockDataStore).create(accessTokenItemArgCaptor.capture());
+        AccessTokenItem capturedAccessTokenItem = accessTokenItemArgCaptor.getValue();
+        assertNotNull(capturedAccessTokenItem);
+        assertEquals(testResourceId, capturedAccessTokenItem.getResourceId());
+        assertEquals(testPassportSessionId, capturedAccessTokenItem.getPassportSessionId());
+        assertEquals(
+                DigestUtils.sha256Hex(
+                        accessTokenResponse.getTokens().getBearerAccessToken().getValue()),
+                capturedAccessTokenItem.getAccessToken());
+        assertEquals(testResourceId, capturedAccessTokenItem.getResourceId());
+        assertNotNull(capturedAccessTokenItem.getAccessTokenExpiryDateTime());
+    }
+
+    @Test
+    void shouldPersistAccessTokenWhenResourceIdNull() {
+        String testPassportSessionId = UUID.randomUUID().toString();
+        AccessToken accessToken = new BearerAccessToken(3600L, null);
+        AccessTokenResponse accessTokenResponse =
+                new AccessTokenResponse(new Tokens(accessToken, null));
+        ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
+                ArgumentCaptor.forClass(AccessTokenItem.class);
+
+        accessTokenService.persistAccessToken(accessTokenResponse, null, testPassportSessionId);
+
+        verify(mockDataStore).create(accessTokenItemArgCaptor.capture());
+        AccessTokenItem capturedAccessTokenItem = accessTokenItemArgCaptor.getValue();
+        assertNotNull(capturedAccessTokenItem);
+        assertNull(capturedAccessTokenItem.getResourceId());
+        assertEquals(testPassportSessionId, capturedAccessTokenItem.getPassportSessionId());
+        assertEquals(
+                DigestUtils.sha256Hex(
+                        accessTokenResponse.getTokens().getBearerAccessToken().getValue()),
+                capturedAccessTokenItem.getAccessToken());
+        assertNotNull(capturedAccessTokenItem.getAccessTokenExpiryDateTime());
+    }
+
+    @Test
+    void shouldGetSessionIdByAccessTokenWhenValidAccessTokenProvided() {
+        String testResourceId = UUID.randomUUID().toString();
+        AccessToken accessToken = new BearerAccessToken();
+        String accessTokenValue = accessToken.toAuthorizationHeader();
+        String testPassportSessionId = UUID.randomUUID().toString();
+
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        DigestUtils.sha256Hex(accessTokenValue),
+                        testResourceId,
+                        Instant.now().toString(),
+                        testPassportSessionId);
+        accessTokenItem.setResourceId(testResourceId);
+        when(mockDataStore.getItem(DigestUtils.sha256Hex(accessTokenValue)))
+                .thenReturn(accessTokenItem);
+
+        AccessTokenItem result = accessTokenService.getAccessTokenItem(accessTokenValue);
+
+        verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessTokenValue));
+
+        assertNotNull(result.getResourceId());
+        assertEquals(testResourceId, result.getResourceId());
+    }
+
+    @Test
+    void shouldReturnNullWhenInvalidAccessTokenProvided() {
+        String accessToken = new BearerAccessToken().toAuthorizationHeader();
+
+        when(mockDataStore.getItem(DigestUtils.sha256Hex(accessToken))).thenReturn(null);
+
+        AccessTokenItem accessTokenItem = accessTokenService.getAccessTokenItem(accessToken);
+
+        verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessToken));
+        assertNull(accessTokenItem);
+    }
+
+    @Test
+    void shouldRevokeAccessToken() {
+        String accessToken = "test-access-token";
+
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken,
+                        UUID.randomUUID().toString(),
+                        Instant.now().toString(),
+                        UUID.randomUUID().toString());
+
+        when(mockDataStore.getItem(accessToken)).thenReturn(accessTokenItem);
+
+        accessTokenService.revokeAccessToken(accessToken);
+
+        ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
+                ArgumentCaptor.forClass(AccessTokenItem.class);
+
+        verify(mockDataStore).update(accessTokenItemArgCaptor.capture());
+        assertNotNull(accessTokenItemArgCaptor.getValue().getRevokedAtDateTime());
+    }
+
+    @Test
+    void shouldNotAttemptUpdateIfAccessTokenIsAlreadyRevoked() {
+        String accessToken = "test-access-token";
+
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken,
+                        UUID.randomUUID().toString(),
+                        Instant.now().toString(),
+                        UUID.randomUUID().toString());
+        accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
+
+        when(mockDataStore.getItem(accessToken)).thenReturn(accessTokenItem);
+
+        accessTokenService.revokeAccessToken(accessToken);
+
+        verify(mockDataStore, Mockito.times(0)).update(any());
+    }
+
+    @Test
+    void shouldThrowExceptionIfAccessTokenCanNotBeFoundWhenRevoking() {
+        String accessToken = "test-access-token";
+
+        when(mockDataStore.getItem(accessToken)).thenReturn(null);
+
+        try {
+            accessTokenService.revokeAccessToken(accessToken);
+            fail("Should have thrown an exception");
+        } catch (IllegalArgumentException e) {
+            assertEquals(
+                    "Failed to revoke access token - access token could not be found in DynamoDB",
+                    e.getMessage());
+        }
     }
 }

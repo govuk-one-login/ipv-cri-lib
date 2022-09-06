@@ -18,7 +18,11 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import uk.gov.di.ipv.cri.common.library.persistence.item.AccessTokenItem;
+import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
 
+import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +31,10 @@ public class DataStore<T> {
     private final DynamoDbTable<T> table;
     private final Class<T> typeParameterClass;
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
+    private final ConfigurationService configurationService;
 
+    // --- TODO: can these constructors be condensed?
+    // currently the first works with existing files, the second was added to support Passport CRI
     public DataStore(
             String tableName,
             Class<T> typeParameterClass,
@@ -36,7 +43,21 @@ public class DataStore<T> {
                 dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(typeParameterClass));
         this.typeParameterClass = typeParameterClass;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
+        this.configurationService = new ConfigurationService();
     }
+
+    public DataStore(
+            String tableName,
+            Class<T> typeParameterClass,
+            DynamoDbEnhancedClient dynamoDbEnhancedClient,
+            ConfigurationService configurationService) {
+        this.table =
+                dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(typeParameterClass));
+        this.typeParameterClass = typeParameterClass;
+        this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
+        this.configurationService = configurationService;
+    }
+    // ---
 
     public static DynamoDbEnhancedClient getClient() {
         DynamoDbClientBuilder clientBuilder = getDynamoDbClientBuilder(DynamoDbClient.builder());
@@ -44,8 +65,25 @@ public class DataStore<T> {
         return DynamoDbEnhancedClient.builder().dynamoDbClient(clientBuilder.build()).build();
     }
 
+    public static DynamoDbEnhancedClient getClient(URI endpointOverride) {
+        DynamoDbClientBuilder clientBuilder =
+                DynamoDbClient.builder()
+                        .endpointOverride(endpointOverride)
+                        .httpClient(UrlConnectionHttpClient.create())
+                        .region(Region.EU_WEST_2);
+
+        return DynamoDbEnhancedClient.builder().dynamoDbClient(clientBuilder.build()).build();
+    }
+
     public void create(T item) {
-        this.table.putItem(item);
+        if (item.getClass() == AccessTokenItem.class) {
+            ((AccessTokenItem) item)
+                    .setTtl(
+                            Instant.now()
+                                    .plusSeconds(configurationService.getSessionTtl())
+                                    .getEpochSecond());
+        }
+        getTable().putItem(item);
     }
 
     public void createItems(List<T> items) {
@@ -143,5 +181,9 @@ public class DataStore<T> {
 
     private static DynamoDbClientBuilder getDynamoDbClientBuilder(DynamoDbClientBuilder builder) {
         return builder.httpClient(UrlConnectionHttpClient.create()).region(Region.EU_WEST_2);
+    }
+
+    private DynamoDbTable<T> getTable() {
+        return table;
     }
 }

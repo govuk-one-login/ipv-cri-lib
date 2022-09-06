@@ -2,11 +2,7 @@ package uk.gov.di.ipv.cri.common.library.service;
 
 import com.nimbusds.common.contenttype.ContentType;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.AccessTokenResponse;
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import com.nimbusds.oauth2.sdk.OAuth2Error;
-import com.nimbusds.oauth2.sdk.TokenRequest;
+import com.nimbusds.oauth2.sdk.*;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
@@ -18,16 +14,24 @@ import com.nimbusds.oauth2.sdk.id.Subject;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
+import com.nimbusds.oauth2.sdk.util.StringUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.exception.AccessTokenRequestException;
 import uk.gov.di.ipv.cri.common.library.exception.AccessTokenValidationException;
 import uk.gov.di.ipv.cri.common.library.exception.ClientConfigurationException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
+import uk.gov.di.ipv.cri.common.library.helpers.LogHelper;
+import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
+import uk.gov.di.ipv.cri.common.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
+import uk.gov.di.ipv.cri.common.library.validation.ValidationResult;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class AccessTokenService {
@@ -37,13 +41,37 @@ public class AccessTokenService {
     public static final String CLIENT_ASSERTION = "client_assertion";
     public static final String AUTHORISATION_CODE = "authorization_code";
     public static final String REDIRECT_URI = "redirect_uri";
+
+    protected static final Scope DEFAULT_SCOPE = new Scope("user-credentials");
+
     private final ConfigurationService configurationService;
     private final JWTVerifier jwtVerifier;
+    private final DataStore<AccessTokenItem> dataStore;
 
+    // --- TODO: can these constructors be condensed?
+    // currently the first works with existing files, the second was added to support Passport CRI
     public AccessTokenService(ConfigurationService configurationService, JWTVerifier jwtVerifier) {
         this.configurationService = configurationService;
         this.jwtVerifier = jwtVerifier;
+        this.dataStore =
+                new DataStore<>(
+                        this.configurationService.getEnvironmentVariable(
+                                EnvironmentVariable.CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME),
+                        AccessTokenItem.class,
+                        DataStore.getClient(
+                                this.configurationService.getDynamoDbEndpointOverride()),
+                        this.configurationService);
     }
+
+    public AccessTokenService(
+            DataStore<AccessTokenItem> dataStore,
+            ConfigurationService configurationService,
+            JWTVerifier jwtVerifier) {
+        this.dataStore = dataStore;
+        this.jwtVerifier = jwtVerifier;
+        this.configurationService = configurationService;
+    }
+    // ---
 
     @ExcludeFromGeneratedCoverageReport
     public AccessTokenService() {
@@ -61,6 +89,57 @@ public class AccessTokenService {
                 new BearerAccessToken(
                         configurationService.getBearerAccessTokenTtl(), tokenRequest.getScope());
         return new AccessTokenResponse(new Tokens(accessToken, null)).toSuccessResponse();
+    }
+
+    public AccessTokenResponse createToken() {
+        AccessToken accessToken =
+                new BearerAccessToken(
+                        configurationService.getAccessTokenExpirySeconds(), DEFAULT_SCOPE);
+        return new AccessTokenResponse(new Tokens(accessToken, null));
+    }
+
+    public ValidationResult<ErrorObject> validateAuthorizationGrant(AuthorizationGrant authGrant) {
+        if (!authGrant.getType().equals(GrantType.AUTHORIZATION_CODE)) {
+            return new ValidationResult<>(false, OAuth2Error.UNSUPPORTED_GRANT_TYPE);
+        }
+        return ValidationResult.createValidResult();
+    }
+
+    public AccessTokenItem getAccessTokenItem(String accessToken) {
+        AccessTokenItem accessTokenItem = dataStore.getItem(DigestUtils.sha256Hex(accessToken));
+        if (accessTokenItem != null) {
+            LogHelper.attachPassportSessionIdToLogs(accessTokenItem.getPassportSessionId());
+        }
+        return accessTokenItem;
+    }
+
+    public void persistAccessToken(
+            AccessTokenResponse tokenResponse, String resourceId, String passportSessionId) {
+        BearerAccessToken accessToken = tokenResponse.getTokens().getBearerAccessToken();
+        dataStore.create(
+                new AccessTokenItem(
+                        DigestUtils.sha256Hex(accessToken.getValue()),
+                        resourceId,
+                        toExpiryDateTime(accessToken.getLifetime()),
+                        passportSessionId));
+    }
+
+    public void revokeAccessToken(String accessToken) throws IllegalArgumentException {
+        AccessTokenItem accessTokenItem = dataStore.getItem(accessToken);
+
+        if (Objects.nonNull(accessTokenItem)) {
+            if (StringUtils.isBlank(accessTokenItem.getRevokedAtDateTime())) {
+                accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
+                dataStore.update(accessTokenItem);
+            }
+        } else {
+            throw new IllegalArgumentException(
+                    "Failed to revoke access token - access token could not be found in DynamoDB");
+        }
+    }
+
+    private String toExpiryDateTime(long expirySeconds) {
+        return Instant.now().plusSeconds(expirySeconds).toString();
     }
 
     public void updateSessionAccessToken(
