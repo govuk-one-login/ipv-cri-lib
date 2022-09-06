@@ -4,6 +4,7 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.ssm.SsmClient;
+import software.amazon.awssdk.services.ssm.model.SsmException;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
@@ -132,7 +133,12 @@ public class ConfigurationService {
     }
 
     public long getMaxJwtTtl() {
-        return Long.parseLong(ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)));
+        try {
+            return Long.parseLong(
+                    ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)));
+        } catch (SsmException e) {
+            return 7200l;
+        }
     }
 
     public String getVerifiableCredentialIssuer() {

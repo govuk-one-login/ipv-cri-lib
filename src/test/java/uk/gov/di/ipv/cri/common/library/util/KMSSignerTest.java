@@ -1,11 +1,12 @@
 package uk.gov.di.ipv.cri.common.library.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.shaded.json.JSONObject;
 import com.nimbusds.jose.util.Base64URL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,14 +94,14 @@ class KMSSignerTest {
 
     @Test
     void shouldSignJWSObject()
-            throws JOSEException, NoSuchAlgorithmException, SignatureException,
-                    InvalidKeyException {
+            throws JOSEException, NoSuchAlgorithmException, SignatureException, InvalidKeyException,
+                    JsonProcessingException {
         var signResponse = mock(SignResponse.class);
         when(mockKmsClient.sign(any(SignRequest.class))).thenReturn(signResponse);
         when(signResponse.signature())
                 .thenReturn(SdkBytes.fromByteArray(getDERPayloadBytes("test payload".getBytes())));
 
-        JSONObject jsonPayload = new JSONObject(Map.of("test", "test"));
+        String jsonPayload = new ObjectMapper().writeValueAsString(Map.of("test", "test"));
 
         JWSHeader jwsHeader = new JWSHeader.Builder(ES256).build();
         JWSObject jwsObject = new JWSObject(jwsHeader, new Payload(jsonPayload));
@@ -109,7 +110,7 @@ class KMSSignerTest {
 
         assertEquals(JWSObject.State.SIGNED, jwsObject.getState());
         assertEquals(jwsHeader, jwsObject.getHeader());
-        assertEquals(jsonPayload.toJSONString(), jwsObject.getPayload().toString());
+        assertEquals(jsonPayload, jwsObject.getPayload().toString());
     }
 
     @Test

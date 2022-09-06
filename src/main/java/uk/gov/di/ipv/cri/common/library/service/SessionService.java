@@ -1,6 +1,10 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
 import com.nimbusds.oauth2.sdk.token.AccessToken;
+import com.nimbusds.oauth2.sdk.util.StringUtils;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.LoggingUtils;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.SessionRequest;
@@ -14,10 +18,15 @@ import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.common.library.util.ListUtil;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 public class SessionService {
+
+    private static final Logger LOGGER = LogManager.getLogger();
+
     private static final String SESSION_TABLE_PARAM_NAME = "SessionTableName";
     private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
     private final ConfigurationService configurationService;
@@ -133,7 +142,14 @@ public class SessionService {
                     listUtil.getOneItemOrThrowError(
                             dataStore.getItemByIndex(
                                     SessionItem.ACCESS_TOKEN_INDEX,
-                                    accessToken.toAuthorizationHeader()));
+                                    DigestUtils.sha256Hex(accessToken.getValue())));
+            if (sessionItem == null) {
+                sessionItem =
+                        listUtil.getOneItemOrThrowError(
+                                dataStore.getItemByIndex(
+                                        SessionItem.ACCESS_TOKEN_INDEX,
+                                        accessToken.toAuthorizationHeader()));
+            }
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("No items found")) {
                 throw new SessionNotFoundException("no session found with that access token");
@@ -175,9 +191,25 @@ public class SessionService {
         sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
 
         if (sessionItem.getAuthorizationCodeExpiryDate() < clock.instant().getEpochSecond()) {
+            LOGGER.error(
+                    "Access Token could not be issued. The supplied authorization code has expired. Expired at: {}",
+                    sessionItem.getAuthorizationCodeExpiryDate());
             throw new AuthorizationCodeExpiredException("authorization code expired");
         }
 
         return sessionItem;
+    }
+
+    public void revokeAccessToken(SessionItem sessionItem) throws IllegalArgumentException {
+
+        if (Objects.nonNull(sessionItem)) {
+            if (StringUtils.isBlank(sessionItem.getAccessTokenRevokedDateTime())) {
+                sessionItem.setAccessTokenRevokedDateTime(Instant.now().toString());
+                dataStore.update(sessionItem);
+            }
+        } else {
+            throw new IllegalArgumentException(
+                    "Failed to revoke access token - access token could not be found in DynamoDB");
+        }
     }
 }

@@ -8,7 +8,7 @@ import java.net.URI;
 import java.util.UUID;
 
 @DynamoDbBean
-public class SessionItem {
+public class SessionItem implements DynamodbItem {
     public static final String AUTHORIZATION_CODE_INDEX = "authorizationCode-index";
     public static final String ACCESS_TOKEN_INDEX = "access-token-index";
     private UUID sessionId;
@@ -26,6 +26,13 @@ public class SessionItem {
     private String clientSessionId;
     private String clientIpAddress;
     private int attemptCount;
+    private String authorizationCodeUsedAtTime;
+    private String accessTokenExchangedDateTime;
+    private String accessTokenRevokedDateTime;
+    private String jwtId;
+    private String jwtIdUsedAt;
+
+    private long ttl;
 
     public SessionItem() {
         sessionId = UUID.randomUUID();
@@ -152,6 +159,55 @@ public class SessionItem {
 
     public void setAttemptCount(int attemptCount) {
         this.attemptCount = attemptCount;
+    }
+
+    public String getAuthorizationCodeUsedAtTime() {
+        return authorizationCodeUsedAtTime;
+    }
+
+    public void setAuthorizationCodeUsedAtTime(String authorizationCodeUsedAtTime) {
+        this.authorizationCodeUsedAtTime = authorizationCodeUsedAtTime;
+    }
+
+    public String getAccessTokenExchangedDateTime() {
+        return accessTokenExchangedDateTime;
+    }
+
+    public void setAccessTokenExchangedDateTime(String accessTokenExchangedDateTime) {
+        this.accessTokenExchangedDateTime = accessTokenExchangedDateTime;
+    }
+
+    public String getAccessTokenRevokedDateTime() {
+        return accessTokenRevokedDateTime;
+    }
+
+    public void setAccessTokenRevokedDateTime(String accessTokenRevokedDateTime) {
+        this.accessTokenRevokedDateTime = accessTokenRevokedDateTime;
+    }
+
+    public long getTtl() {
+        return ttl;
+    }
+
+    @Override
+    public void setTtl(long ttl) {
+        this.ttl = ttl;
+    }
+
+    public String getJwtId() {
+        return jwtId;
+    }
+
+    public void setJwtId(String jwtId) {
+        this.jwtId = jwtId;
+    }
+
+    public String getJwtIdUsedAt() {
+        return jwtIdUsedAt;
+    }
+
+    public void setJwtIdUsedAt(String jwtIdUsedAt) {
+        this.jwtIdUsedAt = jwtIdUsedAt;
     }
 
     @Override

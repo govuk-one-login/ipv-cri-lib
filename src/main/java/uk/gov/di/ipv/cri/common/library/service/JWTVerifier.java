@@ -12,9 +12,19 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import com.nimbusds.oauth2.sdk.auth.JWTAuthenticationClaimsSet;
+import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
+import com.nimbusds.oauth2.sdk.auth.verifier.InvalidClientException;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import com.nimbusds.oauth2.sdk.id.JWTID;
+import com.nimbusds.oauth2.sdk.util.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import software.amazon.lambda.powertools.logging.LoggingUtils;
 import uk.gov.di.ipv.cri.common.library.exception.ClientConfigurationException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
+import uk.gov.di.ipv.cri.common.library.helper.LogHelper;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.io.ByteArrayInputStream;
 import java.security.PublicKey;
@@ -29,12 +39,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static com.nimbusds.jose.JWSAlgorithm.ES256;
 
 public class JWTVerifier {
+
+    private static final String CLIENT_ASSERTION_PARAM = "client_assertion";
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public void verifyAuthorizationJWT(
             Map<String, String> clientAuthenticationConfig, SignedJWT signedJWT)
@@ -45,10 +60,12 @@ public class JWTVerifier {
                 Set.of(
                         JWTClaimNames.EXPIRATION_TIME,
                         JWTClaimNames.SUBJECT,
-                        JWTClaimNames.NOT_BEFORE),
+                        JWTClaimNames.NOT_BEFORE,
+                        JWTClaimNames.ISSUED_AT),
                 new JWTClaimsSet.Builder()
                         .issuer(clientAuthenticationConfig.get("issuer"))
                         .audience(clientAuthenticationConfig.get("audience"))
+                        .claim("response_type", "code")
                         .build());
     }
 
@@ -83,6 +100,49 @@ public class JWTVerifier {
             throw new SessionValidationException(
                     "The client JWT expiry date has surpassed the maximum allowed ttl value");
         }
+    }
+
+    public void validateJwtId(JWTAuthenticationClaimsSet claimsSet, SessionItem sessionItem)
+            throws InvalidClientException {
+        JWTID jwtId = claimsSet.getJWTID();
+        if (jwtId == null || StringUtils.isBlank(jwtId.getValue())) {
+            LOGGER.error("The client auth JWT id (jti) is missing");
+            throw new InvalidClientException("The client auth JWT id (jti) is missing");
+        }
+
+        if (sessionItem.getJwtId() != null && sessionItem.getJwtId().equals(jwtId.getValue())) {
+            LoggingUtils.appendKey(
+                    LogHelper.LogField.JTI_LOG_FIELD.getFieldName(), jwtId.getValue());
+            LoggingUtils.appendKey(
+                    LogHelper.LogField.USED_AT_DATE_TIME_LOG_FIELD.getFieldName(),
+                    sessionItem.getAuthorizationCodeUsedAtTime());
+            LOGGER.error("The client auth JWT id (jti) has already been used");
+            LoggingUtils.removeKeys(
+                    LogHelper.LogField.JTI_LOG_FIELD.getFieldName(),
+                    LogHelper.LogField.USED_AT_DATE_TIME_LOG_FIELD.getFieldName());
+            throw new InvalidClientException("The client auth JWT id (jti) has already been used");
+        } else {
+            sessionItem.setJwtId(jwtId.getValue());
+            sessionItem.setJwtIdUsedAt(Instant.now().toString());
+        }
+    }
+
+    public PrivateKeyJWT clientJwtWithConcatSignature(
+            PrivateKeyJWT clientJwt, Map<String, List<String>> requestBody)
+            throws JOSEException, java.text.ParseException, com.nimbusds.oauth2.sdk.ParseException {
+        // AWS KMS EC signature are in DER format. We need them in concat format.
+        return signatureIsDerFormat(clientJwt.getClientAssertion())
+                ? transcodeSignatureToConcatFormat(clientJwt, requestBody)
+                : clientJwt;
+    }
+
+    private PrivateKeyJWT transcodeSignatureToConcatFormat(
+            PrivateKeyJWT clientJwt, Map<String, List<String>> queryParams)
+            throws java.text.ParseException, JOSEException, com.nimbusds.oauth2.sdk.ParseException {
+        queryParams.put(
+                CLIENT_ASSERTION_PARAM,
+                List.of(transcodeSignature(clientJwt.getClientAssertion()).serialize()));
+        return PrivateKeyJWT.parse(queryParams);
     }
 
     private void verifyJWT(

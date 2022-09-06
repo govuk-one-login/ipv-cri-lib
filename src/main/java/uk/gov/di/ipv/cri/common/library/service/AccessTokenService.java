@@ -1,14 +1,20 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
 import com.nimbusds.common.contenttype.ContentType;
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.AccessTokenResponse;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
+import com.nimbusds.oauth2.sdk.GrantType;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.TokenRequest;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
+import com.nimbusds.oauth2.sdk.auth.verifier.ClientAuthenticationVerifier;
+import com.nimbusds.oauth2.sdk.auth.verifier.InvalidClientException;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.Audience;
 import com.nimbusds.oauth2.sdk.id.ClientID;
@@ -18,6 +24,8 @@ import com.nimbusds.oauth2.sdk.id.Subject;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
+import com.nimbusds.oauth2.sdk.util.StringUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.exception.AccessTokenRequestException;
 import uk.gov.di.ipv.cri.common.library.exception.AccessTokenValidationException;
@@ -26,8 +34,10 @@ import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class AccessTokenService {
@@ -37,6 +47,9 @@ public class AccessTokenService {
     public static final String CLIENT_ASSERTION = "client_assertion";
     public static final String AUTHORISATION_CODE = "authorization_code";
     public static final String REDIRECT_URI = "redirect_uri";
+
+    protected static final Scope DEFAULT_SCOPE = new Scope("user-credentials");
+
     private final ConfigurationService configurationService;
     private final JWTVerifier jwtVerifier;
 
@@ -63,11 +76,27 @@ public class AccessTokenService {
         return new AccessTokenResponse(new Tokens(accessToken, null)).toSuccessResponse();
     }
 
+    public void revokeAccessToken(SessionItem sessionItem) throws IllegalArgumentException {
+
+        if (Objects.nonNull(sessionItem)) {
+            if (StringUtils.isBlank(sessionItem.getAccessTokenRevokedDateTime())) {
+                sessionItem.setAccessTokenRevokedDateTime(Instant.now().toString());
+            }
+        } else {
+            throw new IllegalArgumentException(
+                    "Failed to revoke access token - session no longer exists");
+        }
+    }
+
+    private String toExpiryDateTime(long expirySeconds) {
+        return Instant.now().plusSeconds(expirySeconds).toString();
+    }
+
     public void updateSessionAccessToken(
             SessionItem sessionItem, AccessTokenResponse tokenResponse) {
         // Set the access token
         sessionItem.setAccessToken(
-                tokenResponse.getTokens().getBearerAccessToken().toAuthorizationHeader());
+                DigestUtils.sha256Hex(tokenResponse.getTokens().getBearerAccessToken().getValue()));
 
         // Set the access token expiry
         sessionItem.setAccessTokenExpiryDate(
@@ -114,21 +143,45 @@ public class AccessTokenService {
 
             ClientAuthentication clientAuthentication = tokenRequest.getClientAuthentication();
             PrivateKeyJWT privateKeyJWT = (PrivateKeyJWT) clientAuthentication;
-            AuthorizationCodeGrant authorizationGrant =
-                    (AuthorizationCodeGrant) tokenRequest.getAuthorizationGrant();
+            GrantType grantType = tokenRequest.getAuthorizationGrant().getType();
 
-            ClientID clientID = tokenRequest.getClientAuthentication().getClientID();
-            validateTokenRequestToRecord(privateKeyJWT, authorizationGrant, clientID, sessionItem);
+            if (grantType.equals(GrantType.AUTHORIZATION_CODE)) {
+                AuthorizationCodeGrant authorizationGrant =
+                        (AuthorizationCodeGrant) tokenRequest.getAuthorizationGrant();
 
-            Map<String, String> clientAuthenticationConfig =
-                    getClientAuthenticationConfig(clientID.getValue());
-            SignedJWT signedJWT = privateKeyJWT.getClientAssertion();
+                ClientID clientID = tokenRequest.getClientAuthentication().getClientID();
+                validateTokenRequestToRecord(
+                        privateKeyJWT, authorizationGrant, clientID, sessionItem);
 
-            jwtVerifier.verifyAccessTokenJWT(clientAuthenticationConfig, signedJWT, clientID);
+                Map<String, String> clientAuthenticationConfig =
+                        getClientAuthenticationConfig(clientID.getValue());
+                SignedJWT signedJWT = privateKeyJWT.getClientAssertion();
+
+                jwtVerifier.verifyAccessTokenJWT(clientAuthenticationConfig, signedJWT, clientID);
+
+                ClientAuthentication clientJwtWithConcatSignature =
+                        jwtVerifier.clientJwtWithConcatSignature(
+                                privateKeyJWT, tokenRequest.toHTTPRequest().getQueryParameters());
+                ClientAuthenticationVerifier<Object> clientAuthVerifier =
+                        getClientAuthVerifier(configurationService, clientAuthenticationConfig);
+                clientAuthVerifier.verify(clientJwtWithConcatSignature, null, null);
+
+                jwtVerifier.validateMaxAllowedJarTtl(
+                        signedJWT.getJWTClaimsSet().getExpirationTime().toInstant(),
+                        configurationService.getMaxJwtTtl());
+                jwtVerifier.validateJwtId(
+                        privateKeyJWT.getJWTAuthenticationClaimsSet(), sessionItem);
+            } else {
+                throw new AccessTokenRequestException(
+                        "Invalid grant type", OAuth2Error.INVALID_GRANT);
+            }
             return tokenRequest;
         } catch (SessionValidationException
                 | ClientConfigurationException
-                | AccessTokenRequestException e) {
+                | JOSEException
+                | java.text.ParseException
+                | ParseException
+                | InvalidClientException e) {
             throw new AccessTokenValidationException(e);
         }
     }
@@ -231,5 +284,15 @@ public class AccessTokenService {
     private void throwValidationException(String errorMessage)
             throws AccessTokenValidationException {
         throw new AccessTokenValidationException(errorMessage);
+    }
+
+    private ClientAuthenticationVerifier<Object> getClientAuthVerifier(
+            ConfigurationService configurationService, Map<String, String> clientConfig) {
+
+        ConfigurationServicePublicKeySelector configurationServicePublicKeySelector =
+                new ConfigurationServicePublicKeySelector(configurationService);
+        return new ClientAuthenticationVerifier<>(
+                configurationServicePublicKeySelector,
+                Set.of(new Audience(clientConfig.get("audience"))));
     }
 }

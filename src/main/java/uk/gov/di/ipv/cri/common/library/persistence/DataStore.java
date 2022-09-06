@@ -18,7 +18,12 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
+import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
 
+import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +32,9 @@ public class DataStore<T> {
     private final DynamoDbTable<T> table;
     private final Class<T> typeParameterClass;
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
+    private final ConfigurationService configurationService;
 
+    @ExcludeFromGeneratedCoverageReport
     public DataStore(
             String tableName,
             Class<T> typeParameterClass,
@@ -36,6 +43,19 @@ public class DataStore<T> {
                 dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(typeParameterClass));
         this.typeParameterClass = typeParameterClass;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
+        this.configurationService = new ConfigurationService();
+    }
+
+    public DataStore(
+            String tableName,
+            Class<T> typeParameterClass,
+            DynamoDbEnhancedClient dynamoDbEnhancedClient,
+            ConfigurationService configurationService) {
+        this.table =
+                dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(typeParameterClass));
+        this.typeParameterClass = typeParameterClass;
+        this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
+        this.configurationService = configurationService;
     }
 
     public static DynamoDbEnhancedClient getClient() {
@@ -44,7 +64,29 @@ public class DataStore<T> {
         return DynamoDbEnhancedClient.builder().dynamoDbClient(clientBuilder.build()).build();
     }
 
+    public static DynamoDbEnhancedClient getClient(URI endpointOverride) {
+        DynamoDbClientBuilder clientBuilder =
+                DynamoDbClient.builder()
+                        .endpointOverride(endpointOverride)
+                        .httpClient(UrlConnectionHttpClient.create())
+                        .region(Region.EU_WEST_2);
+
+        return DynamoDbEnhancedClient.builder().dynamoDbClient(clientBuilder.build()).build();
+    }
+
     public void create(T item) {
+        if (item.getClass() == SessionItem.class) {
+            ((SessionItem) item)
+                    .setExpiryDate(
+                            Instant.now()
+                                    .plusSeconds(configurationService.getSessionTtl())
+                                    .getEpochSecond());
+            ((SessionItem) item)
+                    .setTtl(
+                            Instant.now()
+                                    .plusSeconds(configurationService.getSessionTtl())
+                                    .getEpochSecond());
+        }
         this.table.putItem(item);
     }
 

@@ -301,10 +301,12 @@ class JWTVerifierTest {
                 new SignedJWT(
                         new JWSHeader.Builder(JWSAlgorithm.RS256).build(),
                         new JWTClaimsSet.Builder()
+                                .issueTime(Date.from(now.minus(1, ChronoUnit.HOURS)))
                                 .issuer("https://dev.core.ipv.account.gov.uk")
                                 .subject(UUID.randomUUID().toString())
                                 .audience("https://address.cri.account.gov.uk")
                                 .expirationTime(Date.from(now.plus(1, ChronoUnit.HOURS)))
+                                .claim("response_type", "code")
                                 .build());
         RSASSASigner rsaSigner = new RSASSASigner(getPrivateKey());
         signedJWT.sign(rsaSigner);

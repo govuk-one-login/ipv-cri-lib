@@ -55,6 +55,7 @@ configurations {
 	gson
 	powertools
 	mockito
+	commons_codec
 }
 
 // The dynamodb enhanced package loads the apache-client as well as the spi-client, so
@@ -102,6 +103,8 @@ dependencies {
 			"uk.org.webcompere:system-stubs-core:2.0.1"
 
 	test_runtime "org.junit.jupiter:junit-jupiter-engine:${dependencyVersions.junit}"
+
+	commons_codec "commons-codec:commons-codec:1.15"
 }
 
 dependencies {
@@ -113,7 +116,8 @@ dependencies {
 			configurations.nimbus,
 			configurations.powertools,
 			configurations.sqs,
-			configurations.kms
+			configurations.kms,
+			configurations.commons_codec
 
 	testImplementation configurations.tests
 

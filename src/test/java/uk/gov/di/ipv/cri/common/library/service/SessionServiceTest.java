@@ -2,6 +2,7 @@ package uk.gov.di.ipv.cri.common.library.service;
 
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -132,7 +133,7 @@ class SessionServiceTest {
     void shouldGetSessionItemByTokenIndexSuccessfully()
             throws AccessTokenExpiredException, SessionExpiredException, SessionNotFoundException {
         AccessToken accessToken = new BearerAccessToken();
-        String serialisedAccessToken = accessToken.toAuthorizationHeader();
+        String serialisedAccessToken = DigestUtils.sha256Hex(accessToken.getValue());
         SessionItem item = new SessionItem();
         item.setSessionId(UUID.randomUUID());
         item.setAccessToken(serialisedAccessToken);
@@ -196,7 +197,7 @@ class SessionServiceTest {
     @Test
     void shouldThrowAccessTokenExpiredException() {
         AccessToken accessToken = new BearerAccessToken();
-        String serialisedAccessToken = accessToken.toAuthorizationHeader();
+        String serialisedAccessToken = DigestUtils.sha256Hex(accessToken.getValue());
         SessionItem item = new SessionItem();
         item.setSessionId(UUID.randomUUID());
         item.setAccessToken(serialisedAccessToken);
