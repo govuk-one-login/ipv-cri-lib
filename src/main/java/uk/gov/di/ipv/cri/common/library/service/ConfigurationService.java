@@ -12,6 +12,7 @@ import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverage
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ConfigurationService {
@@ -22,6 +23,7 @@ public class ConfigurationService {
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
+    private final String commonParameterPrefix;
     private final String secretPrefix;
     private final Clock clock;
 
@@ -41,8 +43,6 @@ public class ConfigurationService {
 
     @ExcludeFromGeneratedCoverageReport
     public ConfigurationService() {
-        // the following environment variables are defined in the global section of the template.yml
-        // file
         this(
                 ParamManager.getSsmProvider(
                         SsmClient.builder()
@@ -55,6 +55,7 @@ public class ConfigurationService {
                                 .httpClient(UrlConnectionHttpClient.create())
                                 .build()),
                 System.getenv("AWS_STACK_NAME"),
+                System.getenv("COMMON_PARAMETER_NAME_PREFIX"),
                 Optional.ofNullable(System.getenv("SECRET_PREFIX"))
                         .orElse(System.getenv("AWS_STACK_NAME")),
                 Clock.systemUTC());
@@ -64,11 +65,13 @@ public class ConfigurationService {
             SSMProvider ssmProvider,
             SecretsProvider secretsProvider,
             String parameterPrefix,
+            String commonParameterPrefix,
             String secretPrefix,
             Clock clock) {
         this.ssmProvider = ssmProvider;
         this.secretsProvider = secretsProvider;
         this.parameterPrefix = parameterPrefix;
+        this.commonParameterPrefix = commonParameterPrefix;
         this.secretPrefix = secretPrefix;
         this.clock = clock;
     }
@@ -76,6 +79,15 @@ public class ConfigurationService {
     public String getParameterValue(String parameterName) {
         return ssmProvider.get(
                 String.format(PARAMETER_NAME_FORMAT, parameterPrefix, parameterName));
+    }
+
+    public String getParameterValueByAbsoluteName(String parameterName) {
+        return ssmProvider.get(parameterName);
+    }
+
+    public String getCommonParameterValue(String parameterName) {
+        return ssmProvider.get(
+                String.format(PARAMETER_NAME_FORMAT, getCommonParameterPrefix(), parameterName));
     }
 
     public String getSecretValue(String secretName) {
@@ -88,7 +100,8 @@ public class ConfigurationService {
     }
 
     public long getSessionTtl() {
-        return Long.parseLong(ssmProvider.get(getParameterName(SSMParameterName.SESSION_TTL)));
+        return Long.parseLong(
+                ssmProvider.get(getCommonParameterName(SSMParameterName.SESSION_TTL)));
     }
 
     public long getSessionExpirationEpoch() {
@@ -120,7 +133,8 @@ public class ConfigurationService {
     }
 
     public String getVerifiableCredentialIssuer() {
-        return ssmProvider.get(getParameterName(SSMParameterName.VERIFIABLE_CREDENTIAL_ISSUER));
+        return ssmProvider.get(
+                getCommonParameterName(SSMParameterName.VERIFIABLE_CREDENTIAL_ISSUER));
     }
 
     public String getVerifiableCredentialKmsSigningKeyId() {
@@ -143,5 +157,14 @@ public class ConfigurationService {
 
     private String getParameterName(SSMParameterName parameterName) {
         return String.format(PARAMETER_NAME_FORMAT, parameterPrefix, parameterName.parameterName);
+    }
+
+    private String getCommonParameterName(SSMParameterName parameterName) {
+        return String.format(
+                PARAMETER_NAME_FORMAT, getCommonParameterPrefix(), parameterName.parameterName);
+    }
+
+    private String getCommonParameterPrefix() {
+        return Objects.nonNull(commonParameterPrefix) ? commonParameterPrefix : parameterPrefix;
     }
 }

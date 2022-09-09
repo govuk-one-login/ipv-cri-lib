@@ -27,7 +27,7 @@ public class SessionService {
         this.configurationService = new ConfigurationService();
         this.dataStore =
                 new DataStore<>(
-                        configurationService.getParameterValue(SESSION_TABLE_PARAM_NAME),
+                        configurationService.getCommonParameterValue(SESSION_TABLE_PARAM_NAME),
                         SessionItem.class,
                         new DynamoDbEnhancedClientFactory().getClient());
         this.clock = Clock.systemUTC();
@@ -38,7 +38,7 @@ public class SessionService {
     public SessionService(ConfigurationService configurationService) {
         this(
                 new DataStore<>(
-                        configurationService.getParameterValue(SESSION_TABLE_PARAM_NAME),
+                        configurationService.getCommonParameterValue(SESSION_TABLE_PARAM_NAME),
                         SessionItem.class,
                         new DynamoDbEnhancedClientFactory().getClient()),
                 configurationService,
