@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
 import com.nimbusds.oauth2.sdk.token.AccessToken;
+import software.amazon.lambda.powertools.logging.LoggingUtils;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.SessionRequest;
 import uk.gov.di.ipv.cri.common.library.exception.AccessTokenExpiredException;
@@ -13,6 +14,7 @@ import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.common.library.util.ListUtil;
 
 import java.time.Clock;
+import java.util.Optional;
 import java.util.UUID;
 
 public class SessionService {
@@ -74,6 +76,7 @@ public class SessionService {
     }
 
     public void updateSession(SessionItem sessionItem) {
+        setSessionItemsToLogging(sessionItem);
         dataStore.update(sessionItem);
     }
 
@@ -88,6 +91,7 @@ public class SessionService {
             throws SessionNotFoundException, SessionExpiredException {
 
         SessionItem sessionItem = dataStore.getItem(sessionId);
+        setSessionItemsToLogging(sessionItem);
         if (sessionItem == null) {
             throw new SessionNotFoundException("session not found");
         }
@@ -99,8 +103,14 @@ public class SessionService {
         return sessionItem;
     }
 
+    private void setSessionItemsToLogging(SessionItem sessionItem) {
+        Optional.ofNullable(sessionItem.getClientSessionId()).ifPresent(id -> LoggingUtils.appendKey("govuk_signin_journey_id", id));
+    }
+
     public SessionItem getSession(String sessionId) {
-        return dataStore.getItem(sessionId);
+        SessionItem sessionItem = dataStore.getItem(sessionId);
+        setSessionItemsToLogging(sessionItem);
+        return sessionItem;
     }
 
     public SessionItem getSessionByAccessToken(AccessToken accessToken)
@@ -124,6 +134,7 @@ public class SessionService {
 
         // Re-fetch our session directly to avoid problems with projections
         sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
+        setSessionItemsToLogging(sessionItem);
 
         if (sessionItem.getAccessTokenExpiryDate() < clock.instant().getEpochSecond()) {
             throw new AccessTokenExpiredException("access code expired");
@@ -134,7 +145,7 @@ public class SessionService {
 
     public SessionItem getSessionByAuthorisationCode(String authCode)
             throws SessionExpiredException, AuthorizationCodeExpiredException,
-                    SessionNotFoundException {
+            SessionNotFoundException {
         SessionItem sessionItem;
 
         try {
@@ -153,6 +164,7 @@ public class SessionService {
 
         // Re-fetch our session directly to avoid problems with projections
         sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
+        setSessionItemsToLogging(sessionItem);
 
         if (sessionItem.getAuthorizationCodeExpiryDate() < clock.instant().getEpochSecond()) {
             throw new AuthorizationCodeExpiredException("authorization code expired");
