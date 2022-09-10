@@ -23,6 +23,13 @@ public class EventProbe {
         return this;
     }
 
+    public EventProbe log(Level level, String message) {
+        if (LOGGER.isEnabled(level)) {
+            LOGGER.log(level, message);
+        }
+        return this;
+    }
+
     private void logErrorCause(Throwable throwable) {
         Throwable cause = throwable.getCause();
         if (Objects.nonNull(cause)) {
