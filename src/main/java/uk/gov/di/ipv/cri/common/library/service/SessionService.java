@@ -69,9 +69,8 @@ public class SessionService {
         sessionItem.setSubject(sessionRequest.getSubject());
         sessionItem.setPersistentSessionId(sessionRequest.getPersistentSessionId());
         sessionItem.setClientSessionId(sessionRequest.getClientSessionId());
-
+        setSessionItemsToLogging(sessionItem);
         dataStore.create(sessionItem);
-
         return sessionItem.getSessionId();
     }
 
@@ -104,7 +103,20 @@ public class SessionService {
     }
 
     private void setSessionItemsToLogging(SessionItem sessionItem) {
-        Optional.ofNullable(sessionItem.getClientSessionId()).ifPresent(id -> LoggingUtils.appendKey("govuk_signin_journey_id", id));
+        Optional.ofNullable(sessionItem)
+                .ifPresent(
+                        s -> {
+                            Optional.ofNullable(s.getClientSessionId())
+                                    .ifPresent(
+                                            id ->
+                                                    LoggingUtils.appendKey(
+                                                            "govuk_signin_journey_id", id));
+                            Optional.ofNullable(s.getPersistentSessionId())
+                                    .ifPresent(
+                                            id ->
+                                                    LoggingUtils.appendKey(
+                                                            "persistent_session_id", id));
+                        });
     }
 
     public SessionItem getSession(String sessionId) {
@@ -134,8 +146,6 @@ public class SessionService {
 
         // Re-fetch our session directly to avoid problems with projections
         sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
-        setSessionItemsToLogging(sessionItem);
-
         if (sessionItem.getAccessTokenExpiryDate() < clock.instant().getEpochSecond()) {
             throw new AccessTokenExpiredException("access code expired");
         }
@@ -145,7 +155,7 @@ public class SessionService {
 
     public SessionItem getSessionByAuthorisationCode(String authCode)
             throws SessionExpiredException, AuthorizationCodeExpiredException,
-            SessionNotFoundException {
+                    SessionNotFoundException {
         SessionItem sessionItem;
 
         try {
@@ -164,7 +174,6 @@ public class SessionService {
 
         // Re-fetch our session directly to avoid problems with projections
         sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
-        setSessionItemsToLogging(sessionItem);
 
         if (sessionItem.getAuthorizationCodeExpiryDate() < clock.instant().getEpochSecond()) {
             throw new AuthorizationCodeExpiredException("authorization code expired");
