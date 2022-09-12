@@ -175,7 +175,8 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
-def buildVersion = "1.1.0"
+// please update RELEASE_NOTES.md when you update this version
+def buildVersion = "1.1.1"
 group = "uk.gov.account"
 version = "$buildVersion"
 
