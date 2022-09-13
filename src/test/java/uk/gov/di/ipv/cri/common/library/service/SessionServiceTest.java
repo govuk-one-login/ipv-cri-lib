@@ -96,6 +96,7 @@ class SessionServiceTest {
         assertThat(
                 capturedValue.getRedirectUri(),
                 equalTo(URI.create("https://www.example.com/callback")));
+        assertThat(capturedValue.getAttemptCount(), equalTo(0));
     }
 
     @Test

@@ -1,9 +1,14 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.1.7
+
+* Added additional expiry time validation to auth jar checks
+* Added log helper to assist with adding logging identifiers
+
 ## 1.1.6
 
 * Added attemptCount to sessionItem and initialised attemptCount in session creation
-* Addded OathErrorResponse for use with access denied error
+* Added OathErrorResponse for use with access denied error
 
 ## 1.1.5
 

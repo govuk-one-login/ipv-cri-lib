@@ -23,6 +23,7 @@ public class SessionRequest {
     private String persistentSessionId;
     private String clientSessionId;
     private String clientIpAddress;
+    private int attemptCount;
 
     public String getIssuer() {
         return issuer;
@@ -146,5 +147,13 @@ public class SessionRequest {
 
     public void setClientIpAddress(String clientIpAddress) {
         this.clientIpAddress = clientIpAddress;
+    }
+
+    public int getAttemptCount() {
+        return attemptCount;
+    }
+
+    public void setAttemptCount(int attemptCount) {
+        this.attemptCount = attemptCount;
     }
 }

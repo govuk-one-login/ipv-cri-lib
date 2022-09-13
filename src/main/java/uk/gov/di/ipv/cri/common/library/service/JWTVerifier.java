@@ -13,6 +13,8 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import uk.gov.di.ipv.cri.common.library.exception.ClientConfigurationException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
 
@@ -24,6 +26,9 @@ import java.security.cert.CertificateFactory;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +36,8 @@ import java.util.Set;
 import static com.nimbusds.jose.JWSAlgorithm.ES256;
 
 public class JWTVerifier {
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public void verifyAuthorizationJWT(
             Map<String, String> clientAuthenticationConfig, SignedJWT signedJWT)
@@ -65,6 +72,19 @@ public class JWTVerifier {
                         .audience(clientAuthenticationConfig.get("audience"))
                         .build();
         verifyJWT(clientAuthenticationConfig, signedJWT, requiredClaims, expectedClaimValues);
+    }
+
+    public void validateMaxAllowedJarTtl(Instant jwtExpirationTime, long maxAllowedTtl)
+            throws SessionValidationException {
+
+        LocalDateTime maximumExpirationTime = LocalDateTime.now().plusSeconds(maxAllowedTtl);
+        LocalDateTime expirationTime = LocalDateTime.ofInstant(jwtExpirationTime, ZoneOffset.UTC);
+
+        if (expirationTime.isAfter(maximumExpirationTime)) {
+            LOGGER.error("Client JWT expiry date is too far in the future");
+            throw new SessionValidationException(
+                    "The client JWT expiry date has surpassed the maximum allowed ttl value");
+        }
     }
 
     private void verifyJWT(
@@ -139,6 +159,7 @@ public class JWTVerifier {
         try {
             new DefaultJWTClaimsVerifier<>(expectedClaimValues, requiredClaims)
                     .verify(signedJWT.getJWTClaimsSet(), null);
+
         } catch (BadJWTException | ParseException e) {
             throw new SessionValidationException(e.getMessage(), e);
         }
