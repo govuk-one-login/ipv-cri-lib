@@ -70,7 +70,9 @@ public class SessionService {
         sessionItem.setSubject(sessionRequest.getSubject());
         sessionItem.setPersistentSessionId(sessionRequest.getPersistentSessionId());
         sessionItem.setClientSessionId(sessionRequest.getClientSessionId());
+        sessionItem.setClientIpAddress(sessionRequest.getClientIpAddress());
         setSessionItemsToLogging(sessionItem);
+
         dataStore.create(sessionItem);
         return sessionItem.getSessionId();
     }

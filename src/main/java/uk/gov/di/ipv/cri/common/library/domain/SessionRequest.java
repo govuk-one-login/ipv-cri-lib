@@ -22,6 +22,7 @@ public class SessionRequest {
     private SharedClaims sharedClaims;
     private String persistentSessionId;
     private String clientSessionId;
+    private String clientIpAddress;
 
     public String getIssuer() {
         return issuer;
@@ -137,5 +138,13 @@ public class SessionRequest {
 
     public void setClientSessionId(String clientSessionId) {
         this.clientSessionId = clientSessionId;
+    }
+
+    public String getClientIpAddress() {
+        return clientIpAddress;
+    }
+
+    public void setClientIpAddress(String clientIpAddress) {
+        this.clientIpAddress = clientIpAddress;
     }
 }

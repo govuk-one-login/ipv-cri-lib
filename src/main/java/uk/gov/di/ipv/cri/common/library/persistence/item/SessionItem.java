@@ -24,6 +24,7 @@ public class SessionItem {
     private String subject;
     private String persistentSessionId;
     private String clientSessionId;
+    private String clientIpAddress;
 
     public SessionItem() {
         sessionId = UUID.randomUUID();
@@ -134,6 +135,14 @@ public class SessionItem {
 
     public void setClientSessionId(String clientSessionId) {
         this.clientSessionId = clientSessionId;
+    }
+
+    public String getClientIpAddress() {
+        return clientIpAddress;
+    }
+
+    public void setClientIpAddress(String clientIpAddress) {
+        this.clientIpAddress = clientIpAddress;
     }
 
     @Override

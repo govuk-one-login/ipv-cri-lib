@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.1.3
+
+* Added `clientIpAddress` in session table `session-di-ipv-cri-kbv-*`.
+
 ## 1.1.2
 
 * Remove `persistent_session_id` from being logged.

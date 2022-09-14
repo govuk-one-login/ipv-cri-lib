@@ -76,6 +76,7 @@ class SessionServiceTest {
         when(sessionRequest.getSubject()).thenReturn("a subject");
         when(sessionRequest.getPersistentSessionId()).thenReturn("a persistent session id");
         when(sessionRequest.getClientSessionId()).thenReturn("a client session id");
+        when(sessionRequest.getClientIpAddress()).thenReturn("192.0.2.0");
 
         try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
                 Mockito.mockStatic(LoggingUtils.class)) {
@@ -91,6 +92,7 @@ class SessionServiceTest {
         assertThat(capturedValue.getSubject(), equalTo("a subject"));
         assertThat(capturedValue.getPersistentSessionId(), equalTo("a persistent session id"));
         assertThat(capturedValue.getClientSessionId(), equalTo("a client session id"));
+        assertThat(capturedValue.getClientIpAddress(), equalTo("192.0.2.0"));
         assertThat(
                 capturedValue.getRedirectUri(),
                 equalTo(URI.create("https://www.example.com/callback")));
