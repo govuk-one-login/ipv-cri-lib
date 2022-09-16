@@ -19,6 +19,7 @@ import java.util.UUID;
 
 public class SessionService {
     private static final String SESSION_TABLE_PARAM_NAME = "SessionTableName";
+    private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
     private final ConfigurationService configurationService;
     private final DataStore<SessionItem> dataStore;
     private final ListUtil listUtil;
@@ -110,12 +111,7 @@ public class SessionService {
                                     .ifPresent(
                                             id ->
                                                     LoggingUtils.appendKey(
-                                                            "govuk_signin_journey_id", id));
-                            Optional.ofNullable(s.getPersistentSessionId())
-                                    .ifPresent(
-                                            id ->
-                                                    LoggingUtils.appendKey(
-                                                            "persistent_session_id", id));
+                                                            GOVUK_SIGNIN_JOURNEY_ID, id));
                         });
     }
 
