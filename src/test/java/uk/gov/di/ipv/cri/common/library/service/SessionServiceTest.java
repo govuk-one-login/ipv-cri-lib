@@ -232,17 +232,11 @@ class SessionServiceTest {
             SessionItem sessionItem = mock(SessionItem.class);
             when(mockDataStore.getItem(SESSION_ID)).thenReturn(sessionItem);
             when(sessionItem.getClientSessionId()).thenReturn("a client session id");
-            when(sessionItem.getPersistentSessionId()).thenReturn("a persistent session id");
             sessionService.getSession(SESSION_ID);
 
             verify(mockDataStore).getItem(SESSION_ID);
             loggingUtilsMockedStatic.verify(
                     () -> LoggingUtils.appendKey("govuk_signin_journey_id", "a client session id"),
-                    times(1));
-            loggingUtilsMockedStatic.verify(
-                    () ->
-                            LoggingUtils.appendKey(
-                                    "persistent_session_id", "a persistent session id"),
                     times(1));
             loggingUtilsMockedStatic.verifyNoMoreInteractions();
         }
@@ -251,9 +245,6 @@ class SessionServiceTest {
     private void verifyLoggingUtilsAppendKeys(MockedStatic<LoggingUtils> loggingUtilsMockedStatic) {
         loggingUtilsMockedStatic.verify(
                 () -> LoggingUtils.appendKey("govuk_signin_journey_id", "a client session id"),
-                times(1));
-        loggingUtilsMockedStatic.verify(
-                () -> LoggingUtils.appendKey("persistent_session_id", "a persistent session id"),
                 times(1));
         loggingUtilsMockedStatic.verifyNoMoreInteractions();
     }
