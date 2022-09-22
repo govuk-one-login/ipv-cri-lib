@@ -45,15 +45,17 @@ public class ConfigurationService {
     public ConfigurationService() {
         this(
                 ParamManager.getSsmProvider(
-                        SsmClient.builder()
-                                .region(Region.of(System.getenv("AWS_REGION")))
-                                .httpClient(UrlConnectionHttpClient.create())
-                                .build()),
+                                SsmClient.builder()
+                                        .region(Region.of(System.getenv("AWS_REGION")))
+                                        .httpClient(UrlConnectionHttpClient.create())
+                                        .build())
+                        .defaultMaxAge(getCacheTTLInMinutes(), ChronoUnit.MINUTES),
                 ParamManager.getSecretsProvider(
-                        SecretsManagerClient.builder()
-                                .region(Region.of(System.getenv("AWS_REGION")))
-                                .httpClient(UrlConnectionHttpClient.create())
-                                .build()),
+                                SecretsManagerClient.builder()
+                                        .region(Region.of(System.getenv("AWS_REGION")))
+                                        .httpClient(UrlConnectionHttpClient.create())
+                                        .build())
+                        .defaultMaxAge(getCacheTTLInMinutes(), ChronoUnit.MINUTES),
                 System.getenv("AWS_STACK_NAME"),
                 System.getenv("COMMON_PARAMETER_NAME_PREFIX"),
                 Optional.ofNullable(System.getenv("SECRET_PREFIX"))
@@ -166,5 +168,11 @@ public class ConfigurationService {
 
     private String getCommonParameterPrefix() {
         return Objects.nonNull(commonParameterPrefix) ? commonParameterPrefix : parameterPrefix;
+    }
+
+    private static int getCacheTTLInMinutes() {
+        return Optional.ofNullable(System.getenv("CONFIG_SERVICE_CACHE_TTL_MINS"))
+                .map(Integer::valueOf)
+                .orElse(5);
     }
 }
