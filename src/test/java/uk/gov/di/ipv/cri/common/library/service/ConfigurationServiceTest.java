@@ -149,15 +149,15 @@ class ConfigurationServiceTest {
 
     @Test
     @DisplayName("should cache ssm params and secrets manager secrets for 5 minutes by default")
-    void cacheFor5MinsByDefault() {
+    void shouldCacheFor5MinsByDefault() {
         testConfigurationManagerWithExpectedCacheMinutes(5);
     }
 
     @Test
     @DisplayName(
-            "should cache ssm params and secrets manager secrets for 1 minute if set by the env var "
+            "should cache ssm params and secrets manager secrets for the number of minutes set by the env var "
                     + CONFIG_SERVICE_CACHE_TTL_MINS)
-    void cacheForMinutesSetByEnvVar() {
+    void shouldCacheForMinutesSetByEnvVar() {
         environment.set(CONFIG_SERVICE_CACHE_TTL_MINS, "1");
         testConfigurationManagerWithExpectedCacheMinutes(1);
     }
