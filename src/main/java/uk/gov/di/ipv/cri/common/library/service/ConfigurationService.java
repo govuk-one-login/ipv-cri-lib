@@ -20,6 +20,7 @@ public class ConfigurationService {
     private static final String PARAMETER_NAME_FORMAT = "/%s/%s";
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final Long AUTHORIZATION_CODE_TTL_IN_SECS = 600L;
+    public static final String CONFIG_SERVICE_CACHE_TTL_MINS = "CONFIG_SERVICE_CACHE_TTL_MINS";
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
@@ -171,7 +172,7 @@ public class ConfigurationService {
     }
 
     private static int getCacheTTLInMinutes() {
-        return Optional.ofNullable(System.getenv("CONFIG_SERVICE_CACHE_TTL_MINS"))
+        return Optional.ofNullable(System.getenv(CONFIG_SERVICE_CACHE_TTL_MINS))
                 .map(Integer::valueOf)
                 .orElse(5);
     }

@@ -30,6 +30,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.CONFIG_SERVICE_CACHE_TTL_MINS;
 
 @ExtendWith({MockitoExtension.class, SystemStubsExtension.class})
 class ConfigurationServiceTest {
@@ -154,9 +155,9 @@ class ConfigurationServiceTest {
 
     @Test
     @DisplayName(
-            "should cache ssm params and secrets manager secrets for 1 minute if set by the env var CONFIG_MAX_AGE_IN_MINS")
+            "should cache ssm params and secrets manager secrets for 1 minute if set by the env var " + CONFIG_SERVICE_CACHE_TTL_MINS)
     void cacheForMinutesSetByEnvVar() {
-        environment.set("CONFIG_SERVICE_CACHE_TTL_MINS", "1");
+        environment.set(CONFIG_SERVICE_CACHE_TTL_MINS, "1");
         testConfigurationManagerWithExpectedCacheMinutes(1);
     }
 
