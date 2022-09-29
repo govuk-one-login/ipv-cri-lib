@@ -1,0 +1,12 @@
+# See also: https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "03:00"
+    target-branch: main
+    labels:
+      - dependabot
