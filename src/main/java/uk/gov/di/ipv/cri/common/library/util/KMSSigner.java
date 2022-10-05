@@ -4,9 +4,12 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.impl.ECDSA;
 import com.nimbusds.jose.jca.JCAContext;
 import com.nimbusds.jose.util.Base64URL;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.MessageType;
 import software.amazon.awssdk.services.kms.model.SignRequest;
@@ -30,7 +33,11 @@ public class KMSSigner implements JWSSigner {
     @ExcludeFromGeneratedCoverageReport
     public KMSSigner(String keyId) {
         this.keyId = keyId;
-        this.kmsClient = KmsClient.builder().build();
+        this.kmsClient =
+                KmsClient.builder()
+                        .region(Region.of(System.getenv("AWS_REGION")))
+                        .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+                        .build();
     }
 
     public KMSSigner(String keyId, KmsClient kmsClient) {
@@ -42,25 +49,31 @@ public class KMSSigner implements JWSSigner {
     public Base64URL sign(JWSHeader header, byte[] signingInput) throws JOSEException {
         Objects.requireNonNull(signingInput, "Signing input must not be null");
 
-        byte[] signingInputHash;
+        SignResponse signResponse =
+                kmsClient.sign(
+                        SignRequest.builder()
+                                .signingAlgorithm(SigningAlgorithmSpec.ECDSA_SHA_256.toString())
+                                .keyId(keyId)
+                                .message(SdkBytes.fromByteArray(getSigningInputBytes(signingInput)))
+                                .messageType(MessageType.DIGEST)
+                                .build());
 
+        byte[] concatSignature =
+                ECDSA.transcodeSignatureToConcat(
+                        signResponse.signature().asByteArray(),
+                        ECDSA.getSignatureByteArrayLength(ES256));
+
+        return Base64URL.encode(concatSignature);
+    }
+
+    private byte[] getSigningInputBytes(byte[] signingInput) throws JOSEException {
+        byte[] signingInputHash;
         try {
             signingInputHash = MessageDigest.getInstance("SHA-256").digest(signingInput);
         } catch (NoSuchAlgorithmException e) {
             throw new JOSEException(e.getMessage());
         }
-
-        SignRequest signRequest =
-                SignRequest.builder()
-                        .signingAlgorithm(SigningAlgorithmSpec.ECDSA_SHA_256.toString())
-                        .keyId(keyId)
-                        .message(SdkBytes.fromByteArray(signingInputHash))
-                        .messageType(MessageType.DIGEST)
-                        .build();
-
-        SignResponse signResponse = kmsClient.sign(signRequest);
-
-        return Base64URL.encode(signResponse.signature().asByteArray());
+        return signingInputHash;
     }
 
     @Override
