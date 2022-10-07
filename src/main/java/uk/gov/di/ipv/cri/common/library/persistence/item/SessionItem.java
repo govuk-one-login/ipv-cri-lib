@@ -25,6 +25,7 @@ public class SessionItem {
     private String persistentSessionId;
     private String clientSessionId;
     private String clientIpAddress;
+    private int attemptCount;
 
     public SessionItem() {
         sessionId = UUID.randomUUID();
@@ -143,6 +144,14 @@ public class SessionItem {
 
     public void setClientIpAddress(String clientIpAddress) {
         this.clientIpAddress = clientIpAddress;
+    }
+
+    public int getAttemptCount() {
+        return attemptCount;
+    }
+
+    public void setAttemptCount(int attemptCount) {
+        this.attemptCount = attemptCount;
     }
 
     @Override
