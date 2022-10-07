@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.1.5
+
+* Convert the KMS der signature format into concat format
+
 ## 1.1.4
 
 * Performance: cache SSM params and Secrets Manager secrets for longer

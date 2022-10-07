@@ -20,11 +20,18 @@ import software.amazon.awssdk.services.kms.model.SignRequest;
 import software.amazon.awssdk.services.kms.model.SignResponse;
 import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
 
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.nimbusds.jose.JWSAlgorithm.ES256;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -52,13 +59,15 @@ class KMSSignerTest {
     void shouldCreateKMSSignerSuccessfully() {
         assertThat(kmsSigner, notNullValue());
         assertThat(kmsSigner.getJCAContext(), notNullValue());
-        assertThat(Set.of(JWSAlgorithm.ES256), equalTo(kmsSigner.supportedJWSAlgorithms()));
+        assertThat(Set.of(ES256), equalTo(kmsSigner.supportedJWSAlgorithms()));
     }
 
     @Test
-    void shouldSignJWSHeaderSuccessfully() throws JOSEException {
+    void shouldSignJWSHeaderSuccessfully()
+            throws JOSEException, NoSuchAlgorithmException, SignatureException,
+                    InvalidKeyException {
         JWSHeader mockJWSHeader = mock(JWSHeader.class);
-        byte[] data = new byte[0];
+        byte[] payload = "test payload".getBytes();
         ArgumentCaptor<SignRequest> signRequestArgumentCaptor =
                 ArgumentCaptor.forClass(SignRequest.class);
 
@@ -67,9 +76,9 @@ class KMSSignerTest {
 
         when(mockKmsClient.sign(signRequestArgumentCaptor.capture())).thenReturn(mockSignResponse);
         when(mockSignResponse.signature()).thenReturn(mockSdkBytes);
-        when(mockSdkBytes.asByteArray()).thenReturn(data);
+        when(mockSdkBytes.asByteArray()).thenReturn(getDERPayloadBytes(payload));
 
-        var signed = kmsSigner.sign(mockJWSHeader, data);
+        var signed = kmsSigner.sign(mockJWSHeader, payload);
 
         verify(mockKmsClient).sign(signRequestArgumentCaptor.capture());
         SignRequest capturedSignRequest = signRequestArgumentCaptor.getValue();
@@ -83,16 +92,17 @@ class KMSSignerTest {
     }
 
     @Test
-    void shouldSignJWSObject() throws JOSEException {
+    void shouldSignJWSObject()
+            throws JOSEException, NoSuchAlgorithmException, SignatureException,
+                    InvalidKeyException {
         var signResponse = mock(SignResponse.class);
         when(mockKmsClient.sign(any(SignRequest.class))).thenReturn(signResponse);
-
-        byte[] bytes = new byte[10];
-        when(signResponse.signature()).thenReturn(SdkBytes.fromByteArray(bytes));
+        when(signResponse.signature())
+                .thenReturn(SdkBytes.fromByteArray(getDERPayloadBytes("test payload".getBytes())));
 
         JSONObject jsonPayload = new JSONObject(Map.of("test", "test"));
 
-        JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.ES256).build();
+        JWSHeader jwsHeader = new JWSHeader.Builder(ES256).build();
         JWSObject jwsObject = new JWSObject(jwsHeader, new Payload(jsonPayload));
 
         jwsObject.sign(kmsSigner);
@@ -114,22 +124,27 @@ class KMSSignerTest {
 
     @Test
     void base64UrlSignatureShouldNotIncludePadding() throws Exception {
-        JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.ES256).build();
+        var jwsHeader = new JWSHeader.Builder(JWSAlgorithm.ES256).build();
         var signResponse = mock(SignResponse.class);
-        byte[] bytesThanWillNormallyHaveB64Padding = new byte[10];
+        var payload = Base64.getDecoder().decode("dGVzdCBpbnB1dA==");
+        byte[] base64PaddedBytes = getDERPayloadBytes(payload);
 
         when(mockKmsClient.sign(any(SignRequest.class))).thenReturn(signResponse);
-        when(signResponse.signature())
-                .thenReturn(SdkBytes.fromByteArray(bytesThanWillNormallyHaveB64Padding));
+        when(signResponse.signature()).thenReturn(SdkBytes.fromByteArray(base64PaddedBytes));
 
-        Base64URL signature = kmsSigner.sign(jwsHeader, new byte[0]);
+        Base64URL signature = kmsSigner.sign(jwsHeader, payload);
         String signatureString = signature.toString();
 
-        assertThat(
-                Base64.getUrlEncoder()
-                        .encodeToString(bytesThanWillNormallyHaveB64Padding)
-                        .endsWith("=="),
-                is(true));
+        assertThat(Base64.getUrlEncoder().encodeToString(payload).endsWith("=="), is(true));
         assertThat(signatureString.endsWith("="), is(false));
+    }
+
+    private byte[] getDERPayloadBytes(byte[] payload)
+            throws InvalidKeyException, NoSuchAlgorithmException, SignatureException {
+        KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
+        Signature signature = Signature.getInstance("SHA256WithECDSA");
+        signature.initSign(keyPair.getPrivate());
+        signature.update(payload);
+        return signature.sign();
     }
 }
