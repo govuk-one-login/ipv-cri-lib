@@ -29,6 +29,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
@@ -77,11 +78,12 @@ public class JWTVerifier {
     public void validateMaxAllowedJarTtl(Instant jwtExpirationTime, long maxAllowedTtl)
             throws SessionValidationException {
 
-        LocalDateTime maximumExpirationTime = LocalDateTime.now().plusSeconds(maxAllowedTtl);
+        LocalDateTime maximumExpirationTime =
+                LocalDateTime.ofInstant(
+                        Instant.now().plus(maxAllowedTtl, ChronoUnit.SECONDS), ZoneOffset.UTC);
         LocalDateTime expirationTime = LocalDateTime.ofInstant(jwtExpirationTime, ZoneOffset.UTC);
 
         if (expirationTime.isAfter(maximumExpirationTime)) {
-            LOGGER.error("Client JWT expiry date is too far in the future");
             throw new SessionValidationException(
                     "The client JWT expiry date has surpassed the maximum allowed ttl value");
         }

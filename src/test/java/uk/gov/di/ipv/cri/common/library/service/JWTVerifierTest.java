@@ -22,6 +22,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
@@ -102,6 +103,29 @@ class JWTVerifierTest {
         assertEquals(
                 "JWT iss claim has value incorrect-issuer-url, must be ipv-core-stub",
                 exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowValidationExceptionWhenJWTClaimsExpiryExceedsLimit() {
+        SessionValidationException exception =
+                assertThrows(
+                        SessionValidationException.class,
+                        () ->
+                                jwtVerifier.validateMaxAllowedJarTtl(
+                                        Instant.now()
+                                                .plusSeconds(101)
+                                                .atZone(ZoneId.of("UTC"))
+                                                .toInstant(),
+                                        100));
+        assertEquals(
+                "The client JWT expiry date has surpassed the maximum allowed ttl value",
+                exception.getMessage());
+    }
+
+    @Test
+    void shouldNotThrowValidationExceptionWhenJWTClaimsWithinLimit() {
+        jwtVerifier.validateMaxAllowedJarTtl(
+                Instant.now().plusSeconds(99).atZone(ZoneId.of("UTC")).toInstant(), 100);
     }
 
     @Test
