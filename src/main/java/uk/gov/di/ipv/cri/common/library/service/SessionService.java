@@ -71,6 +71,7 @@ public class SessionService {
         sessionItem.setPersistentSessionId(sessionRequest.getPersistentSessionId());
         sessionItem.setClientSessionId(sessionRequest.getClientSessionId());
         sessionItem.setClientIpAddress(sessionRequest.getClientIpAddress());
+        sessionItem.setAttemptCount(0);
         setSessionItemsToLogging(sessionItem);
 
         dataStore.create(sessionItem);

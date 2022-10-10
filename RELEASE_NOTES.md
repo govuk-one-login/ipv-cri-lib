@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.1.6
+
+* Added attemptCount to sessionItem and initialised attemptCount in session creation
+* Addded OathErrorResponse for use with access denied error
+
 ## 1.1.5
 
 * Convert the KMS der signature format into concat format
