@@ -13,8 +13,6 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.oauth2.sdk.id.ClientID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import uk.gov.di.ipv.cri.common.library.exception.ClientConfigurationException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
 
@@ -37,8 +35,6 @@ import java.util.Set;
 import static com.nimbusds.jose.JWSAlgorithm.ES256;
 
 public class JWTVerifier {
-
-    private static final Logger LOGGER = LogManager.getLogger();
 
     public void verifyAuthorizationJWT(
             Map<String, String> clientAuthenticationConfig, SignedJWT signedJWT)
