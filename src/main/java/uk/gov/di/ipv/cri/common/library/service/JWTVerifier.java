@@ -24,6 +24,10 @@ import java.security.cert.CertificateFactory;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +69,20 @@ public class JWTVerifier {
                         .audience(clientAuthenticationConfig.get("audience"))
                         .build();
         verifyJWT(clientAuthenticationConfig, signedJWT, requiredClaims, expectedClaimValues);
+    }
+
+    public void validateMaxAllowedJarTtl(Instant jwtExpirationTime, long maxAllowedTtl)
+            throws SessionValidationException {
+
+        LocalDateTime maximumExpirationTime =
+                LocalDateTime.ofInstant(
+                        Instant.now().plus(maxAllowedTtl, ChronoUnit.SECONDS), ZoneOffset.UTC);
+        LocalDateTime expirationTime = LocalDateTime.ofInstant(jwtExpirationTime, ZoneOffset.UTC);
+
+        if (expirationTime.isAfter(maximumExpirationTime)) {
+            throw new SessionValidationException(
+                    "The client JWT expiry date has surpassed the maximum allowed ttl value");
+        }
     }
 
     private void verifyJWT(
@@ -139,6 +157,7 @@ public class JWTVerifier {
         try {
             new DefaultJWTClaimsVerifier<>(expectedClaimValues, requiredClaims)
                     .verify(signedJWT.getJWTClaimsSet(), null);
+
         } catch (BadJWTException | ParseException e) {
             throw new SessionValidationException(e.getMessage(), e);
         }
