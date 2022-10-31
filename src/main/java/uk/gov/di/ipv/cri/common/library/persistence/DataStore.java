@@ -53,11 +53,11 @@ public class DataStore<T> {
         BatchWriteResult batchWriteResult = persistBatch(putItemsBatch);
         List<T> unprocessedItems = batchWriteResult.unprocessedPutItemsForTable(this.table);
         do {
-            if (unprocessedItems.size() != 0) {
+            if (!unprocessedItems.isEmpty()) {
                 batchWriteResult = persistBatch(createPutItemsWriteBatch(unprocessedItems));
                 unprocessedItems = batchWriteResult.unprocessedPutItemsForTable(this.table);
             }
-        } while (unprocessedItems.size() > 0);
+        } while (!unprocessedItems.isEmpty());
     }
 
     public T getItem(String partitionValue, String sortValue) {

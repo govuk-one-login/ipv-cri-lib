@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.1.8
+
+* Code smells removal (no functional change)
+
 ## 1.1.7
 
 * Added additional expiry time validation to auth jar checks
