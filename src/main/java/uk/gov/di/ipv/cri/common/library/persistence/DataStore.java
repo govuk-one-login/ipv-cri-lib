@@ -8,7 +8,6 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
-import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
@@ -53,11 +52,11 @@ public class DataStore<T> {
         BatchWriteResult batchWriteResult = persistBatch(putItemsBatch);
         List<T> unprocessedItems = batchWriteResult.unprocessedPutItemsForTable(this.table);
         do {
-            if (unprocessedItems.size() != 0) {
+            if (!unprocessedItems.isEmpty()) {
                 batchWriteResult = persistBatch(createPutItemsWriteBatch(unprocessedItems));
                 unprocessedItems = batchWriteResult.unprocessedPutItemsForTable(this.table);
             }
-        } while (unprocessedItems.size() > 0);
+        } while (!unprocessedItems.isEmpty());
     }
 
     public T getItem(String partitionValue, String sortValue) {
@@ -130,8 +129,7 @@ public class DataStore<T> {
         WriteBatch.Builder<T> builder =
                 WriteBatch.builder(this.typeParameterClass).mappedTableResource(this.table);
         for (T item : items) {
-            builder.addPutItem(
-                    PutItemEnhancedRequest.builder(this.typeParameterClass).item(item).build());
+            builder.addPutItem(r -> r.item(item).build());
         }
         return builder.build();
     }
