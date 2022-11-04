@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.2.0
+
+* Added VerifiableCredentialClaimsSetBuilder class to centralise the creation of the verifiable credential JWT claims set
+
 ## 1.1.8
 
 * Code smells removal (no functional change)
