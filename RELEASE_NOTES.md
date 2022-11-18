@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.3.1
+
+* Added `END` AuditEventType to enable sending `CRI_END` audit event
+
 ## 1.3.0
 
 * Added method to persistently log specified key/value data when a log entry is written 
