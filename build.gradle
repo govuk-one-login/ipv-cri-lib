@@ -1,13 +1,16 @@
 plugins {
-	id "java"
+	id "java-library"
+	id "java-test-fixtures"
 	id "org.sonarqube"
 	id "com.diffplug.spotless"
 	id "jacoco"
+	id "maven-publish"
+	id "signing"
 	id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "1.3.1"
+def buildVersion = "1.4.0"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
@@ -18,10 +21,10 @@ ext {
 		aws_powertools_version   : "1.12.0",
 		nimbusds_oauth_version   : "9.25",
 		nimbusds_jwt_version     : "9.15.1",
-		protobuf_version         : "3.19.4",
 		junit                    : "5.8.2",
 		mockito					 : "4.3.1",
-		glassfish_version        : "3.0.3"
+		glassfish_version        : "3.0.3",
+		cucumber_version         : "7.9.0"
 	]
 }
 
@@ -55,6 +58,7 @@ configurations {
 	gson
 	powertools
 	mockito
+	cucumber
 }
 
 // The dynamodb enhanced package loads the apache-client as well as the spi-client, so
@@ -102,6 +106,9 @@ dependencies {
 			"uk.org.webcompere:system-stubs-core:2.0.1"
 
 	test_runtime "org.junit.jupiter:junit-jupiter-engine:${dependencyVersions.junit}"
+
+	cucumber "io.cucumber:cucumber-java:${dependencyVersions.cucumber_version}",
+			"io.cucumber:cucumber-picocontainer:${dependencyVersions.cucumber_version}"
 }
 
 dependencies {
@@ -118,6 +125,10 @@ dependencies {
 	testImplementation configurations.tests
 
 	testRuntimeOnly configurations.test_runtime
+
+	testFixturesApi	configurations.cucumber
+	testFixturesImplementation configurations.jackson
+	testFixturesImplementation configurations.tests
 }
 
 tasks.named("jar") {
@@ -137,9 +148,6 @@ jacocoTestReport {
 		xml.required.set(true)
 	}
 }
-
-apply plugin: 'java'
-
 
 sonarqube {
 	properties {
@@ -174,11 +182,6 @@ gradle.projectsEvaluated {
 		options.compilerArgs << "-Xlint:unchecked"
 	}
 }
-
-apply plugin: 'java-library'
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
-apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 group = "uk.gov.account"
 version = "$buildVersion"
@@ -233,6 +236,18 @@ publishing {
 				developers {
 					developer {
 						name = 'GDS Developers'
+					}
+				}
+			}
+			// The java-test-fixtures plugin results in the API dependencies for testFixtures
+			// being added to the pom with <scope>compile</scope> & <optional>true</optional>.
+			// This is not desired as the scope is incorrect and the testFixtures are referenced
+			// via gradle module metadata. The code below removes the unwanted optional dependencies
+			// from the pom.
+			pom.withXml {
+				asNode().dependencies.dependency.each { dep ->
+					if(dep.optional.text() == 'true') {
+						dep.parent().remove(dep)
 					}
 				}
 			}

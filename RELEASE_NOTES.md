@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.4.0
+
+* Added common clients/steps for cucumber integration-testing
+
 ## 1.3.1
 
 * Added `END` AuditEventType to enable sending `CRI_END` audit event
