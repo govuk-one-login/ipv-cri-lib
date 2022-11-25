@@ -22,7 +22,7 @@ ext {
 		nimbusds_oauth_version   : "9.25",
 		nimbusds_jwt_version     : "9.15.1",
 		junit                    : "5.8.2",
-		mockito					 : "4.3.1",
+		mockito					 : "4.9.0",
 		glassfish_version        : "3.0.3",
 		cucumber_version         : "7.9.0"
 	]
