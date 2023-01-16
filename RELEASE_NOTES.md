@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.4.1
+
+* Added `RESPONSE_RECEIVED` to replace `THIRD_PARTY_REQUEST_ENDED` 
+* `THIRD_PARTY_REQUEST_ENDED` left for backward compatibility
+
 ## 1.4.0
 
 * Added common clients/steps for cucumber integration-testing
