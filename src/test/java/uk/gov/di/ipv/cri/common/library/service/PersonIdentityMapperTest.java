@@ -305,7 +305,8 @@ class PersonIdentityMapperTest {
         address.setValidFrom(TODAY);
 
         PersonIdentityDetailed testPersonIdentity =
-                new PersonIdentityDetailed(List.of(name), List.of(birthDate), List.of(address));
+                new PersonIdentityDetailed(
+                        List.of(name), List.of(birthDate), List.of(address), null);
 
         PersonIdentity mappedPersonIdentity =
                 this.personIdentityMapper.mapToPersonIdentity(testPersonIdentity);

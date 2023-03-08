@@ -16,11 +16,18 @@ public class PersonIdentityDetailed {
     @JsonProperty("address")
     private final List<Address> addresses;
 
+    @JsonProperty("drivingPermit")
+    private final List<DrivingPermit> drivingPermits;
+
     public PersonIdentityDetailed(
-            List<Name> names, List<BirthDate> birthDates, List<Address> addresses) {
+            List<Name> names,
+            List<BirthDate> birthDates,
+            List<Address> addresses,
+            List<DrivingPermit> drivingPermits) {
         this.names = names;
         this.birthDates = birthDates;
         this.addresses = addresses;
+        this.drivingPermits = drivingPermits;
     }
 
     public List<Name> getNames() {
@@ -33,5 +40,9 @@ public class PersonIdentityDetailed {
 
     public List<Address> getAddresses() {
         return addresses;
+    }
+
+    public List<DrivingPermit> getDrivingPermits() {
+        return drivingPermits;
     }
 }
