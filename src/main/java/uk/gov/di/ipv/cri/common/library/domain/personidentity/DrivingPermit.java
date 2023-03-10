@@ -10,7 +10,7 @@ public class DrivingPermit {
     private LocalDate expiryDate;
 
     private String issueNumber;
-    private DrivingPermitIssuer issuedBy;
+    private String issuedBy;
     private LocalDate issueDate;
 
     public String getPersonalNumber() {
@@ -37,11 +37,11 @@ public class DrivingPermit {
         this.issueNumber = issueNumber;
     }
 
-    public DrivingPermitIssuer getIssuedBy() {
+    public String getIssuedBy() {
         return issuedBy;
     }
 
-    public void setIssuedBy(DrivingPermitIssuer issuedBy) {
+    public void setIssuedBy(String issuedBy) {
         this.issuedBy = issuedBy;
     }
 
