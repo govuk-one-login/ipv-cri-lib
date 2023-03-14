@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.4.2
+
+* Added `DrivingPermit` and `DrivingPermitIssuer`
+* Modified `PersonIdentityDetailed` and `PersonIdentityDetailed` to support  `DrivingPermit`
+
 ## 1.4.1
 
 * Added `RESPONSE_RECEIVED` to replace `THIRD_PARTY_REQUEST_ENDED` 
