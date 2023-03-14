@@ -96,7 +96,7 @@ class PersonIdentityMapper {
             addresses = mapCanonicalAddresses(personIdentityItem.getAddresses());
         }
 
-        return new PersonIdentityDetailed(names, dobs, addresses, null);
+        return new PersonIdentityDetailed(names, dobs, addresses);
     }
 
     private List<Address> mapCanonicalAddresses(List<CanonicalAddress> addresses) {

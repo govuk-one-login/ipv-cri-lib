@@ -20,6 +20,11 @@ public class PersonIdentityDetailed {
     private final List<DrivingPermit> drivingPermits;
 
     public PersonIdentityDetailed(
+            List<Name> names, List<BirthDate> birthDates, List<Address> addresses) {
+        this(names, birthDates, addresses, null);
+    }
+
+    public PersonIdentityDetailed(
             List<Name> names,
             List<BirthDate> birthDates,
             List<Address> addresses,
