@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.4.3
+
+* Added `PiiRedactingDeserializer`
+
+
 ## 1.4.2
 
 * Added `DrivingPermit` and `DrivingPermitIssuer`
