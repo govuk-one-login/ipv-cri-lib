@@ -7,6 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
@@ -49,15 +51,27 @@ class VerifiableCredentialClaimsSetBuilderTest {
         this.builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
     }
 
-    @Test
-    void shouldBuildVerifiableCredential() throws ParseException {
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(
+            strings = {
+                "",
+                " ",
+                "false",
+                "anything",
+            })
+    void shouldBuildVerifiableCredential(String expiryRemovedReleasedFlagValue)
+            throws ParseException {
         String[] testContexts = new String[] {"context1", "context2"};
         Map<String, String> evidence =
                 Map.of(
                         "evidence-key-1", "evidence-value-1",
                         "evidence-key-2", "evidence-value-2");
 
-        initMockConfigurationService();
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
+        when(mockConfigurationService.getParameterValueByAbsoluteName(
+                        "/release-flags/vc-expiry-removed"))
+                .thenReturn(expiryRemovedReleasedFlagValue);
 
         JWTClaimsSet builtClaimSet =
                 this.builder
@@ -69,14 +83,64 @@ class VerifiableCredentialClaimsSetBuilderTest {
                         .verifiableCredentialEvidence(evidence)
                         .build();
 
-        makeCommonClaimSetAssertions(builtClaimSet);
+        assertNotNull(builtClaimSet);
+        assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
+        assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
+        assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
+        assertTrue(
+                builtClaimSet.getLongClaim(EXPIRATION_TIME)
+                        > this.clock.instant().getEpochSecond());
+        assertEquals(
+                TEST_PERSON_IDENTITY,
+                builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
+        assertArrayEquals(
+                new String[] {"VerifiableCredential", TEST_VC_TYPE},
+                (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
         assertEquals(testContexts, builtClaimSet.getJSONObjectClaim("vc").get("@context"));
         assertEquals(evidence, builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
     }
 
     @Test
+    void shouldBuildVerifiableCredentialWithoutAnExpiryTime() throws ParseException {
+        String[] testContexts = new String[] {"context1", "context2"};
+        Map<String, String> evidence =
+                Map.of(
+                        "evidence-key-1", "evidence-value-1",
+                        "evidence-key-2", "evidence-value-2");
+
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
+        when(mockConfigurationService.getParameterValueByAbsoluteName(
+                        "/release-flags/vc-expiry-removed"))
+                .thenReturn("true");
+        JWTClaimsSet builtClaimSet =
+                this.builder
+                        .subject(TEST_SUBJECT)
+                        .timeToLive(6L, ChronoUnit.MONTHS)
+                        .verifiableCredentialType(TEST_VC_TYPE)
+                        .verifiableCredentialSubject(TEST_PERSON_IDENTITY)
+                        .verifiableCredentialContext(testContexts)
+                        .verifiableCredentialEvidence(evidence)
+                        .build();
+
+        assertNotNull(builtClaimSet);
+        assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
+        assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
+        assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
+        assertEquals(
+                TEST_PERSON_IDENTITY,
+                builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
+        assertArrayEquals(
+                new String[] {"VerifiableCredential", TEST_VC_TYPE},
+                (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
+        assertEquals(testContexts, builtClaimSet.getJSONObjectClaim("vc").get("@context"));
+        assertEquals(evidence, builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
+
+        assertNull(builtClaimSet.getLongClaim(EXPIRATION_TIME));
+    }
+
+    @Test
     void shouldBuildVerifiableCredentialWithoutContextAndEvidence() throws ParseException {
-        initMockConfigurationService();
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
 
         JWTClaimsSet builtClaimSet =
                 this.builder
@@ -86,7 +150,19 @@ class VerifiableCredentialClaimsSetBuilderTest {
                         .verifiableCredentialSubject(TEST_PERSON_IDENTITY)
                         .build();
 
-        makeCommonClaimSetAssertions(builtClaimSet);
+        assertNotNull(builtClaimSet);
+        assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
+        assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
+        assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
+        assertTrue(
+                builtClaimSet.getLongClaim(EXPIRATION_TIME)
+                        > this.clock.instant().getEpochSecond());
+        assertEquals(
+                TEST_PERSON_IDENTITY,
+                builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
+        assertArrayEquals(
+                new String[] {"VerifiableCredential", TEST_VC_TYPE},
+                (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
 
         assertNull(builtClaimSet.getJSONObjectClaim("vc").get("@context"));
         assertNull(builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
@@ -103,7 +179,8 @@ class VerifiableCredentialClaimsSetBuilderTest {
     })
     void shouldBuildVerifiableCredentialWithAppropriateExpirationTime(
             long ttl, ChronoUnit ttlUnit, String expectedExpirationTime) throws ParseException {
-        initMockConfigurationService();
+
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
 
         JWTClaimsSet builtClaimSet =
                 this.builder
@@ -241,7 +318,7 @@ class VerifiableCredentialClaimsSetBuilderTest {
 
     @Test
     void shouldThrowErrorWhenInvalidTimeToLiveUnitSupplied() {
-        initMockConfigurationService();
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
         this.builder
                 .subject(TEST_SUBJECT)
                 .timeToLive(5L, ChronoUnit.MILLIS)
@@ -251,25 +328,5 @@ class VerifiableCredentialClaimsSetBuilderTest {
                 assertThrows(IllegalStateException.class, () -> this.builder.build());
         assertEquals(
                 "Unexpected time-to-live unit encountered: Millis", thrownException.getMessage());
-    }
-
-    private void makeCommonClaimSetAssertions(JWTClaimsSet builtClaimSet) throws ParseException {
-        assertNotNull(builtClaimSet);
-        assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
-        assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
-        assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
-        assertTrue(
-                builtClaimSet.getLongClaim(EXPIRATION_TIME)
-                        > this.clock.instant().getEpochSecond());
-        assertEquals(
-                TEST_PERSON_IDENTITY,
-                builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
-        assertArrayEquals(
-                new String[] {"VerifiableCredential", TEST_VC_TYPE},
-                (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
-    }
-
-    private void initMockConfigurationService() {
-        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
     }
 }

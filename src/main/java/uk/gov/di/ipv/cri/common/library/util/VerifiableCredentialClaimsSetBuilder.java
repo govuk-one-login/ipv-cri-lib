@@ -11,6 +11,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class VerifiableCredentialClaimsSetBuilder {
     private final ConfigurationService configurationService;
@@ -93,14 +94,23 @@ public class VerifiableCredentialClaimsSetBuilder {
         }
 
         OffsetDateTime dateTimeNow = OffsetDateTime.now(this.clock);
-        long expirationTimestamp = getExpirationTimestamp(dateTimeNow);
+        String vcExpiryRemovedReleaseFlag =
+                configurationService.getParameterValueByAbsoluteName(
+                        "/release-flags/vc-expiry-removed");
+        boolean isVcExpiryRemovedReleaseFlag =
+                Optional.ofNullable(vcExpiryRemovedReleaseFlag)
+                        .map(x -> x.equalsIgnoreCase("true"))
+                        .orElse(false);
 
         JWTClaimsSet.Builder builder =
                 new JWTClaimsSet.Builder()
                         .subject(this.subject)
                         .issuer(issuer)
-                        .claim(JWTClaimNames.NOT_BEFORE, dateTimeNow.toEpochSecond())
-                        .claim(JWTClaimNames.EXPIRATION_TIME, expirationTimestamp);
+                        .claim(JWTClaimNames.NOT_BEFORE, dateTimeNow.toEpochSecond());
+
+        if (!isVcExpiryRemovedReleaseFlag) {
+            builder.claim(JWTClaimNames.EXPIRATION_TIME, getExpirationTimestamp(dateTimeNow));
+        }
 
         Map<String, Object> verifiableCredentialClaims = new LinkedHashMap<>();
         verifiableCredentialClaims.put(
