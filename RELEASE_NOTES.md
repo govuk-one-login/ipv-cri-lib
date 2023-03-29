@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.4.4
+
+* Added feature release flag for VC expiry
+
 ## 1.4.3
 
 * Added `PiiRedactingDeserializer`
