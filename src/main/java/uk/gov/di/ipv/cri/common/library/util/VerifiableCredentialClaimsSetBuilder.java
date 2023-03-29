@@ -3,6 +3,7 @@ package uk.gov.di.ipv.cri.common.library.util;
 import com.nimbusds.jwt.JWTClaimNames;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
+import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
 
 import java.time.Clock;
@@ -94,13 +95,6 @@ public class VerifiableCredentialClaimsSetBuilder {
         }
 
         OffsetDateTime dateTimeNow = OffsetDateTime.now(this.clock);
-        String vcExpiryRemovedReleaseFlag =
-                configurationService.getParameterValueByAbsoluteName(
-                        "/release-flags/vc-expiry-removed");
-        boolean isVcExpiryRemovedReleaseFlag =
-                Optional.ofNullable(vcExpiryRemovedReleaseFlag)
-                        .map(x -> x.equalsIgnoreCase("true"))
-                        .orElse(false);
 
         JWTClaimsSet.Builder builder =
                 new JWTClaimsSet.Builder()
@@ -108,7 +102,7 @@ public class VerifiableCredentialClaimsSetBuilder {
                         .issuer(issuer)
                         .claim(JWTClaimNames.NOT_BEFORE, dateTimeNow.toEpochSecond());
 
-        if (!isVcExpiryRemovedReleaseFlag) {
+        if (!isReleaseFlag("/release-flags/vc-expiry-removed")) {
             builder.claim(JWTClaimNames.EXPIRATION_TIME, getExpirationTimestamp(dateTimeNow));
         }
 
@@ -126,6 +120,19 @@ public class VerifiableCredentialClaimsSetBuilder {
         builder.claim("vc", verifiableCredentialClaims);
 
         return builder.build();
+    }
+
+    private boolean isReleaseFlag(String flagParameterPath) {
+        try {
+            return Optional.ofNullable(
+                            this.configurationService.getParameterValueByAbsoluteName(
+                                    flagParameterPath))
+                    .map(x -> x.equalsIgnoreCase("true"))
+                    .orElse(false);
+
+        } catch (ParameterNotFoundException e) {
+            return false;
+        }
     }
 
     private long getExpirationTimestamp(OffsetDateTime dateTimeNow) {

@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
 
@@ -49,6 +50,47 @@ class VerifiableCredentialClaimsSetBuilderTest {
     void setup() {
         this.clock = Clock.fixed(Instant.parse("2016-11-03T10:15:30Z"), ZoneId.of("UTC"));
         this.builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
+    }
+
+    @Test
+    void shouldBuildVerifiableCredentialWithoutWhenReleaseFlagIsNotSpecified()
+            throws ParseException {
+        String[] testContexts = new String[] {"context1", "context2"};
+        Map<String, String> evidence =
+                Map.of(
+                        "evidence-key-1", "evidence-value-1",
+                        "evidence-key-2", "evidence-value-2");
+
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
+        when(mockConfigurationService.getParameterValueByAbsoluteName(
+                        "/release-flags/vc-expiry-removed"))
+                .thenThrow(ParameterNotFoundException.class);
+
+        JWTClaimsSet builtClaimSet =
+                this.builder
+                        .subject(TEST_SUBJECT)
+                        .timeToLive(6L, ChronoUnit.MONTHS)
+                        .verifiableCredentialType(TEST_VC_TYPE)
+                        .verifiableCredentialSubject(TEST_PERSON_IDENTITY)
+                        .verifiableCredentialContext(testContexts)
+                        .verifiableCredentialEvidence(evidence)
+                        .build();
+
+        assertNotNull(builtClaimSet);
+        assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
+        assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
+        assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
+        assertTrue(
+                builtClaimSet.getLongClaim(EXPIRATION_TIME)
+                        > this.clock.instant().getEpochSecond());
+        assertEquals(
+                TEST_PERSON_IDENTITY,
+                builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
+        assertArrayEquals(
+                new String[] {"VerifiableCredential", TEST_VC_TYPE},
+                (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
+        assertEquals(testContexts, builtClaimSet.getJSONObjectClaim("vc").get("@context"));
+        assertEquals(evidence, builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
     }
 
     @ParameterizedTest
