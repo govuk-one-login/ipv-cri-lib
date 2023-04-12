@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.4.6
+
+* Added `IPV_PASSPORT_` audit events.
+
 ## 1.4.5
 
 * Modified feature release flag for VC expiry
