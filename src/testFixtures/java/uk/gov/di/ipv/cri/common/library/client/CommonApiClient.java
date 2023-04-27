@@ -30,7 +30,8 @@ public class CommonApiClient {
                                         .setPath("/callback")
                                         .build()
                                         .toString())
-                        .addParameter("client_id", this.clientConfigurationService.getDefaultClientId())
+                        .addParameter(
+                                "client_id", this.clientConfigurationService.getDefaultClientId())
                         .addParameter("response_type", "code")
                         .addParameter("scope", "openid")
                         .addParameter("state", "state-ipv")
