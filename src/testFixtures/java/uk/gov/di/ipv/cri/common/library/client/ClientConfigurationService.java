@@ -14,6 +14,7 @@ public class ClientConfigurationService {
     private final String ipvCoreStubUsername;
     private final String ipvCoreStubPassword;
     private final String ipvCoreStubCriId;
+    private final String ipvCoreStubClientId;
 
     public ClientConfigurationService() {
         this.environment =
@@ -55,6 +56,7 @@ public class ClientConfigurationService {
                         System.getenv("IPV_CORE_STUB_CRI_ID"),
                         String.format(
                                 MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT, "IPV_CORE_STUB_CRI_ID"));
+        this.ipvCoreStubClientId = Optional.ofNullable(System.getenv("DEFAULT_CLIENT_ID")).orElse("ipv-core-stub");
     }
 
     public String getPrivateApiEndpoint() {
@@ -84,6 +86,7 @@ public class ClientConfigurationService {
     public String getIpvCoreStubCriId() {
         return ipvCoreStubCriId;
     }
+    public String getDefaultClientId() { return this.ipvCoreStubClientId; }
 
     public String createUriPath(String endpoint) {
         return String.format("/%s/%s", this.environment, endpoint);
