@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.5.0
+
+* Added new factory object `PersonIdentityDetailedFactory` with `createPersonIdentityDetailedWith` methods for creation of `PersonIdentityDetailed` with cri specific lists to restrict scope of any PersonIdentityDetailed constructor changes to just cri-lib
+* Deprecated all `PersonIdentityDetailed` constructors to denote that direct use should be avoided to mitigate the antipattern of extending the constructor to add lists, then requiring CRI's during cri-lib updates to set lists they don't use to null
+
 ## 1.4.6
 
 * Add default client id representing core stub
@@ -15,7 +20,6 @@
 ## 1.4.3
 
 * Added `PiiRedactingDeserializer`
-
 
 ## 1.4.2
 

@@ -1,17 +1,27 @@
 package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DrivingPermit {
+    @JsonProperty("personalNumber")
     private String personalNumber;
-    private LocalDate expiryDate;
 
+    @JsonProperty("expiryDate")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private String expiryDate;
+
+    @JsonProperty("issueNumber")
     private String issueNumber;
+
+    @JsonProperty("issuedBy")
     private String issuedBy;
-    private LocalDate issueDate;
+
+    @JsonProperty("issueDate")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private String issueDate;
 
     public String getPersonalNumber() {
         return personalNumber;
@@ -21,11 +31,11 @@ public class DrivingPermit {
         this.personalNumber = personalNumber;
     }
 
-    public LocalDate getExpiryDate() {
+    public String getExpiryDate() {
         return expiryDate;
     }
 
-    public void setExpiryDate(LocalDate expiryDate) {
+    public void setExpiryDate(String expiryDate) {
         this.expiryDate = expiryDate;
     }
 
@@ -45,11 +55,11 @@ public class DrivingPermit {
         this.issuedBy = issuedBy;
     }
 
-    public LocalDate getIssueDate() {
+    public String getIssueDate() {
         return issueDate;
     }
 
-    public void setIssueDate(LocalDate issueDate) {
+    public void setIssueDate(String issueDate) {
         this.issueDate = issueDate;
     }
 }
