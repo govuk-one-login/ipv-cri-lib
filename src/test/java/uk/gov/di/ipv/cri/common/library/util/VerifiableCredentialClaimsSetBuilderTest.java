@@ -188,7 +188,7 @@ class VerifiableCredentialClaimsSetBuilderTest {
                         "/release-flags/vc-expiry-removed"))
                 .thenReturn(expiryRemovedReleasedFlagValue);
 
-        when(mockConfigurationService.getParameterValue("/release-flags/vc-contains-unique-id"))
+        when(mockConfigurationService.getParameterValue("release-flags/vc-contains-unique-id"))
                 .thenThrow(ParameterNotFoundException.class);
 
         JWTClaimsSet builtClaimSet =
@@ -225,19 +225,17 @@ class VerifiableCredentialClaimsSetBuilderTest {
             String expiryRemovedReleasedFlagValue) throws ParseException {
         String[] testContexts = new String[] {"context1", "context2"};
         Map<String, String> evidence = Collections.emptyMap();
-        UUID fixedUuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
 
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
         when(mockConfigurationService.getParameterValueByAbsoluteName(
                         "/release-flags/vc-expiry-removed"))
                 .thenReturn(expiryRemovedReleasedFlagValue);
 
-        when(mockConfigurationService.getParameterValue("/release-flags/vc-contains-unique-id"))
+        when(mockConfigurationService.getParameterValue("release-flags/vc-contains-unique-id"))
                 .thenReturn("true");
 
         JWTClaimsSet builtClaimSet =
                 this.builder
-                        .id(fixedUuid)
                         .subject(TEST_SUBJECT)
                         .timeToLive(6L, ChronoUnit.MONTHS)
                         .verifiableCredentialType(TEST_VC_TYPE)
@@ -260,9 +258,9 @@ class VerifiableCredentialClaimsSetBuilderTest {
                 (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
         assertEquals(testContexts, builtClaimSet.getJSONObjectClaim("vc").get("@context"));
         assertEquals(evidence, builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
-        assertEquals(
-                "urn:uuid:123e4567-e89b-12d3-a456-426614174000",
-                builtClaimSet.getJSONObjectClaim("vc").get("id"));
+        assertNotNull(builtClaimSet.getJSONObjectClaim("vc").get("id"));
+        assertTrue(
+                builtClaimSet.getJSONObjectClaim("vc").get("id").toString().contains("urn:uuid:"));
     }
 
     @Test
@@ -328,13 +326,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
                 assertThrows(IllegalStateException.class, () -> this.builder.build());
         assertEquals(
                 "The verifiable credential type must be specified", thrownException.getMessage());
-    }
-
-    @Test
-    void shouldThrowErrorWhenNoUniqueIdIsSupplied() {
-        NullPointerException thrownException =
-                assertThrows(NullPointerException.class, () -> this.builder.id(null));
-        assertEquals("UniqueId must not be null", thrownException.getMessage());
     }
 
     @Test

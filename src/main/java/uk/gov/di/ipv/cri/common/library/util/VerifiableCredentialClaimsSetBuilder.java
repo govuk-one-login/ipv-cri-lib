@@ -18,7 +18,7 @@ import java.util.function.UnaryOperator;
 
 public class VerifiableCredentialClaimsSetBuilder {
     private static final String EXPIRY_REMOVED = "/release-flags/vc-expiry-removed";
-    private static final String CONTAINS_UNIQUE_ID = "/release-flags/vc-contains-unique-id";
+    private static final String CONTAINS_UNIQUE_ID = "release-flags/vc-contains-unique-id";
     private final ConfigurationService configurationService;
     private final Clock clock;
 
@@ -29,17 +29,11 @@ public class VerifiableCredentialClaimsSetBuilder {
     private Object evidence;
     private ChronoUnit ttlUnit;
     private long ttl;
-    private String id;
 
     public VerifiableCredentialClaimsSetBuilder(
             ConfigurationService configurationService, Clock clock) {
         this.configurationService = configurationService;
         this.clock = clock;
-    }
-
-    public VerifiableCredentialClaimsSetBuilder id(UUID uniqueId) {
-        this.id = generateUniqueId(uniqueId);
-        return this;
     }
 
     public VerifiableCredentialClaimsSetBuilder subject(String subject) {
@@ -121,7 +115,7 @@ public class VerifiableCredentialClaimsSetBuilder {
                 "type", new String[] {"VerifiableCredential", this.verifiableCredentialType});
 
         if (isReleaseFlag(configurationService::getParameterValue, CONTAINS_UNIQUE_ID)) {
-            verifiableCredentialClaims.put("id", this.id);
+            verifiableCredentialClaims.put("id", generateUniqueId());
         }
         if (Objects.nonNull(this.contexts) && contexts.length > 0) {
             verifiableCredentialClaims.put("@context", contexts);
@@ -167,8 +161,7 @@ public class VerifiableCredentialClaimsSetBuilder {
         }
     }
 
-    private String generateUniqueId(UUID uniqueId) {
-        return String.format(
-                "urn:uuid:%s", Objects.requireNonNull(uniqueId, "UniqueId must not be null"));
+    private String generateUniqueId() {
+        return String.format("urn:uuid:%s", UUID.randomUUID());
     }
 }
