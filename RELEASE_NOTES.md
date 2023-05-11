@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.5.1
+
+* Added a UUID id to `VerifiableCredentialClaimsSetBuilder` ensuring the Claimset of the Verifiable Credential (VC) contains a unique identifier which allows VC's to distinguish each other
+
 ## 1.5.0
 
 * Added new factory object `PersonIdentityDetailedFactory` with `createPersonIdentityDetailedWith` methods for creation of `PersonIdentityDetailed` with cri specific lists to restrict scope of any PersonIdentityDetailed constructor changes to just cri-lib
