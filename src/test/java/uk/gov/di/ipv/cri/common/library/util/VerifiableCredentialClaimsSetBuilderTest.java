@@ -188,8 +188,7 @@ class VerifiableCredentialClaimsSetBuilderTest {
                         "/release-flags/vc-expiry-removed"))
                 .thenReturn(expiryRemovedReleasedFlagValue);
 
-        when(mockConfigurationService.getParameterValueByAbsoluteName(
-                        "/release-flags/vc-contains-unique-id"))
+        when(mockConfigurationService.getParameterValue("/release-flags/vc-contains-unique-id"))
                 .thenThrow(ParameterNotFoundException.class);
 
         JWTClaimsSet builtClaimSet =
@@ -233,8 +232,7 @@ class VerifiableCredentialClaimsSetBuilderTest {
                         "/release-flags/vc-expiry-removed"))
                 .thenReturn(expiryRemovedReleasedFlagValue);
 
-        when(mockConfigurationService.getParameterValueByAbsoluteName(
-                        "/release-flags/vc-contains-unique-id"))
+        when(mockConfigurationService.getParameterValue("/release-flags/vc-contains-unique-id"))
                 .thenReturn("true");
 
         JWTClaimsSet builtClaimSet =

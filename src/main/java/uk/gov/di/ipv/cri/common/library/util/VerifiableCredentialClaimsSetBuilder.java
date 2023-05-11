@@ -14,8 +14,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 
 public class VerifiableCredentialClaimsSetBuilder {
+    private static final String EXPIRY_REMOVED = "/release-flags/vc-expiry-removed";
+    private static final String CONTAINS_UNIQUE_ID = "/release-flags/vc-contains-unique-id";
     private final ConfigurationService configurationService;
     private final Clock clock;
 
@@ -109,7 +112,7 @@ public class VerifiableCredentialClaimsSetBuilder {
                         .issuer(issuer)
                         .claim(JWTClaimNames.NOT_BEFORE, dateTimeNow.toEpochSecond());
 
-        if (!isReleaseFlag("/release-flags/vc-expiry-removed")) {
+        if (!isReleaseFlag(configurationService::getParameterValueByAbsoluteName, EXPIRY_REMOVED)) {
             builder.claim(JWTClaimNames.EXPIRATION_TIME, getExpirationTimestamp(dateTimeNow));
         }
 
@@ -117,7 +120,7 @@ public class VerifiableCredentialClaimsSetBuilder {
         verifiableCredentialClaims.put(
                 "type", new String[] {"VerifiableCredential", this.verifiableCredentialType});
 
-        if (isReleaseFlag("/release-flags/vc-contains-unique-id")) {
+        if (isReleaseFlag(configurationService::getParameterValue, CONTAINS_UNIQUE_ID)) {
             verifiableCredentialClaims.put("id", this.id);
         }
         if (Objects.nonNull(this.contexts) && contexts.length > 0) {
@@ -133,11 +136,9 @@ public class VerifiableCredentialClaimsSetBuilder {
         return builder.build();
     }
 
-    private boolean isReleaseFlag(String flagParameterPath) {
+    private boolean isReleaseFlag(UnaryOperator<String> parameterGetter, String flagParameterPath) {
         try {
-            return Optional.ofNullable(
-                            this.configurationService.getParameterValueByAbsoluteName(
-                                    flagParameterPath))
+            return Optional.ofNullable(parameterGetter.apply(flagParameterPath))
                     .map(x -> x.equalsIgnoreCase("true"))
                     .orElse(false);
 
