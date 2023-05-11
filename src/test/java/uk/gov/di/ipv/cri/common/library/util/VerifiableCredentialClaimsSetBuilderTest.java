@@ -20,6 +20,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
@@ -53,7 +54,7 @@ class VerifiableCredentialClaimsSetBuilderTest {
     }
 
     @Test
-    void shouldBuildVerifiableCredentialWithoutWhenReleaseFlagIsNotSpecified()
+    void shouldBuildVerifiableCredentialWhenVcExpiryRemovedReleaseFlagIsNotSpecified()
             throws ParseException {
         String[] testContexts = new String[] {"context1", "context2"};
         Map<String, String> evidence =
@@ -95,13 +96,7 @@ class VerifiableCredentialClaimsSetBuilderTest {
 
     @ParameterizedTest
     @NullSource
-    @ValueSource(
-            strings = {
-                "",
-                " ",
-                "false",
-                "anything",
-            })
+    @ValueSource(strings = {"", " ", "false", "anything"})
     void shouldBuildVerifiableCredential(String expiryRemovedReleasedFlagValue)
             throws ParseException {
         String[] testContexts = new String[] {"context1", "context2"};
@@ -180,6 +175,98 @@ class VerifiableCredentialClaimsSetBuilderTest {
         assertNull(builtClaimSet.getLongClaim(EXPIRATION_TIME));
     }
 
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " ", "false", "anything"})
+    void shouldBuildVerifiableCredentialWhenVcContainsUniqueIdReleaseFlagIsNotSpecified(
+            String expiryRemovedReleasedFlagValue) throws ParseException {
+        String[] testContexts = new String[] {"context1", "context2"};
+        Map<String, String> evidence = Collections.emptyMap();
+
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
+        when(mockConfigurationService.getParameterValueByAbsoluteName(
+                        "/release-flags/vc-expiry-removed"))
+                .thenReturn(expiryRemovedReleasedFlagValue);
+
+        when(mockConfigurationService.getParameterValueByAbsoluteName(
+                        "/release-flags/vc-contains-unique-id"))
+                .thenThrow(ParameterNotFoundException.class);
+
+        JWTClaimsSet builtClaimSet =
+                this.builder
+                        .subject(TEST_SUBJECT)
+                        .timeToLive(6L, ChronoUnit.MONTHS)
+                        .verifiableCredentialType(TEST_VC_TYPE)
+                        .verifiableCredentialSubject(TEST_PERSON_IDENTITY)
+                        .verifiableCredentialContext(testContexts)
+                        .verifiableCredentialEvidence(evidence)
+                        .build();
+
+        assertNotNull(builtClaimSet);
+        assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
+        assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
+        assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
+        assertTrue(
+                builtClaimSet.getLongClaim(EXPIRATION_TIME)
+                        > this.clock.instant().getEpochSecond());
+        assertEquals(
+                TEST_PERSON_IDENTITY,
+                builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
+        assertArrayEquals(
+                new String[] {"VerifiableCredential", TEST_VC_TYPE},
+                (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
+        assertEquals(testContexts, builtClaimSet.getJSONObjectClaim("vc").get("@context"));
+        assertEquals(evidence, builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " ", "false", "anything"})
+    void shouldBuildVerifiableCredentialWhenVcContainsUniqueIdReleaseFlagIsSpecified(
+            String expiryRemovedReleasedFlagValue) throws ParseException {
+        String[] testContexts = new String[] {"context1", "context2"};
+        Map<String, String> evidence = Collections.emptyMap();
+        UUID fixedUuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
+        when(mockConfigurationService.getParameterValueByAbsoluteName(
+                        "/release-flags/vc-expiry-removed"))
+                .thenReturn(expiryRemovedReleasedFlagValue);
+
+        when(mockConfigurationService.getParameterValueByAbsoluteName(
+                        "/release-flags/vc-contains-unique-id"))
+                .thenReturn("true");
+
+        JWTClaimsSet builtClaimSet =
+                this.builder
+                        .id(fixedUuid)
+                        .subject(TEST_SUBJECT)
+                        .timeToLive(6L, ChronoUnit.MONTHS)
+                        .verifiableCredentialType(TEST_VC_TYPE)
+                        .verifiableCredentialSubject(TEST_PERSON_IDENTITY)
+                        .verifiableCredentialContext(testContexts)
+                        .verifiableCredentialEvidence(evidence)
+                        .build();
+
+        assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
+        assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
+        assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
+        assertTrue(
+                builtClaimSet.getLongClaim(EXPIRATION_TIME)
+                        > this.clock.instant().getEpochSecond());
+        assertEquals(
+                TEST_PERSON_IDENTITY,
+                builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
+        assertArrayEquals(
+                new String[] {"VerifiableCredential", TEST_VC_TYPE},
+                (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
+        assertEquals(testContexts, builtClaimSet.getJSONObjectClaim("vc").get("@context"));
+        assertEquals(evidence, builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
+        assertEquals(
+                "urn:uuid:123e4567-e89b-12d3-a456-426614174000",
+                builtClaimSet.getJSONObjectClaim("vc").get("id"));
+    }
+
     @Test
     void shouldBuildVerifiableCredentialWithoutContextAndEvidence() throws ParseException {
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
@@ -243,6 +330,13 @@ class VerifiableCredentialClaimsSetBuilderTest {
                 assertThrows(IllegalStateException.class, () -> this.builder.build());
         assertEquals(
                 "The verifiable credential type must be specified", thrownException.getMessage());
+    }
+
+    @Test
+    void shouldThrowErrorWhenNoUniqueIdIsSupplied() {
+        NullPointerException thrownException =
+                assertThrows(NullPointerException.class, () -> this.builder.id(null));
+        assertEquals("UniqueId must not be null", thrownException.getMessage());
     }
 
     @Test

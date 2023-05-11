@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 public class VerifiableCredentialClaimsSetBuilder {
     private final ConfigurationService configurationService;
@@ -25,11 +26,17 @@ public class VerifiableCredentialClaimsSetBuilder {
     private Object evidence;
     private ChronoUnit ttlUnit;
     private long ttl;
+    private String id;
 
     public VerifiableCredentialClaimsSetBuilder(
             ConfigurationService configurationService, Clock clock) {
         this.configurationService = configurationService;
         this.clock = clock;
+    }
+
+    public VerifiableCredentialClaimsSetBuilder id(UUID uniqueId) {
+        this.id = generateUniqueId(uniqueId);
+        return this;
     }
 
     public VerifiableCredentialClaimsSetBuilder subject(String subject) {
@@ -109,6 +116,10 @@ public class VerifiableCredentialClaimsSetBuilder {
         Map<String, Object> verifiableCredentialClaims = new LinkedHashMap<>();
         verifiableCredentialClaims.put(
                 "type", new String[] {"VerifiableCredential", this.verifiableCredentialType});
+
+        if (isReleaseFlag("/release-flags/vc-contains-unique-id")) {
+            verifiableCredentialClaims.put("id", this.id);
+        }
         if (Objects.nonNull(this.contexts) && contexts.length > 0) {
             verifiableCredentialClaims.put("@context", contexts);
         }
@@ -153,5 +164,10 @@ public class VerifiableCredentialClaimsSetBuilder {
                 throw new IllegalStateException(
                         "Unexpected time-to-live unit encountered: " + ttlUnit);
         }
+    }
+
+    private String generateUniqueId(UUID uniqueId) {
+        return String.format(
+                "urn:uuid:%s", Objects.requireNonNull(uniqueId, "UniqueId must not be null"));
     }
 }
