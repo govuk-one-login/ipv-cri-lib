@@ -258,9 +258,21 @@ class VerifiableCredentialClaimsSetBuilderTest {
                 (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
         assertEquals(testContexts, builtClaimSet.getJSONObjectClaim("vc").get("@context"));
         assertEquals(evidence, builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
-        assertNotNull(builtClaimSet.getJSONObjectClaim("vc").get("id"));
-        assertTrue(
-                builtClaimSet.getJSONObjectClaim("vc").get("id").toString().contains("urn:uuid:"));
+        assertNotNull(builtClaimSet.getJWTID());
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> getUuidString("urn:uuid:this-does-not-look-like-a-uuid"));
+        assertTrue(builtClaimSet.getJWTID().contains("urn:uuid:"));
+        assertJWTClaimsSetContainsAnIdentifierSimilarToAUuid(builtClaimSet);
+    }
+
+    private static void assertJWTClaimsSetContainsAnIdentifierSimilarToAUuid(
+            JWTClaimsSet builtClaimSet) {
+        assertTrue(builtClaimSet.getJWTID().contains(getUuidString(builtClaimSet.getJWTID())));
+    }
+
+    private static String getUuidString(String jwtId) {
+        return UUID.fromString(jwtId.split(":")[2]).toString();
     }
 
     @Test

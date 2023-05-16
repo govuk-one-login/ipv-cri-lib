@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.5.2
+
+* Fix for the below, add UUID id to `VerifiableCredentialClaimsSetBuilder` as a top level attribute `jti` of the `jwt` 
+
+
 ## 1.5.1
 
 * Added a UUID id to `VerifiableCredentialClaimsSetBuilder` ensuring the Claimset of the Verifiable Credential (VC) contains a unique identifier which allows VC's to distinguish each other
