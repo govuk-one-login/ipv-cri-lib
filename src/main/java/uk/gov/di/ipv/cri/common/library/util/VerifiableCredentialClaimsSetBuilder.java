@@ -115,7 +115,7 @@ public class VerifiableCredentialClaimsSetBuilder {
                 "type", new String[] {"VerifiableCredential", this.verifiableCredentialType});
 
         if (isReleaseFlag(configurationService::getParameterValue, CONTAINS_UNIQUE_ID)) {
-            verifiableCredentialClaims.put("id", generateUniqueId());
+            builder.claim(JWTClaimNames.JWT_ID, generateUniqueId());
         }
         if (Objects.nonNull(this.contexts) && contexts.length > 0) {
             verifiableCredentialClaims.put("@context", contexts);
