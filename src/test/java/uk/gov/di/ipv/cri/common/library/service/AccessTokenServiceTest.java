@@ -413,7 +413,7 @@ class AccessTokenServiceTest {
         assertThat(
                 exception.getMessage(),
                 containsString(
-                        "Invalid private key JWT authentication: The client identifier doesn't match the client assertion subject / issuer"));
+                        "com.nimbusds.oauth2.sdk.ParseException: Invalid private key JWT authentication: The client identifier doesn't match the client assertion subject"));
         verify(mockJwtVerifier, never()).verifyAccessTokenJWT(any(), any(), any());
     }
 

@@ -1,5 +1,11 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.5.3
+
+* Increased version number of nimbusds and awssdk dependencies to remove vulnerabilities, aligned tests to changes in the nimbus error message format
+* Allowed isReleaseFlag to return false if there are no permissions to read the parameter
+* Updated Pom alphagov to govuk-one-login
+
 ## 1.5.2
 
 * Fix for the below, add UUID id to `VerifiableCredentialClaimsSetBuilder` as a top level attribute `jti` of the `jwt` 

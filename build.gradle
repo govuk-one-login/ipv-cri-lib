@@ -10,7 +10,7 @@ plugins {
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "1.5.2"
+def buildVersion = "1.5.3"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
@@ -19,8 +19,8 @@ ext {
 		jackson_version          : "2.13.1",
 		aws_lambda_events_version: "3.11.0",
 		aws_powertools_version   : "1.12.0",
-		nimbusds_oauth_version   : "9.25",
-		nimbusds_jwt_version     : "9.15.1",
+		nimbusds_oauth_version   : "11.2",
+		nimbusds_jwt_version     : "9.36",
 		junit                    : "5.8.2",
 		mockito					 : "4.3.1",
 		glassfish_version        : "3.0.3",
@@ -68,7 +68,7 @@ configurations.all {
 }
 
 dependencies {
-	aws platform('software.amazon.awssdk:bom:2.17.191')
+	aws platform('software.amazon.awssdk:bom:2.20.162')
 
 	dynamodb "software.amazon.awssdk:dynamodb",
 			"software.amazon.awssdk:dynamodb-enhanced"
@@ -216,19 +216,19 @@ publishing {
 				name = 'Digital Identity Credential Issuer common libraries'
 				packaging = 'jar'
 				description = 'Digital Identity Credential Issuer common libraries'
-				url = 'https://github.com/alphagov/di-ipv-cri-lib'
+				url = 'https://github.com/govuk-one-login/ipv-cri-lib'
 				artifactId = 'cri-common-lib'
 
 				scm {
-					url = 'https://github.com/alphagov/di-ipv-cri-lib'
-					connection = 'scm:git:git://github.com/alphagov/di-ipv-cri-lib.git'
-					developerConnection = 'scm:git:ssh://git@github.com:alphagov/di-ipv-cri-lib.git'
+					url = 'https://github.com/govuk-one-login/ipv-cri-lib'
+					connection = 'scm:git:git://github.com/govuk-one-login/ipv-cri-lib.git'
+					developerConnection = 'scm:git:ssh://git@github.com:govuk-one-login/ipv-cri-lib.git'
 				}
 
 				licenses {
 					license {
 						name = 'MIT Licence'
-						url = 'https://github.com/alphagov/di-ipv-cri-lib/blob/main/LICENSE'
+						url = 'https://github.com/govuk-one-login/ipv-cri-lib/blob/main/LICENSE'
 						distribution = 'repo'
 					}
 				}
