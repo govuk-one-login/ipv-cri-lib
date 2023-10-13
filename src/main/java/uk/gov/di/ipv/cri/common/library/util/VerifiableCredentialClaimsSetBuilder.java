@@ -3,7 +3,7 @@ package uk.gov.di.ipv.cri.common.library.util;
 import com.nimbusds.jwt.JWTClaimNames;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
-import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
+import software.amazon.awssdk.services.ssm.model.SsmException;
 import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
 
 import java.time.Clock;
@@ -136,7 +136,7 @@ public class VerifiableCredentialClaimsSetBuilder {
                     .map(x -> x.equalsIgnoreCase("true"))
                     .orElse(false);
 
-        } catch (ParameterNotFoundException e) {
+        } catch (SsmException e) {
             return false;
         }
     }
