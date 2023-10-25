@@ -68,7 +68,7 @@ configurations.all {
 }
 
 dependencies {
-	aws platform('software.amazon.awssdk:bom:2.20.162')
+	aws platform('software.amazon.awssdk:bom:2.21.7')
 
 	dynamodb "software.amazon.awssdk:dynamodb",
 			"software.amazon.awssdk:dynamodb-enhanced"
