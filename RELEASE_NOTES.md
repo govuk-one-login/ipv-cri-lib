@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.5.4
+
+* Updated Person Identity Mapper access to public so it can be tested and mocked by other services that use the person identity service
+
 ## 1.5.3
 
 * Increased version number of nimbusds and awssdk dependencies to remove vulnerabilities, aligned tests to changes in the nimbus error message format

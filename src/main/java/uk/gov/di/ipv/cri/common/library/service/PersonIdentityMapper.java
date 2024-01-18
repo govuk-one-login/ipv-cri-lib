@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-class PersonIdentityMapper {
+public class PersonIdentityMapper {
 
     private enum NamePartType {
         GIVEN_NAME("GivenName"),
