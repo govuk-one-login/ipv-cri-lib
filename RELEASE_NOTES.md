@@ -1,5 +1,11 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.5.5
+
+* Added new event type IPV_KBV_CRI_BILLING this is intended for CRI'S that are chatty, like Experian
+* which has multiple IPV_KBV_CRI_REQUEST_START calls. IPV_KBV_CRI_BILLING is designed to be used only
+* after the first initial request to the 3rd-party Api
+
 ## 1.5.4
 
 * Updated Person Identity Mapper access to public so it can be tested and mocked by other services that use the person identity service
