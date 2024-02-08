@@ -59,6 +59,7 @@ public class PersonIdentityDetailedBuilder {
             this.passports = passports;
             return this;
         }
+
         @SuppressWarnings("deprecation")
         public PersonIdentityDetailed build() {
             return new PersonIdentityDetailed(
