@@ -101,30 +101,7 @@ public class PersonIdentityMapper {
     }
 
     private List<Address> mapCanonicalAddresses(List<CanonicalAddress> addresses) {
-        return addresses.stream()
-                .map(
-                        address -> {
-                            Address mappedAddress = new Address();
-                            mappedAddress.setAddressCountry(address.getAddressCountry());
-                            mappedAddress.setAddressLocality(address.getAddressLocality());
-                            mappedAddress.setBuildingName(address.getBuildingName());
-                            mappedAddress.setBuildingNumber(address.getBuildingNumber());
-                            mappedAddress.setDepartmentName(address.getDepartmentName());
-                            mappedAddress.setDependentAddressLocality(
-                                    address.getDependentAddressLocality());
-                            mappedAddress.setDependentStreetName(address.getDependentStreetName());
-                            mappedAddress.setDoubleDependentAddressLocality(
-                                    address.getDoubleDependentAddressLocality());
-                            mappedAddress.setOrganisationName(address.getOrganisationName());
-                            mappedAddress.setPostalCode(address.getPostalCode());
-                            mappedAddress.setStreetName(address.getStreetName());
-                            mappedAddress.setSubBuildingName(address.getSubBuildingName());
-                            mappedAddress.setUprn(address.getUprn());
-                            mappedAddress.setValidFrom(address.getValidFrom());
-                            mappedAddress.setValidUntil(address.getValidUntil());
-                            return mappedAddress;
-                        })
-                .collect(Collectors.toList());
+        return addresses.stream().map(Address::new).collect(Collectors.toList());
     }
 
     private List<BirthDate> mapPersonIdentityBirthDates(

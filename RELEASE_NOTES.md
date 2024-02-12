@@ -1,5 +1,11 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.5.5
+
+* Added `PersonIdentityDetailedBuilder` with similar intent as `PersonIdentityDetailedFactory` for constructing PersonIdentityDetailed with a builder constructor no args option
+* For cases where CRI's requires a PersonIdentityDetailed object without `nameparts` or `birthdate` for use with the `AuditContext`
+* `PersonIdentityDetailedBuilder` can be used as an alternative to `PersonIdentityDetailedFactory`
+
 ## 1.5.4
 
 * Updated Person Identity Mapper access to public so it can be tested and mocked by other services that use the person identity service

@@ -3,6 +3,7 @@ package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import uk.gov.di.ipv.cri.common.library.persistence.item.CanonicalAddress;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -24,6 +25,28 @@ public class Address {
     private String addressLocality;
     private String postalCode;
     private String addressCountry;
+
+    public Address() {
+        this(new CanonicalAddress());
+    }
+
+    public Address(CanonicalAddress address) {
+        this.uprn = address.getUprn();
+        this.organisationName = address.getOrganisationName();
+        this.departmentName = address.getDepartmentName();
+        this.subBuildingName = address.getSubBuildingName();
+        this.buildingNumber = address.getBuildingNumber();
+        this.buildingName = address.getBuildingName();
+        this.dependentStreetName = address.getDependentStreetName();
+        this.streetName = address.getStreetName();
+        this.doubleDependentAddressLocality = address.getDoubleDependentAddressLocality();
+        this.dependentAddressLocality = address.getDependentAddressLocality();
+        this.addressLocality = address.getAddressLocality();
+        this.postalCode = address.getPostalCode();
+        this.addressCountry = address.getAddressCountry();
+        this.validFrom = address.getValidFrom();
+        this.validUntil = address.getValidUntil();
+    }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate validFrom;
