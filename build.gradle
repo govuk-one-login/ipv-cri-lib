@@ -16,7 +16,7 @@ defaultTasks 'clean', 'spotlessApply', 'build'
 
 ext {
 	dependencyVersions = [
-		jackson_version          : "2.13.1",
+		jackson_version          : "2.16.1",
 		aws_lambda_events_version: "3.11.0",
 		aws_powertools_version   : "1.12.0",
 		nimbusds_oauth_version   : "11.2",
