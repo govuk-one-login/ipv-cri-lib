@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -66,6 +67,7 @@ class AuditEventFactoryTest {
     @Test
     void shouldCreateAuditEventWithContextAndExtensions() {
         long timestamp = 1656947224L;
+        long eventTimestampMs = 165694722422L;
         String userId = String.valueOf(UUID.randomUUID());
         UUID sessionId = UUID.randomUUID();
         String persistentSessionId = UUID.randomUUID().toString();
@@ -75,6 +77,7 @@ class AuditEventFactoryTest {
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_VC_ISSUER);
         Instant mockInstant = mock(Instant.class);
         when(mockInstant.getEpochSecond()).thenReturn(timestamp);
+        when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
         when(mockClock.instant()).thenReturn(mockInstant);
         PersonIdentityDetailed personIdentity = mock(PersonIdentityDetailed.class);
         Map<String, String> requestHeaders = Map.of("X-Forwarded-For", clientIpAddress);
@@ -95,6 +98,7 @@ class AuditEventFactoryTest {
         assertEquals(TEST_AUDIT_EVENT_PREFIX + "_EVENT_TYPE", auditEvent.getEvent());
         assertEquals(personIdentity, auditEvent.getRestricted());
         assertEquals(timestamp, auditEvent.getTimestamp());
+        assertEquals(eventTimestampMs, auditEvent.getEventTimestampMs());
         assertEquals(userId, auditEvent.getUser().getUserId());
         assertEquals(clientIpAddress, auditEvent.getUser().getIpAddress());
         assertEquals(String.valueOf(sessionId), auditEvent.getUser().getSessionId());
@@ -103,8 +107,8 @@ class AuditEventFactoryTest {
 
         assertEquals(auditEventExtensions, auditEvent.getExtensions());
 
-        verify(mockClock).instant();
-        verify(mockInstant).getEpochSecond();
+        verify(mockClock, times(2)).instant();
+        verify(mockInstant).toEpochMilli();
         verify(mockConfigurationService).getSqsAuditEventPrefix();
         verify(mockConfigurationService).getVerifiableCredentialIssuer();
     }
@@ -112,11 +116,13 @@ class AuditEventFactoryTest {
     @Test
     void shouldCreateAuditEventWithContext() {
         long timestamp = 1656947224L;
+        long eventTimestampMs = 165694722422L;
         String clientIpAddress = "81.145.61.43";
         when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn(TEST_AUDIT_EVENT_PREFIX);
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_VC_ISSUER);
         Instant mockInstant = mock(Instant.class);
         when(mockInstant.getEpochSecond()).thenReturn(timestamp);
+        when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
         when(mockClock.instant()).thenReturn(mockInstant);
         PersonIdentityDetailed personIdentity = mock(PersonIdentityDetailed.class);
         Map<String, String> requestHeaders = Map.of("X-Forwarded-For", clientIpAddress);
@@ -131,6 +137,7 @@ class AuditEventFactoryTest {
         assertEquals(TEST_AUDIT_EVENT_PREFIX + "_EVENT_TYPE", auditEvent.getEvent());
         assertEquals(personIdentity, auditEvent.getRestricted());
         assertEquals(timestamp, auditEvent.getTimestamp());
+        assertEquals(eventTimestampMs, auditEvent.getEventTimestampMs());
         assertEquals(clientIpAddress, auditEvent.getUser().getIpAddress());
         assertNull(auditEvent.getUser().getUserId());
         assertNull(auditEvent.getUser().getSessionId());

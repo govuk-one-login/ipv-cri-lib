@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.5.6
+
+* Updated AuditEventFactory to create timestamps in milliseconds for audit events
+
 ## 1.5.5
 
 * Added `PersonIdentityDetailedBuilder` with similar intent as `PersonIdentityDetailedFactory` for constructing PersonIdentityDetailed with a builder constructor no args option
