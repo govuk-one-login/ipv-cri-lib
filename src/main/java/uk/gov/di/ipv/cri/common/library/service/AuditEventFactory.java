@@ -33,7 +33,10 @@ public class AuditEventFactory {
     <T> AuditEvent<T> create(String eventType, AuditEventContext auditEventContext, T extensions) {
         AuditEvent<T> auditEvent =
                 new AuditEvent<>(
-                        clock.instant().getEpochSecond(), eventPrefix + "_" + eventType, issuer);
+                        clock.instant().getEpochSecond(),
+                        clock.instant().toEpochMilli(),
+                        eventPrefix + "_" + eventType,
+                        issuer);
         if (Objects.nonNull(auditEventContext)) {
             if (Objects.nonNull(auditEventContext.getPersonIdentity())) {
                 auditEvent.setRestricted(auditEventContext.getPersonIdentity());

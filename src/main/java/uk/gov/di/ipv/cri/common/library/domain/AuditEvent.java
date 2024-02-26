@@ -11,6 +11,9 @@ public class AuditEvent<T> {
     @JsonProperty("timestamp")
     private final long timestamp;
 
+    @JsonProperty("event_timestamp_ms")
+    private final long eventTimestampMs;
+
     @JsonProperty("event_name")
     private final String event;
 
@@ -24,9 +27,11 @@ public class AuditEvent<T> {
     @JsonCreator
     public AuditEvent(
             @JsonProperty(value = "timestamp", required = true) long timestamp,
+            @JsonProperty(value = "event_timestamp_ms", required = true) long eventTimestampMs,
             @JsonProperty(value = "event_name", required = true) String event,
             @JsonProperty(value = "component_id", required = true) String issuer) {
         this.timestamp = timestamp;
+        this.eventTimestampMs = eventTimestampMs;
         this.event = event;
         this.issuer = issuer;
     }
@@ -36,6 +41,8 @@ public class AuditEvent<T> {
         return "AuditEvent{"
                 + "timestamp="
                 + timestamp
+                + ", event_timestamp_ms="
+                + eventTimestampMs
                 + ", event="
                 + event
                 + ", component_id="
@@ -45,6 +52,10 @@ public class AuditEvent<T> {
 
     public long getTimestamp() {
         return timestamp;
+    }
+
+    public long getEventTimestampMs() {
+        return eventTimestampMs;
     }
 
     public String getEvent() {
