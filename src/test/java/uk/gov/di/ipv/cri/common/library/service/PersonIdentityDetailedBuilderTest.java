@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.AddressType;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.DeviceInformation;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.DrivingPermit;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
@@ -146,8 +147,8 @@ class PersonIdentityDetailedBuilderTest {
             address.setAddressLocality("locality");
             address.setPostalCode("postcode");
             address.setValidFrom(LocalDate.now());
-
             List<Address> addresses = List.of(address);
+
             PersonIdentityDetailed personIdentityDetailed =
                     PersonIdentityDetailedBuilder.builder().withAddresses(addresses).build();
 
@@ -160,6 +161,43 @@ class PersonIdentityDetailedBuilderTest {
             assertEquals(address.getPostalCode(), pidAddress.getPostalCode());
             assertEquals(address.getValidFrom(), pidAddress.getValidFrom());
             assertEquals(AddressType.CURRENT, pidAddress.getAddressType());
+
+            assertNull(personIdentityDetailed.getDrivingPermits());
+            assertNull(personIdentityDetailed.getPassports());
+        }
+    }
+
+    @Nested
+    class BuilderWithDeviceInformation {
+        @Test
+        void shouldUseBuilderToCreatePersonIdentityDetailedWithDeviceInformation() {
+            Address address = new Address();
+            address.setBuildingNumber("buildingNum");
+            address.setBuildingName("buildingName");
+            address.setStreetName("street");
+            address.setAddressLocality("locality");
+            address.setPostalCode("postcode");
+            address.setValidFrom(LocalDate.now());
+            List<Address> addresses = List.of(address);
+            String encodedDeviceInformation = "123456789";
+
+            PersonIdentityDetailed personIdentityDetailed =
+                    PersonIdentityDetailedBuilder.builder()
+                            .withAddresses(addresses, encodedDeviceInformation)
+                            .build();
+
+            Address pidAddress = personIdentityDetailed.getAddresses().get(0);
+            assertEquals(addresses, personIdentityDetailed.getAddresses());
+            assertEquals(address.getBuildingName(), pidAddress.getBuildingName());
+            assertEquals(address.getBuildingNumber(), pidAddress.getBuildingNumber());
+            assertEquals(address.getStreetName(), pidAddress.getStreetName());
+            assertEquals(address.getAddressLocality(), pidAddress.getAddressLocality());
+            assertEquals(address.getPostalCode(), pidAddress.getPostalCode());
+            assertEquals(address.getValidFrom(), pidAddress.getValidFrom());
+            assertEquals(AddressType.CURRENT, pidAddress.getAddressType());
+
+            DeviceInformation deviceInformation = personIdentityDetailed.getDeviceInformation();
+            assertEquals(encodedDeviceInformation, deviceInformation.getEncoded());
 
             assertNull(personIdentityDetailed.getDrivingPermits());
             assertNull(personIdentityDetailed.getPassports());

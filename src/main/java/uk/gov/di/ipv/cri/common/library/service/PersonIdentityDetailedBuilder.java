@@ -2,6 +2,7 @@ package uk.gov.di.ipv.cri.common.library.service;
 
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.DeviceInformation;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.DrivingPermit;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Passport;
@@ -35,6 +36,7 @@ public class PersonIdentityDetailedBuilder {
         private List<Address> addresses;
         private List<DrivingPermit> drivingPermits;
         private List<Passport> passports;
+        private DeviceInformation deviceInformation;
 
         private Builder() {
             this(null, null);
@@ -43,6 +45,16 @@ public class PersonIdentityDetailedBuilder {
         private Builder(List<Name> names, List<BirthDate> birthDates) {
             this.names = names;
             this.birthDates = birthDates;
+        }
+
+        public Builder withAddresses(List<Address> addresses, String encodedDeviceInformation) {
+            this.addresses = addresses;
+
+            DeviceInformation deviceInformation = new DeviceInformation();
+            deviceInformation.setEncoded(encodedDeviceInformation);
+            this.deviceInformation = deviceInformation;
+
+            return this;
         }
 
         public Builder withAddresses(List<Address> addresses) {
@@ -63,7 +75,7 @@ public class PersonIdentityDetailedBuilder {
         @SuppressWarnings("deprecation")
         public PersonIdentityDetailed build() {
             return new PersonIdentityDetailed(
-                    names, birthDates, addresses, drivingPermits, passports);
+                    names, birthDates, addresses, drivingPermits, passports, deviceInformation);
         }
     }
 }

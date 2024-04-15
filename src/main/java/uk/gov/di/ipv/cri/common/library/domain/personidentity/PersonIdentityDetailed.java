@@ -16,6 +16,9 @@ public class PersonIdentityDetailed {
     @JsonProperty("address")
     private final List<Address> addresses;
 
+    @JsonProperty("device_information")
+    private final DeviceInformation deviceInformation;
+
     @JsonProperty("drivingPermit")
     private final List<DrivingPermit> drivingPermits;
 
@@ -33,7 +36,7 @@ public class PersonIdentityDetailed {
      */
     @Deprecated(since = "1.5.0")
     public PersonIdentityDetailed(List<Name> names, List<BirthDate> birthDates) {
-        this(names, birthDates, null, null, null);
+        this(names, birthDates, null, null, null, null);
     }
 
     /**
@@ -47,7 +50,7 @@ public class PersonIdentityDetailed {
     @Deprecated(since = "1.5.0")
     public PersonIdentityDetailed(
             List<Name> names, List<BirthDate> birthDates, List<Address> addresses) {
-        this(names, birthDates, addresses, null, null);
+        this(names, birthDates, addresses, null, null, null);
     }
 
     /**
@@ -56,6 +59,7 @@ public class PersonIdentityDetailed {
      * @param addresses null list if not used
      * @param drivingPermits null list if not used
      * @param passports null list if not used
+     * @param deviceInformation null if not used
      * @deprecated Do not use outside CRI-Lib, CRI's should use PersonIdentityDetailedFactory with
      *     the appropriate createPersonIdentityDetailedWith methods.
      * @see uk.gov.di.ipv.cri.common.library.service.PersonIdentityDetailedFactory
@@ -67,12 +71,14 @@ public class PersonIdentityDetailed {
             List<BirthDate> birthDates,
             List<Address> addresses,
             List<DrivingPermit> drivingPermits,
-            List<Passport> passports) {
+            List<Passport> passports,
+            DeviceInformation deviceInformation) {
         this.names = names;
         this.birthDates = birthDates;
         this.addresses = addresses;
         this.drivingPermits = drivingPermits;
         this.passports = passports;
+        this.deviceInformation = deviceInformation;
     }
 
     public List<Name> getNames() {
@@ -85,6 +91,10 @@ public class PersonIdentityDetailed {
 
     public List<Address> getAddresses() {
         return addresses;
+    }
+
+    public DeviceInformation getDeviceInformation() {
+        return deviceInformation;
     }
 
     public List<DrivingPermit> getDrivingPermits() {
