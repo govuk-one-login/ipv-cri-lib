@@ -8,11 +8,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEvent;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEventContext;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -79,8 +84,29 @@ class AuditEventFactoryTest {
         when(mockInstant.getEpochSecond()).thenReturn(timestamp);
         when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
         when(mockClock.instant()).thenReturn(mockInstant);
-        PersonIdentityDetailed personIdentity = mock(PersonIdentityDetailed.class);
-        Map<String, String> requestHeaders = Map.of("X-Forwarded-For", clientIpAddress);
+
+        NamePart firstNamePart = new NamePart();
+        firstNamePart.setType("GivenName");
+        firstNamePart.setValue("Jon");
+        NamePart surnamePart = new NamePart();
+        surnamePart.setType("FamilyName");
+        surnamePart.setValue("Smith");
+        Name name = new Name();
+        name.setNameParts(List.of(firstNamePart, surnamePart));
+        List<Name> names = List.of(name);
+        BirthDate birthDate = new BirthDate();
+        birthDate.setValue(LocalDate.of(1984, 6, 27));
+        List<BirthDate> birthDates = List.of(birthDate);
+        @SuppressWarnings("deprecation")
+        PersonIdentityDetailed personIdentity = new PersonIdentityDetailed(names, birthDates);
+        String encodedDeviceInformation = "123456789";
+
+        Map<String, String> requestHeaders =
+                Map.of(
+                        "X-Forwarded-For",
+                        clientIpAddress,
+                        "txma-audit-encoded",
+                        encodedDeviceInformation);
         SessionItem sessionItem = mock(SessionItem.class);
         when(sessionItem.getSubject()).thenReturn(userId);
         when(sessionItem.getSessionId()).thenReturn(sessionId);
@@ -96,7 +122,11 @@ class AuditEventFactoryTest {
                 auditEventFactory.create("EVENT_TYPE", auditEventContext, auditEventExtensions);
 
         assertEquals(TEST_AUDIT_EVENT_PREFIX + "_EVENT_TYPE", auditEvent.getEvent());
-        assertEquals(personIdentity, auditEvent.getRestricted());
+        assertEquals(names, auditEvent.getRestricted().getNames());
+        assertEquals(birthDates, auditEvent.getRestricted().getBirthDates());
+        assertEquals(
+                encodedDeviceInformation,
+                auditEvent.getRestricted().getDeviceInformation().getEncoded());
         assertEquals(timestamp, auditEvent.getTimestamp());
         assertEquals(eventTimestampMs, auditEvent.getEventTimestampMs());
         assertEquals(userId, auditEvent.getUser().getUserId());
@@ -124,7 +154,22 @@ class AuditEventFactoryTest {
         when(mockInstant.getEpochSecond()).thenReturn(timestamp);
         when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
         when(mockClock.instant()).thenReturn(mockInstant);
-        PersonIdentityDetailed personIdentity = mock(PersonIdentityDetailed.class);
+
+        NamePart firstNamePart = new NamePart();
+        firstNamePart.setType("GivenName");
+        firstNamePart.setValue("Jon");
+        NamePart surnamePart = new NamePart();
+        surnamePart.setType("FamilyName");
+        surnamePart.setValue("Smith");
+        Name name = new Name();
+        name.setNameParts(List.of(firstNamePart, surnamePart));
+        List<Name> names = List.of(name);
+        BirthDate birthDate = new BirthDate();
+        birthDate.setValue(LocalDate.of(1984, 6, 27));
+        List<BirthDate> birthDates = List.of(birthDate);
+        @SuppressWarnings("deprecation")
+        PersonIdentityDetailed personIdentity = new PersonIdentityDetailed(names, birthDates);
+
         Map<String, String> requestHeaders = Map.of("X-Forwarded-For", clientIpAddress);
         AuditEventContext auditEventContext =
                 new AuditEventContext(personIdentity, requestHeaders, null);
@@ -135,7 +180,8 @@ class AuditEventFactoryTest {
                 auditEventFactory.create("EVENT_TYPE", auditEventContext, null);
 
         assertEquals(TEST_AUDIT_EVENT_PREFIX + "_EVENT_TYPE", auditEvent.getEvent());
-        assertEquals(personIdentity, auditEvent.getRestricted());
+        assertEquals(names, auditEvent.getRestricted().getNames());
+        assertEquals(birthDates, auditEvent.getRestricted().getBirthDates());
         assertEquals(timestamp, auditEvent.getTimestamp());
         assertEquals(eventTimestampMs, auditEvent.getEventTimestampMs());
         assertEquals(clientIpAddress, auditEvent.getUser().getIpAddress());
