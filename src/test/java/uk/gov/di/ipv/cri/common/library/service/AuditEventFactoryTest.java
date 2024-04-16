@@ -99,6 +99,129 @@ class AuditEventFactoryTest {
         List<BirthDate> birthDates = List.of(birthDate);
         @SuppressWarnings("deprecation")
         PersonIdentityDetailed personIdentity = new PersonIdentityDetailed(names, birthDates);
+
+        Map<String, String> requestHeaders = Map.of("X-Forwarded-For", clientIpAddress);
+        SessionItem sessionItem = mock(SessionItem.class);
+        when(sessionItem.getSubject()).thenReturn(userId);
+        when(sessionItem.getSessionId()).thenReturn(sessionId);
+        when(sessionItem.getPersistentSessionId()).thenReturn(persistentSessionId);
+        when(sessionItem.getClientSessionId()).thenReturn(clientSessionId);
+        AuditEventContext auditEventContext =
+                new AuditEventContext(personIdentity, requestHeaders, sessionItem);
+        AuditEventFactory auditEventFactory =
+                new AuditEventFactory(mockConfigurationService, mockClock);
+        Map<String, String> auditEventExtensions = Map.of("test", "extension-data");
+
+        AuditEvent<Object> auditEvent =
+                auditEventFactory.create("EVENT_TYPE", auditEventContext, auditEventExtensions);
+
+        assertEquals(TEST_AUDIT_EVENT_PREFIX + "_EVENT_TYPE", auditEvent.getEvent());
+        assertEquals(names, auditEvent.getRestricted().getNames());
+        assertEquals(birthDates, auditEvent.getRestricted().getBirthDates());
+        assertEquals(timestamp, auditEvent.getTimestamp());
+        assertEquals(eventTimestampMs, auditEvent.getEventTimestampMs());
+        assertEquals(userId, auditEvent.getUser().getUserId());
+        assertEquals(clientIpAddress, auditEvent.getUser().getIpAddress());
+        assertEquals(String.valueOf(sessionId), auditEvent.getUser().getSessionId());
+        assertEquals(persistentSessionId, auditEvent.getUser().getPersistentSessionId());
+        assertEquals(clientSessionId, auditEvent.getUser().getClientSessionId());
+
+        assertEquals(auditEventExtensions, auditEvent.getExtensions());
+
+        verify(mockClock, times(2)).instant();
+        verify(mockInstant).toEpochMilli();
+        verify(mockConfigurationService).getSqsAuditEventPrefix();
+        verify(mockConfigurationService).getVerifiableCredentialIssuer();
+    }
+
+    @Test
+    void shouldCreateAuditEventWithContextAndDeviceInfoRestricted() {
+        long timestamp = 1656947224L;
+        long eventTimestampMs = 165694722422L;
+        String userId = String.valueOf(UUID.randomUUID());
+        UUID sessionId = UUID.randomUUID();
+        String persistentSessionId = UUID.randomUUID().toString();
+        String clientSessionId = UUID.randomUUID().toString();
+        String clientIpAddress = "81.145.61.43";
+        when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn(TEST_AUDIT_EVENT_PREFIX);
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_VC_ISSUER);
+        Instant mockInstant = mock(Instant.class);
+        when(mockInstant.getEpochSecond()).thenReturn(timestamp);
+        when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
+        when(mockClock.instant()).thenReturn(mockInstant);
+        String encodedDeviceInformation = "123456789";
+
+        Map<String, String> requestHeaders =
+                Map.of(
+                        "X-Forwarded-For",
+                        clientIpAddress,
+                        "txma-audit-encoded",
+                        encodedDeviceInformation);
+        SessionItem sessionItem = mock(SessionItem.class);
+        when(sessionItem.getSubject()).thenReturn(userId);
+        when(sessionItem.getSessionId()).thenReturn(sessionId);
+        when(sessionItem.getPersistentSessionId()).thenReturn(persistentSessionId);
+        when(sessionItem.getClientSessionId()).thenReturn(clientSessionId);
+        AuditEventContext auditEventContext = new AuditEventContext(requestHeaders, sessionItem);
+        AuditEventFactory auditEventFactory =
+                new AuditEventFactory(mockConfigurationService, mockClock);
+        Map<String, String> auditEventExtensions = Map.of("test", "extension-data");
+
+        AuditEvent<Object> auditEvent =
+                auditEventFactory.create("EVENT_TYPE", auditEventContext, auditEventExtensions);
+
+        assertEquals(TEST_AUDIT_EVENT_PREFIX + "_EVENT_TYPE", auditEvent.getEvent());
+        assertNull(auditEvent.getRestricted().getNames());
+        assertNull(auditEvent.getRestricted().getBirthDates());
+        assertEquals(
+                encodedDeviceInformation,
+                auditEvent.getRestricted().getDeviceInformation().getEncoded());
+        assertEquals(timestamp, auditEvent.getTimestamp());
+        assertEquals(eventTimestampMs, auditEvent.getEventTimestampMs());
+        assertEquals(userId, auditEvent.getUser().getUserId());
+        assertEquals(clientIpAddress, auditEvent.getUser().getIpAddress());
+        assertEquals(String.valueOf(sessionId), auditEvent.getUser().getSessionId());
+        assertEquals(persistentSessionId, auditEvent.getUser().getPersistentSessionId());
+        assertEquals(clientSessionId, auditEvent.getUser().getClientSessionId());
+
+        assertEquals(auditEventExtensions, auditEvent.getExtensions());
+
+        verify(mockClock, times(2)).instant();
+        verify(mockInstant).toEpochMilli();
+        verify(mockConfigurationService).getSqsAuditEventPrefix();
+        verify(mockConfigurationService).getVerifiableCredentialIssuer();
+    }
+
+    @Test
+    void shouldCreateAuditEventWithContextAndPersonIdentityRestricted() {
+        long timestamp = 1656947224L;
+        long eventTimestampMs = 165694722422L;
+        String userId = String.valueOf(UUID.randomUUID());
+        UUID sessionId = UUID.randomUUID();
+        String persistentSessionId = UUID.randomUUID().toString();
+        String clientSessionId = UUID.randomUUID().toString();
+        String clientIpAddress = "81.145.61.43";
+        when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn(TEST_AUDIT_EVENT_PREFIX);
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_VC_ISSUER);
+        Instant mockInstant = mock(Instant.class);
+        when(mockInstant.getEpochSecond()).thenReturn(timestamp);
+        when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
+        when(mockClock.instant()).thenReturn(mockInstant);
+
+        NamePart firstNamePart = new NamePart();
+        firstNamePart.setType("GivenName");
+        firstNamePart.setValue("Jon");
+        NamePart surnamePart = new NamePart();
+        surnamePart.setType("FamilyName");
+        surnamePart.setValue("Smith");
+        Name name = new Name();
+        name.setNameParts(List.of(firstNamePart, surnamePart));
+        List<Name> names = List.of(name);
+        BirthDate birthDate = new BirthDate();
+        birthDate.setValue(LocalDate.of(1984, 6, 27));
+        List<BirthDate> birthDates = List.of(birthDate);
+        @SuppressWarnings("deprecation")
+        PersonIdentityDetailed personIdentity = new PersonIdentityDetailed(names, birthDates);
         String encodedDeviceInformation = "123456789";
 
         Map<String, String> requestHeaders =

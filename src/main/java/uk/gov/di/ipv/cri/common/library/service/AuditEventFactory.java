@@ -44,7 +44,7 @@ public class AuditEventFactory {
             Map<String, String> requestHeaders = auditEventContext.getRequestHeaders();
 
             auditEvent.setRestricted(
-                    createAuditEventResricted(
+                    createAuditEventRestricted(
                             requestHeaders, auditEventContext.getPersonIdentity()));
 
             auditEvent.setUser(
@@ -57,19 +57,9 @@ public class AuditEventFactory {
     }
 
     @SuppressWarnings("deprecation")
-    private PersonIdentityDetailed createAuditEventResricted(
+    private PersonIdentityDetailed createAuditEventRestricted(
             Map<String, String> requestHeaders, PersonIdentityDetailed personIdentityDetails) {
-        PersonIdentityDetailed restricted = null;
-
-        if (Objects.nonNull(personIdentityDetails)) {
-            restricted =
-                    new PersonIdentityDetailed(
-                            personIdentityDetails.getNames(),
-                            personIdentityDetails.getBirthDates(),
-                            personIdentityDetails.getAddresses(),
-                            personIdentityDetails.getDrivingPermits(),
-                            personIdentityDetails.getPassports());
-        }
+        PersonIdentityDetailed restricted = personIdentityDetails;
 
         if (requestHeaders.containsKey(TXMA_AUDIT_ENCODED)) {
             if (Objects.isNull(restricted)) {
