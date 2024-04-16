@@ -1,5 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.di.ipv.cri.common.library.domain.DeviceInformation;
@@ -7,6 +8,7 @@ import uk.gov.di.ipv.cri.common.library.domain.DeviceInformation;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PersonIdentityDetailed {
     @JsonProperty("name")
     private final List<Name> names;
