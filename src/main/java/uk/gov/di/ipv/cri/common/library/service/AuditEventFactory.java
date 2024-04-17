@@ -4,6 +4,8 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEvent;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEventContext;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEventUser;
+import uk.gov.di.ipv.cri.common.library.domain.DeviceInformation;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.time.Clock;
@@ -12,6 +14,7 @@ import java.util.Objects;
 
 public class AuditEventFactory {
     private static final String CLIENT_IP_HEADER_KEY = "X-Forwarded-For";
+    private static final String TXMA_AUDIT_ENCODED = "txma-audit-encoded";
 
     private final String eventPrefix;
     private final String issuer;
@@ -38,18 +41,36 @@ public class AuditEventFactory {
                         eventPrefix + "_" + eventType,
                         issuer);
         if (Objects.nonNull(auditEventContext)) {
-            if (Objects.nonNull(auditEventContext.getPersonIdentity())) {
-                auditEvent.setRestricted(auditEventContext.getPersonIdentity());
-            }
+            Map<String, String> requestHeaders = auditEventContext.getRequestHeaders();
+
+            auditEvent.setRestricted(
+                    createAuditEventRestricted(
+                            requestHeaders, auditEventContext.getPersonIdentity()));
+
             auditEvent.setUser(
-                    createAuditEventUser(
-                            auditEventContext.getRequestHeaders(),
-                            auditEventContext.getSessionItem()));
+                    createAuditEventUser(requestHeaders, auditEventContext.getSessionItem()));
         }
         if (Objects.nonNull(extensions)) {
             auditEvent.setExtensions(extensions);
         }
         return auditEvent;
+    }
+
+    @SuppressWarnings("deprecation")
+    private PersonIdentityDetailed createAuditEventRestricted(
+            Map<String, String> requestHeaders, PersonIdentityDetailed personIdentityDetails) {
+        PersonIdentityDetailed restricted = personIdentityDetails;
+
+        if (requestHeaders.containsKey(TXMA_AUDIT_ENCODED)) {
+            if (Objects.isNull(restricted)) {
+                restricted = new PersonIdentityDetailed(null, null, null, null, null);
+            }
+            DeviceInformation deviceInformation = new DeviceInformation();
+            deviceInformation.setEncoded(requestHeaders.get(TXMA_AUDIT_ENCODED));
+            restricted.setDeviceInformation(deviceInformation);
+        }
+
+        return restricted;
     }
 
     private AuditEventUser createAuditEventUser(

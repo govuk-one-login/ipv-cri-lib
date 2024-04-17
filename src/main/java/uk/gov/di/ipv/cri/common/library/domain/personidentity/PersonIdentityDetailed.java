@@ -1,11 +1,14 @@
 package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.di.ipv.cri.common.library.domain.DeviceInformation;
 
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PersonIdentityDetailed {
     @JsonProperty("name")
     private final List<Name> names;
@@ -21,6 +24,9 @@ public class PersonIdentityDetailed {
 
     @JsonProperty("passport")
     private final List<Passport> passports;
+
+    @JsonProperty("device_information")
+    private DeviceInformation deviceInformation;
 
     /**
      * @param names list of names
@@ -93,5 +99,13 @@ public class PersonIdentityDetailed {
 
     public List<Passport> getPassports() {
         return passports;
+    }
+
+    public DeviceInformation getDeviceInformation() {
+        return deviceInformation;
+    }
+
+    public void setDeviceInformation(DeviceInformation deviceInformation) {
+        this.deviceInformation = deviceInformation;
     }
 }
