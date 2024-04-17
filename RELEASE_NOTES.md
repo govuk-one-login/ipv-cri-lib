@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.6.1
+
+* Update README
+
 ## 1.6.0
 
 * Append `device_information` to `restricted` if the `txma-audit-encoded` header is present
