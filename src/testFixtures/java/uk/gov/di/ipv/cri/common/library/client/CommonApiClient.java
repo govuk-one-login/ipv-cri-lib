@@ -67,6 +67,27 @@ public class CommonApiClient {
         return sendHttpRequest(request);
     }
 
+    public HttpResponse<String> sendNewSessionRequest(String sessionRequestBody)
+            throws IOException, InterruptedException {
+        var request =
+                HttpRequest.newBuilder()
+                        .uri(
+                                new URIBuilder(
+                                                this.clientConfigurationService
+                                                        .getPrivateApiEndpoint())
+                                        .setPath(
+                                                this.clientConfigurationService.createUriPath(
+                                                        "session"))
+                                        .build())
+                        .header(HttpHeaders.ACCEPT, JSON_MIME_MEDIA_TYPE)
+                        .header(HttpHeaders.CONTENT_TYPE, JSON_MIME_MEDIA_TYPE)
+                        .header("X-Forwarded-For", "192.168.0.1")
+                        .header("Txma-Audit-Encoded", "deviceInformation")
+                        .POST(HttpRequest.BodyPublishers.ofString(sessionRequestBody))
+                        .build();
+        return sendHttpRequest(request);
+    }
+
     public HttpResponse<String> sendTokenRequest(String privateKeyJwt)
             throws IOException, InterruptedException {
         var request =

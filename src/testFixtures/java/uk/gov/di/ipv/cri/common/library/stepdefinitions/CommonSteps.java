@@ -55,6 +55,18 @@ public class CommonSteps {
         this.testContext.setSessionId(deserializedResponse.get("session_id"));
     }
 
+    @When("user sends a POST request to session end point with txma header")
+    public void userSendsAPostRequestToSessionEndpointWithHeader()
+            throws IOException, InterruptedException {
+
+        this.testContext.setResponse(
+                this.commonApiClient.sendNewSessionRequest(sessionRequestBody));
+        Map<String, String> deserializedResponse =
+                objectMapper.readValue(
+                        this.testContext.getResponse().body(), new TypeReference<>() {});
+        this.testContext.setSessionId(deserializedResponse.get("session_id"));
+    }
+
     @When("user sends a GET request to authorization end point")
     public void userSendsAGetRequestToAuthorizationEndpoint()
             throws IOException, InterruptedException {
