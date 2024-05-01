@@ -56,9 +56,11 @@ public class CommonSteps {
     }
 
     @When("user sends a POST request to session end point with txma header")
-    public void userSendsAPostRequestToSessionEndpointWithHeader() throws IOException, InterruptedException {
+    public void userSendsAPostRequestToSessionEndpointWithHeader()
+            throws IOException, InterruptedException {
 
-        this.testContext.setResponse(this.commonApiClient.sendNewSessionRequest(sessionRequestBody));
+        this.testContext.setResponse(
+                this.commonApiClient.sendNewSessionRequest(sessionRequestBody));
         Map<String, String> deserializedResponse =
                 objectMapper.readValue(
                         this.testContext.getResponse().body(), new TypeReference<>() {});
