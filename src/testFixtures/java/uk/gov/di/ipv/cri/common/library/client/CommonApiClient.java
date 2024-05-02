@@ -82,7 +82,7 @@ public class CommonApiClient {
                         .header(HttpHeaders.ACCEPT, JSON_MIME_MEDIA_TYPE)
                         .header(HttpHeaders.CONTENT_TYPE, JSON_MIME_MEDIA_TYPE)
                         .header("X-Forwarded-For", "192.168.0.1")
-                        .header("Txma-Audit-Encoded", "deviceInformation")
+                        .header("txma-audit-encoded", "deviceInformation")
                         .POST(HttpRequest.BodyPublishers.ofString(sessionRequestBody))
                         .build();
         return sendHttpRequest(request);
