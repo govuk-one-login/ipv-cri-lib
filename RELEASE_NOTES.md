@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.6.2
+
+* Created new step definition for posting session request to include new `txma-audit-encoded` header to be referenced in the address repository tests.
+
 ## 1.6.1
 
 * Update README
