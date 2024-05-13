@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 2.0.0
+
+* Added support for National Insurance number as SocialSecurityRecord
+* Bumped version to 2.0.0 following change to remove public constructor on ListUtil
+
 ## 1.7.0
 
 ### Added utilities for integration testing with AWS services

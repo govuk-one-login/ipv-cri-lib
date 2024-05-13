@@ -10,6 +10,7 @@ import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Passport;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.SocialSecurityRecord;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -22,6 +23,7 @@ class PersonIdentityDetailedBuilderTest {
     class BuilderWithNamesParts {
         @Test
         void shouldUseBuilderToCreatePersonIdentityDetailedWithDrivingPermit() {
+
             NamePart firstNamePart = new NamePart();
             firstNamePart.setType("GivenName");
             firstNamePart.setValue("Jon");
@@ -82,10 +84,12 @@ class PersonIdentityDetailedBuilderTest {
             assertEquals(drivingPermit.getIssueNumber(), pidDrivingPermit.getIssueNumber());
 
             assertNull(personIdentityDetailed.getPassports());
+            assertNull(personIdentityDetailed.getSocialSecurityRecords());
         }
 
         @Test
         void shouldUseBuilderToCreatePersonIdentityWithPassport() {
+
             NamePart firstNamePart = new NamePart();
             firstNamePart.setType("GivenName");
             firstNamePart.setValue("Jon");
@@ -129,6 +133,55 @@ class PersonIdentityDetailedBuilderTest {
             assertEquals(passport.getDocumentNumber(), pidPassport.getDocumentNumber());
             assertEquals(passport.getExpiryDate(), pidPassport.getExpiryDate());
             assertEquals(passport.getIcaoIssuerCode(), pidPassport.getIcaoIssuerCode());
+
+            assertNull(personIdentityDetailed.getAddresses());
+            assertNull(personIdentityDetailed.getDrivingPermits());
+            assertNull(personIdentityDetailed.getSocialSecurityRecords());
+        }
+
+        @Test
+        void shouldUseBuilderToCreatePersonIdentityWithNino() {
+            SocialSecurityRecord socialSecurityRecord = new SocialSecurityRecord();
+            socialSecurityRecord.setPersonalNumber("AA000003D");
+            List<SocialSecurityRecord> socialSecurityRecords = List.of(socialSecurityRecord);
+
+            NamePart firstNamePart = new NamePart();
+            firstNamePart.setType("GivenName");
+            firstNamePart.setValue("Jon");
+            NamePart surnamePart = new NamePart();
+            surnamePart.setType("FamilyName");
+            surnamePart.setValue("Smith");
+            Name name = new Name();
+            name.setNameParts(List.of(firstNamePart, surnamePart));
+            List<Name> names = List.of(name);
+
+            LocalDate dob = LocalDate.of(1984, 6, 27);
+            BirthDate birthDate = new BirthDate();
+            birthDate.setValue(dob);
+            List<BirthDate> birthDates = List.of(birthDate);
+
+            PersonIdentityDetailed personIdentityDetailed =
+                    PersonIdentityDetailedBuilder.builder(names, birthDates)
+                            .withNino(socialSecurityRecords)
+                            .build();
+
+            assertEquals(names, personIdentityDetailed.getNames());
+            assertEquals(
+                    firstNamePart.getValue(),
+                    personIdentityDetailed.getNames().get(0).getNameParts().get(0).getValue());
+            assertEquals(
+                    surnamePart.getValue(),
+                    personIdentityDetailed.getNames().get(0).getNameParts().get(1).getValue());
+
+            assertEquals(birthDates, personIdentityDetailed.getBirthDates());
+            assertEquals(
+                    birthDate.getValue(), personIdentityDetailed.getBirthDates().get(0).getValue());
+
+            SocialSecurityRecord personSocialSecurityRecord =
+                    personIdentityDetailed.getSocialSecurityRecords().get(0);
+            assertEquals(
+                    personSocialSecurityRecord.getPersonalNumber(),
+                    socialSecurityRecords.get(0).getPersonalNumber());
 
             assertNull(personIdentityDetailed.getAddresses());
             assertNull(personIdentityDetailed.getDrivingPermits());

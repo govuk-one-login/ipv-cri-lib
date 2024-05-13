@@ -10,6 +10,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PersonIdentityDetailed {
+
     @JsonProperty("name")
     private final List<Name> names;
 
@@ -25,6 +26,9 @@ public class PersonIdentityDetailed {
     @JsonProperty("passport")
     private final List<Passport> passports;
 
+    @JsonProperty("socialSecurityRecord")
+    private final List<SocialSecurityRecord> socialSecurityRecords;
+
     @JsonProperty("device_information")
     private DeviceInformation deviceInformation;
 
@@ -39,7 +43,7 @@ public class PersonIdentityDetailed {
      */
     @Deprecated(since = "1.5.0")
     public PersonIdentityDetailed(List<Name> names, List<BirthDate> birthDates) {
-        this(names, birthDates, null, null, null);
+        this(names, birthDates, null, null, null, null);
     }
 
     /**
@@ -53,7 +57,7 @@ public class PersonIdentityDetailed {
     @Deprecated(since = "1.5.0")
     public PersonIdentityDetailed(
             List<Name> names, List<BirthDate> birthDates, List<Address> addresses) {
-        this(names, birthDates, addresses, null, null);
+        this(names, birthDates, addresses, null, null, null);
     }
 
     /**
@@ -73,12 +77,18 @@ public class PersonIdentityDetailed {
             List<BirthDate> birthDates,
             List<Address> addresses,
             List<DrivingPermit> drivingPermits,
-            List<Passport> passports) {
+            List<Passport> passports,
+            List<SocialSecurityRecord> socialSecurityRecords) {
         this.names = names;
         this.birthDates = birthDates;
         this.addresses = addresses;
         this.drivingPermits = drivingPermits;
         this.passports = passports;
+        this.socialSecurityRecords = socialSecurityRecords;
+    }
+
+    public List<SocialSecurityRecord> getSocialSecurityRecords() {
+        return socialSecurityRecords;
     }
 
     public List<Name> getNames() {

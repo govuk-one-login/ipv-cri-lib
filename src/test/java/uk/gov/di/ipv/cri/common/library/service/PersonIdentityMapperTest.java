@@ -12,11 +12,13 @@ import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.SocialSecurityRecord;
 import uk.gov.di.ipv.cri.common.library.persistence.item.CanonicalAddress;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityDateOfBirth;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityName;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityNamePart;
+import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentitySocialSecurityRecord;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -58,10 +60,15 @@ class PersonIdentityMapperTest {
         address.setPostalCode("postcode");
         address.setValidFrom(TODAY);
 
+        PersonIdentitySocialSecurityRecord socialSecurityRecord =
+                new PersonIdentitySocialSecurityRecord();
+        socialSecurityRecord.setPersonalNumber("AA000003D");
+
         PersonIdentityItem testPersonIdentityItem = new PersonIdentityItem();
         testPersonIdentityItem.setNames(List.of(name));
         testPersonIdentityItem.setBirthDates(List.of(birthDate));
         testPersonIdentityItem.setAddresses(List.of(address));
+        testPersonIdentityItem.setSocialSecurityRecords(List.of(socialSecurityRecord));
 
         PersonIdentity mappedPersonIdentity =
                 this.personIdentityMapper.mapToPersonIdentity(testPersonIdentityItem);
@@ -77,6 +84,9 @@ class PersonIdentityMapperTest {
         assertEquals(address.getPostalCode(), mappedAddress.getPostalCode());
         assertEquals(address.getValidFrom(), mappedAddress.getValidFrom());
         assertEquals(AddressType.CURRENT, mappedAddress.getAddressType());
+        assertEquals(
+                socialSecurityRecord.getPersonalNumber(),
+                testPersonIdentityItem.getSocialSecurityRecords().get(0).getPersonalNumber());
     }
 
     @Test
@@ -194,11 +204,18 @@ class PersonIdentityMapperTest {
         address.setValidFrom(TODAY);
         sharedClaims.setAddresses(List.of(address));
 
+        SocialSecurityRecord socialSecurityRecord = new SocialSecurityRecord();
+        socialSecurityRecord.setPersonalNumber("AA000003D");
+        sharedClaims.setSocialSecurityRecords(List.of(socialSecurityRecord));
+
         PersonIdentityItem mappedPersonIdentityItem =
                 personIdentityMapper.mapToPersonIdentityItem(sharedClaims);
 
         PersonIdentityName mappedName = mappedPersonIdentityItem.getNames().get(0);
         CanonicalAddress mappedAddress = mappedPersonIdentityItem.getAddresses().get(0);
+        PersonIdentitySocialSecurityRecord mappedSocialSecurityRecord =
+                mappedPersonIdentityItem.getSocialSecurityRecords().get(0);
+
         assertEquals(firstNamePart.getValue(), mappedName.getNameParts().get(0).getValue());
         assertEquals(firstNamePart.getType(), mappedName.getNameParts().get(0).getType());
         assertEquals(surnamePart.getValue(), mappedName.getNameParts().get(1).getValue());
@@ -212,6 +229,9 @@ class PersonIdentityMapperTest {
         assertEquals(address.getPostalCode(), mappedAddress.getPostalCode());
         assertEquals(TODAY, mappedAddress.getValidFrom());
         assertNull(mappedAddress.getValidUntil());
+        assertEquals(
+                socialSecurityRecord.getPersonalNumber(),
+                mappedSocialSecurityRecord.getPersonalNumber());
     }
 
     @Test
@@ -245,10 +265,16 @@ class PersonIdentityMapperTest {
         address.setValidFrom(LocalDate.of(2011, 10, 21));
         address.setValidUntil(LocalDate.of(2017, 11, 25));
 
+        PersonIdentitySocialSecurityRecord personIdentitySocialSecurityRecord =
+                new PersonIdentitySocialSecurityRecord();
+        personIdentitySocialSecurityRecord.setPersonalNumber("AA000003D");
+
         PersonIdentityItem testPersonIdentityItem = new PersonIdentityItem();
         testPersonIdentityItem.setNames(List.of(name));
         testPersonIdentityItem.setBirthDates(List.of(birthDate));
         testPersonIdentityItem.setAddresses(List.of(address));
+        testPersonIdentityItem.setSocialSecurityRecords(
+                List.of(personIdentitySocialSecurityRecord));
 
         PersonIdentityDetailed mappedPersonIdentity =
                 personIdentityMapper.mapToPersonIdentityDetailed(testPersonIdentityItem);
@@ -277,6 +303,11 @@ class PersonIdentityMapperTest {
         assertEquals(address.getStreetName(), mappedAddress.getStreetName());
         assertEquals(address.getSubBuildingName(), mappedAddress.getSubBuildingName());
         assertEquals(address.getUprn(), mappedAddress.getUprn());
+
+        // CRIs using a java backend currently shouldn't have a nino sent to them,
+        // functionality has been added in case this changes in the future but for now
+        // this checks the value hasn't been mapped into the personIdentity
+        assertNull(mappedPersonIdentity.getSocialSecurityRecords());
     }
 
     @Test

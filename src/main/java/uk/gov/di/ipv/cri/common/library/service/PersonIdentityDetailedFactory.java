@@ -23,7 +23,7 @@ public class PersonIdentityDetailedFactory {
     @SuppressWarnings("deprecation")
     public static PersonIdentityDetailed createPersonIdentityDetailedWithAddresses(
             List<Name> names, List<BirthDate> birthDates, List<Address> addresses) {
-        return new PersonIdentityDetailed(names, birthDates, addresses, null, null);
+        return new PersonIdentityDetailed(names, birthDates, addresses, null, null, null);
     }
 
     @SuppressWarnings("deprecation")
@@ -32,12 +32,12 @@ public class PersonIdentityDetailedFactory {
             List<BirthDate> birthDates,
             List<Address> addresses,
             List<DrivingPermit> drivingPermits) {
-        return new PersonIdentityDetailed(names, birthDates, addresses, drivingPermits, null);
+        return new PersonIdentityDetailed(names, birthDates, addresses, drivingPermits, null, null);
     }
 
     @SuppressWarnings("deprecation")
     public static PersonIdentityDetailed createPersonIdentityDetailedWithPassport(
             List<Name> names, List<BirthDate> birthDates, List<Passport> passports) {
-        return new PersonIdentityDetailed(names, birthDates, null, null, passports);
+        return new PersonIdentityDetailed(names, birthDates, null, null, passports, null);
     }
 }
