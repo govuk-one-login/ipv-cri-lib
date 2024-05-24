@@ -20,7 +20,6 @@ import uk.gov.di.ipv.cri.common.library.exception.SessionExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionNotFoundException;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
-import uk.gov.di.ipv.cri.common.library.util.ListUtil;
 
 import java.net.URI;
 import java.time.Clock;
@@ -47,7 +46,6 @@ class SessionServiceTest {
 
     @Mock private DataStore<SessionItem> mockDataStore;
     @Mock private ConfigurationService mockConfigurationService;
-    @Mock private ListUtil mockListUtil;
     @Captor private ArgumentCaptor<SessionItem> sessionItemArgumentCaptor;
 
     @BeforeAll
@@ -58,8 +56,7 @@ class SessionServiceTest {
     @BeforeEach
     void setUp() {
         Clock nowClock = Clock.fixed(fixedInstant, ZoneId.systemDefault());
-        sessionService =
-                new SessionService(mockDataStore, mockConfigurationService, nowClock, mockListUtil);
+        sessionService = new SessionService(mockDataStore, mockConfigurationService, nowClock);
     }
 
     @Test
@@ -114,7 +111,6 @@ class SessionServiceTest {
         setClientSessionIds(item);
         List<SessionItem> items = List.of(item);
 
-        when(mockListUtil.getOneItemOrThrowError(items)).thenReturn(item);
         when(mockDataStore.getItemByIndex(SessionItem.AUTHORIZATION_CODE_INDEX, authCodeValue))
                 .thenReturn(items);
         when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
@@ -141,7 +137,6 @@ class SessionServiceTest {
         setClientSessionIds(item);
         List<SessionItem> items = List.of(item);
 
-        when(mockListUtil.getOneItemOrThrowError(items)).thenReturn(item);
         when(mockDataStore.getItemByIndex(SessionItem.ACCESS_TOKEN_INDEX, serialisedAccessToken))
                 .thenReturn(items);
         when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
@@ -183,7 +178,6 @@ class SessionServiceTest {
                 Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond());
         List<SessionItem> items = List.of(item);
 
-        when(mockListUtil.getOneItemOrThrowError(items)).thenReturn(item);
         when(mockDataStore.getItemByIndex(SessionItem.AUTHORIZATION_CODE_INDEX, authorizationCode))
                 .thenReturn(items);
         when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
@@ -204,7 +198,6 @@ class SessionServiceTest {
         item.setAccessTokenExpiryDate(Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond());
         List<SessionItem> items = List.of(item);
 
-        when(mockListUtil.getOneItemOrThrowError(items)).thenReturn(item);
         when(mockDataStore.getItemByIndex(SessionItem.ACCESS_TOKEN_INDEX, serialisedAccessToken))
                 .thenReturn(items);
         when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);

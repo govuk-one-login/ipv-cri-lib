@@ -22,7 +22,6 @@ public class SessionService {
     private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
     private final ConfigurationService configurationService;
     private final DataStore<SessionItem> dataStore;
-    private final ListUtil listUtil;
     private final Clock clock;
 
     @ExcludeFromGeneratedCoverageReport
@@ -34,7 +33,6 @@ public class SessionService {
                         SessionItem.class,
                         new DynamoDbEnhancedClientFactory().getClient());
         this.clock = Clock.systemUTC();
-        this.listUtil = new ListUtil();
     }
 
     @ExcludeFromGeneratedCoverageReport
@@ -45,19 +43,16 @@ public class SessionService {
                         SessionItem.class,
                         new DynamoDbEnhancedClientFactory().getClient()),
                 configurationService,
-                Clock.systemUTC(),
-                new ListUtil());
+                Clock.systemUTC());
     }
 
     public SessionService(
             DataStore<SessionItem> dataStore,
             ConfigurationService configurationService,
-            Clock clock,
-            ListUtil listUtil) {
+            Clock clock) {
         this.dataStore = dataStore;
         this.configurationService = configurationService;
         this.clock = clock;
-        this.listUtil = listUtil;
     }
 
     public UUID saveSession(SessionRequest sessionRequest) {
@@ -129,7 +124,7 @@ public class SessionService {
 
         try {
             sessionItem =
-                    listUtil.getOneItemOrThrowError(
+                    ListUtil.getOneItemOrThrowError(
                             dataStore.getItemByIndex(
                                     SessionItem.ACCESS_TOKEN_INDEX,
                                     accessToken.toAuthorizationHeader()));
@@ -158,7 +153,7 @@ public class SessionService {
 
         try {
             sessionItem =
-                    listUtil.getOneItemOrThrowError(
+                    ListUtil.getOneItemOrThrowError(
                             dataStore.getItemByIndex(
                                     SessionItem.AUTHORIZATION_CODE_INDEX, authCode));
         } catch (IllegalArgumentException e) {
