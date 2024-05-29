@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 class ListUtilTest {
 
+    // *** #getOneItemOrThrowError ***//
+
     @Test
     void getOneItemOrThrowError_shouldThrowIfListIsNull() {
         assertThrows(IllegalArgumentException.class, () -> ListUtil.getOneItemOrThrowError(null));
@@ -40,6 +42,8 @@ class ListUtilTest {
     void getOneItemOrThrowError_shouldReturnElementFromSingletonList() {
         assertEquals(1, ListUtil.getOneItemOrThrowError(Collections.singletonList(1)));
     }
+
+    // *** #split ***//
 
     @Test
     void split_shouldThrowIfListIsNull() {
@@ -102,6 +106,8 @@ class ListUtilTest {
         assertEquals(List.of(1, 2, 3), batches.get(0));
         assertEquals(List.of(4, 5), batches.get(1));
     }
+
+    // *** #except ***//
 
     @Test
     void except_shouldThrowIfSourceListIsNull() {
@@ -222,6 +228,8 @@ class ListUtilTest {
         assertEquals(List.of(new Point(1, 2)), ListUtil.except(points, exclude, Point::getY));
     }
 
+    // *** #exclude ***//
+
     @Test
     void exclude_shouldThrowIfSourceListIsNull() {
         final List<Object> except = Collections.emptyList();
@@ -242,10 +250,10 @@ class ListUtilTest {
     void exclude_shouldMakeEmptyListIfSourceListIsEmpty() {
         final List<Object> list = Collections.emptyList();
 
-        ListUtil.exclude(Collections.emptyList(), Collections.emptyList(), Object::toString);
+        ListUtil.exclude(list, Collections.emptyList(), Object::toString);
         assertEquals(Collections.emptyList(), list);
 
-        ListUtil.exclude(Collections.emptyList(), List.of(1, 2, 3), Object::toString);
+        ListUtil.exclude(list, List.of(1, 2, 3), Object::toString);
         assertEquals(Collections.emptyList(), list);
     }
 
@@ -343,5 +351,137 @@ class ListUtilTest {
 
         ListUtil.exclude(points, Collections.singletonList(exclude), Point::getY);
         assertEquals(Collections.emptyList(), points);
+    }
+
+    // *** #mergeDistinct ***//
+
+    @Test
+    void mergeDistinct_shouldThrowIfSourceListIsNull() {
+        final List<Object> merge = Collections.emptyList();
+
+        assertThrows(
+                NullPointerException.class,
+                () -> ListUtil.mergeDistinct(null, merge, Object::toString));
+    }
+
+    @Test
+    void mergeDistinct_shouldThrowIfMergeListIsNull() {
+        final ArrayList<Integer> source = new ArrayList<>(List.of(1));
+
+        assertThrows(
+                NullPointerException.class,
+                () -> ListUtil.mergeDistinct(source, null, Object::toString));
+    }
+
+    @Test
+    void mergeDistinct_shouldAddToEmptySourceList() {
+        final List<Object> list = new ArrayList<>();
+        final List<Object> add = List.of(1, 2, 3);
+
+        ListUtil.mergeDistinct(list, Collections.emptyList(), Object::toString);
+        assertEquals(Collections.emptyList(), list);
+
+        ListUtil.mergeDistinct(list, add, Object::toString);
+        assertEquals(add, list);
+    }
+
+    @Test
+    void mergeDistinct_shouldProduceSameListIfSourceListMatchesMergeList() {
+        List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3));
+
+        ListUtil.mergeDistinct(list, List.copyOf(list), Object::toString);
+        assertEquals(List.copyOf(list), list);
+    }
+
+    @Test
+    void mergeDistinct_shouldProduceSameListIfMergeListIsEmpty() {
+        final List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3));
+
+        ListUtil.mergeDistinct(list, Collections.emptyList(), Object::toString);
+        assertEquals(List.copyOf(list), list);
+    }
+
+    @Test
+    void mergeDistinct_shouldAddTwoDistinctLists() {
+        final List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3));
+        final List<Integer> add = List.of(4, 5, 6);
+
+        ListUtil.mergeDistinct(list, add, Object::toString);
+        assertEquals(List.of(1, 2, 3, 4, 5, 6), list);
+    }
+
+    @Test
+    void mergeDistinct_shouldNotAddDuplicatedElements() {
+        final List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5, 6));
+
+        ListUtil.mergeDistinct(list, List.of(2, 4, 5, 7, 8), Object::toString);
+        assertEquals(List.of(1, 3, 6, 2, 4, 5, 7, 8), list);
+    }
+
+    @Test
+    void mergeDistinct_shouldNotDuplicateComplexTypes() {
+        final List<Point> points = new ArrayList<>(Arrays.asList(new Point(1, 2), new Point(3, 4)));
+
+        ListUtil.mergeDistinct(points, Collections.singletonList(points.get(1)), Object::toString);
+        assertEquals(List.copyOf(points), points);
+    }
+
+    @Test
+    void mergeDistinct_shouldNotDuplicateCollections() {
+        final List<Collection<Integer>> lists =
+                new ArrayList<>(List.of(Arrays.asList(1, 2, 3), List.of(4, 5, 6)));
+
+        ListUtil.mergeDistinct(lists, Collections.singletonList(lists.get(1)), Object::toString);
+        assertEquals(List.copyOf(lists), lists);
+    }
+
+    @Test
+    void mergeDistinct_shouldNotDuplicateMaps() {
+        final List<Map<String, Integer>> maps =
+                new ArrayList<>(Arrays.asList(Map.of("one", 1), Map.of("two", 2)));
+
+        ListUtil.mergeDistinct(maps, Collections.singletonList(maps.get(1)), Object::toString);
+        assertEquals(List.copyOf(maps), maps);
+    }
+
+    @Test
+    void mergeDistinct_shouldAddDistinctComplexTypesUsingCustomComparator() {
+        final List<Point> points = new ArrayList<>(Arrays.asList(new Point(1, 2), new Point(3, 5)));
+        List<Point> list = new ArrayList<>(points);
+
+        ListUtil.mergeDistinct(
+                list,
+                Collections.singletonList(new Point(1, 4)),
+                Comparator.comparing(Point::getX));
+
+        assertEquals(List.of(new Point(3, 5), new Point(1, 4)), list);
+
+        ListUtil.mergeDistinct(
+                list,
+                Collections.singletonList(new Point(1, 5)),
+                Comparator.comparing(Point::getY));
+
+        assertEquals(List.of(new Point(1, 4), new Point(1, 5)), list);
+
+        ListUtil.mergeDistinct(
+                list,
+                Collections.singletonList(new Point(1, 6)),
+                Comparator.comparing(Point::getY).thenComparing(Point::getX));
+
+        assertEquals(List.of(new Point(1, 4), new Point(1, 5), new Point(1, 6)), list);
+    }
+
+    @Test
+    void mergeDistinct_shouldAddDistinctComplexTypesUsingFieldValue() {
+        final List<Point> list = new ArrayList<>(Arrays.asList(new Point(1, 2), new Point(3, 4)));
+
+        ListUtil.mergeDistinct(list, Collections.singletonList(new Point(2, 6)), Point::getX);
+        assertEquals(List.of(new Point(1, 2), new Point(3, 4), new Point(2, 6)), list);
+
+        ListUtil.mergeDistinct(list, Collections.singletonList(new Point(1, 5)), Point::getX);
+        assertEquals(List.of(new Point(3, 4), new Point(2, 6), new Point(1, 5)), list);
+
+        ListUtil.mergeDistinct(list, Collections.singletonList(new Point(1, 4)), Point::getY);
+        assertEquals(List.of(new Point(2, 6), new Point(1, 5), new Point(1, 4)), list);
     }
 }

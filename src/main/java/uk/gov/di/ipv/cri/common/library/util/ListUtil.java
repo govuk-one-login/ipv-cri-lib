@@ -91,8 +91,35 @@ public final class ListUtil {
         source.removeIf(element -> contains(except, element, comparator));
     }
 
-    private static <T> boolean contains(List<T> list, T exclude, Comparator<T> comparator) {
-        return list.stream().anyMatch(element -> objectsEqual(element, exclude, comparator));
+    /**
+     * Merge two lists without duplicating any elements. Elements from the {@code source} list are
+     * replaced by elements from the {@code merge} list if they are equal when evaluated using the
+     * {@code mapper} function.
+     *
+     * @param source The source list to be modified with the new elements
+     * @param merge The list with the elements to be added to the source list
+     * @param mapper A function mapping list elements to values used to determine element equality
+     */
+    public static <T, U extends Comparable<? super U>> void mergeDistinct(
+            List<T> source, List<T> merge, Function<? super T, ? extends U> mapper) {
+        mergeDistinct(source, merge, Comparator.comparing(mapper));
+    }
+
+    /**
+     * Merge two lists without duplicating any elements. Elements from the {@code source} list are
+     * replaced by elements from the {@code merge} list if they are equal when evaluated using the
+     * {@code comparator} function.
+     *
+     * @param comparator A {@link Comparator comparator} function used to determine element equality
+     * @see ListUtil#mergeDistinct(List, List, Function)
+     */
+    public static <T> void mergeDistinct(List<T> source, List<T> merge, Comparator<T> comparator) {
+        exclude(source, merge, comparator);
+        source.addAll(merge);
+    }
+
+    private static <T> boolean contains(List<T> list, T object, Comparator<T> comparator) {
+        return list.stream().anyMatch(element -> objectsEqual(element, object, comparator));
     }
 
     private static <T> boolean objectsEqual(T a, T b, Comparator<T> comparator) {
