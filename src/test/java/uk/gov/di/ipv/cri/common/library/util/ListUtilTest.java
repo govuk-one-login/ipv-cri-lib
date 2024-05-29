@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -214,14 +216,132 @@ class ListUtilTest {
     @Test
     void except_shouldExcludeUsingFieldValue() {
         final List<Point> points = List.of(new Point(1, 2), new Point(3, 4));
+        final List<Point> exclude = Collections.singletonList(new Point(1, 4));
+
+        assertEquals(List.of(new Point(3, 4)), ListUtil.except(points, exclude, Point::getX));
+        assertEquals(List.of(new Point(1, 2)), ListUtil.except(points, exclude, Point::getY));
+    }
+
+    @Test
+    void exclude_shouldThrowIfSourceListIsNull() {
+        final List<Object> except = Collections.emptyList();
+
+        assertThrows(
+                NullPointerException.class, () -> ListUtil.exclude(null, except, Object::toString));
+    }
+
+    @Test
+    void exclude_shouldThrowIfExcludeListIsNull() {
+        final ArrayList<Integer> source = new ArrayList<>(List.of(1));
+
+        assertThrows(
+                NullPointerException.class, () -> ListUtil.exclude(source, null, Object::toString));
+    }
+
+    @Test
+    void exclude_shouldMakeEmptyListIfSourceListIsEmpty() {
+        final List<Object> list = Collections.emptyList();
+
+        ListUtil.exclude(Collections.emptyList(), Collections.emptyList(), Object::toString);
+        assertEquals(Collections.emptyList(), list);
+
+        ListUtil.exclude(Collections.emptyList(), List.of(1, 2, 3), Object::toString);
+        assertEquals(Collections.emptyList(), list);
+    }
+
+    @Test
+    void exclude_shouldMakeEmptyListIfSourceListMatchesExcludeList() {
+        List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3));
+
+        ListUtil.exclude(list, List.copyOf(list), Object::toString);
+        assertEquals(Collections.emptyList(), list);
+    }
+
+    @Test
+    void exclude_shouldReturnSourceListIfExcludeListIsEmpty() {
+        final List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3));
+
+        ListUtil.exclude(list, Collections.emptyList(), Object::toString);
+        assertEquals(List.copyOf(list), list);
+    }
+
+    @Test
+    void exclude_shouldReturnSourceListIfExcludeListDoesNotHaveCommonElements() {
+        final List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3));
+
+        ListUtil.exclude(list, List.of(4, 5, 6), Object::toString);
+        assertEquals(List.copyOf(list), list);
+    }
+
+    @Test
+    void exclude_shouldExcludeAllElementsFromExcludeList() {
+        final List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5, 6));
+
+        ListUtil.exclude(list, List.of(2, 4, 5), Object::toString);
+        assertEquals(List.of(1, 3, 6), list);
+    }
+
+    @Test
+    void exclude_shouldExcludeAllElementsContainedInExcludeList() {
+        final List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5, 6));
+
+        ListUtil.exclude(list, List.of(1, 3, 7, 8), Object::toString);
+        assertEquals(List.of(2, 4, 5, 6), list);
+    }
+
+    @Test
+    void exclude_shouldExcludeComplexTypes() {
+        final List<Point> points = new ArrayList<>(Arrays.asList(new Point(1, 2), new Point(3, 4)));
+
+        ListUtil.exclude(points, Collections.singletonList(points.get(1)), Object::toString);
+        assertEquals(List.of(new Point(1, 2)), points);
+    }
+
+    @Test
+    void exclude_shouldExcludeCollections() {
+        final List<Collection<Integer>> lists =
+                new ArrayList<>(List.of(Arrays.asList(1, 2, 3), List.of(4, 5, 6)));
+
+        ListUtil.exclude(lists, Collections.singletonList(lists.get(1)), Object::toString);
+        assertEquals(List.of(List.of(1, 2, 3)), lists);
+    }
+
+    @Test
+    void exclude_shouldExcludeMaps() {
+        final List<Map<String, Integer>> maps =
+                new ArrayList<>(Arrays.asList(Map.of("one", 1), Map.of("two", 2)));
+
+        ListUtil.exclude(maps, Collections.singletonList(maps.get(1)), Object::toString);
+        assertEquals(List.of(Map.of("one", 1)), maps);
+    }
+
+    @Test
+    void exclude_shouldExcludeUsingCustomComparator() {
+        final List<Point> points = new ArrayList<>(Arrays.asList(new Point(1, 2), new Point(3, 4)));
+        final List<Point> exclude = Collections.singletonList(new Point(1, 4));
+        List<Point> list = new ArrayList<>(points);
+
+        ListUtil.exclude(
+                list, exclude, Comparator.comparing(Point::getY).thenComparing(Point::getX));
+
+        assertEquals(points, list);
+
+        ListUtil.exclude(list, exclude, Comparator.comparing(Point::getX));
+        assertEquals(List.of(new Point(3, 4)), list);
+
+        ListUtil.exclude(list, exclude, Comparator.comparing(Point::getY));
+        assertEquals(Collections.emptyList(), list);
+    }
+
+    @Test
+    void exclude_shouldExcludeUsingFieldValue() {
+        final List<Point> points = new ArrayList<>(Arrays.asList(new Point(1, 2), new Point(3, 4)));
         final Point exclude = new Point(1, 4);
 
-        assertEquals(
-                List.of(new Point(3, 4)),
-                ListUtil.except(points, Collections.singletonList(exclude), Point::getX));
+        ListUtil.exclude(points, Collections.singletonList(exclude), Point::getX);
+        assertEquals(Collections.singletonList(new Point(3, 4)), points);
 
-        assertEquals(
-                List.of(new Point(1, 2)),
-                ListUtil.except(points, Collections.singletonList(exclude), Point::getY));
+        ListUtil.exclude(points, Collections.singletonList(exclude), Point::getY);
+        assertEquals(Collections.emptyList(), points);
     }
 }
