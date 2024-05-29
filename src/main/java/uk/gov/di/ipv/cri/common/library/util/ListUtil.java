@@ -118,7 +118,18 @@ public final class ListUtil {
         source.addAll(merge);
     }
 
-    private static <T> boolean contains(List<T> list, T object, Comparator<T> comparator) {
+    /**
+     * Determine whether a list contains an element using a custom comparator. This allows to select
+     * only certain fields or specify a custom function to determine equality between objects.
+     *
+     * @param list The source list to test for existence of the object
+     * @param object Determine whether this object is an element of the list given the {@code
+     *     comparator}
+     * @param comparator The {@link Comparator comparator} function used to determine object
+     *     equality
+     * @return {@code true} if the object is determined to be contained in the {@code list}
+     */
+    public static <T> boolean contains(List<T> list, T object, Comparator<T> comparator) {
         return list.stream().anyMatch(element -> objectsEqual(element, object, comparator));
     }
 

@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 class ListUtilTest {
@@ -483,5 +485,54 @@ class ListUtilTest {
 
         ListUtil.mergeDistinct(list, Collections.singletonList(new Point(1, 4)), Point::getY);
         assertEquals(List.of(new Point(2, 6), new Point(1, 5), new Point(1, 4)), list);
+    }
+
+    // *** #contains ***//
+
+    @Test
+    void contains_shouldThrowIfSourceListIsNull() {
+        final Comparator<Integer> comparator = Comparator.naturalOrder();
+        assertThrows(NullPointerException.class, () -> ListUtil.contains(null, 1, comparator));
+    }
+
+    @Test
+    void contains_shouldThrowIfObjectIsNull() {
+        final List<Integer> list = Collections.singletonList(1);
+        final Comparator<Integer> comparator = Comparator.naturalOrder();
+
+        assertThrows(NullPointerException.class, () -> ListUtil.contains(list, null, comparator));
+    }
+
+    @Test
+    void contains_shouldReturnFalseIfSourceListIsEmpty() {
+        assertFalse(ListUtil.contains(Collections.emptyList(), 1, Comparator.naturalOrder()));
+    }
+
+    @Test
+    void contains_shouldReturnFalseIfListDoesNotContainPrimitiveObject() {
+        assertFalse(ListUtil.contains(Collections.singletonList(1), 2, Comparator.naturalOrder()));
+    }
+
+    @Test
+    void contains_shouldReturnTrueIfListContainsPrimitiveObject() {
+        assertTrue(ListUtil.contains(List.of(1, 2, 3), 2, Comparator.naturalOrder()));
+    }
+
+    @Test
+    void contains_shouldReturnTrueIfListContainsComplexObject() {
+        assertTrue(
+                ListUtil.contains(
+                        List.of(new Point(1, 2), new Point(3, 4)),
+                        new Point(1, 5),
+                        Comparator.comparing(Point::getX)));
+    }
+
+    @Test
+    void contains_shouldReturnFalseIfListDoesNotContainComplexObject() {
+        assertFalse(
+                ListUtil.contains(
+                        List.of(new Point(1, 2), new Point(3, 4)),
+                        new Point(1, 5),
+                        Comparator.comparing(Point::getY)));
     }
 }
