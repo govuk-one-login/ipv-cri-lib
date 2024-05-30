@@ -44,6 +44,7 @@ java {
 
 configurations {
 	aws
+	cloudformation
 	dynamodb
 	jackson
 	lambda
@@ -70,6 +71,8 @@ configurations.all {
 
 dependencies {
 	aws platform('software.amazon.awssdk:bom:2.20.162')
+
+	cloudformation "software.amazon.awssdk:cloudformation"
 
 	dynamodb "software.amazon.awssdk:dynamodb",
 			"software.amazon.awssdk:dynamodb-enhanced"
@@ -132,6 +135,7 @@ dependencies {
 
 	testFixturesApi configurations.aws
 	testFixturesApi configurations.sqs
+	testFixturesApi configurations.cloudformation
 	testFixturesApi	configurations.cucumber
 
 	testFixturesImplementation configurations.jackson
