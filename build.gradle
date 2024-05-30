@@ -48,6 +48,7 @@ configurations {
 	jackson
 	lambda
 	sqs
+	sso
 	kms
 	lambda_tests
 	lettuce
@@ -80,6 +81,9 @@ dependencies {
 			"software.amazon.lambda:powertools-parameters:${dependencyVersions.aws_powertools_version}"
 
 	sqs "software.amazon.awssdk:sqs"
+
+	sso "software.amazon.awssdk:sso",
+			"software.amazon.awssdk:ssooidc"
 
 	kms "software.amazon.awssdk:kms"
 
@@ -132,6 +136,8 @@ dependencies {
 
 	testFixturesImplementation configurations.jackson
 	testFixturesImplementation configurations.tests
+
+	testFixturesRuntimeOnly configurations.sso
 }
 
 tasks.named("jar") {
