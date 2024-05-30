@@ -1,5 +1,17 @@
 # Credential Issuer common libraries Release Notes
 
+## 1.7.0
+
+### Added utilities for integration testing with AWS services
+
+* Added a CloudFormation helper to retrieve information about stacks, such as output values
+* Added an SQS helper to read and delete messages from SQS queues
+
+### Added tests and new methods to ListUtil
+
+* Added a method to split a list into batches
+* Added methods to merge or exclude items from lists using custom comparators
+
 ## 1.6.2
 
 * Created new step definition for posting session request to include new `txma-audit-encoded` header to be referenced in the address repository tests.
