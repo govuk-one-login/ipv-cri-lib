@@ -137,6 +137,10 @@ public final class SQSHelper {
      *     {@code count} or more messages are returned
      * @param filters Key-value pairs to filter and only select messages whose JSON body contents
      *     match all the provided pairs. Messages without a valid JSON body are ignored.
+     *     <p>The keys are specified as expressions to compile into instances of {@link
+     *     com.fasterxml.jackson.core.JsonPointer JsonPointer}. The expressions must start with a
+     *     {@code /} and use the same token as the sub-key separator. For instance, {@code
+     *     /key/sub-key}.
      * @return The list of at least {@code count} received messages matching the {@code filters}
      * @throws InterruptedException If at least {@code count} messages matching the filters have not
      *     been found within the {@link SQSHelper#timeoutSeconds timeout}
