@@ -126,7 +126,10 @@ dependencies {
 
 	testRuntimeOnly configurations.test_runtime
 
+	testFixturesApi configurations.aws
+	testFixturesApi configurations.sqs
 	testFixturesApi	configurations.cucumber
+
 	testFixturesImplementation configurations.jackson
 	testFixturesImplementation configurations.tests
 }
