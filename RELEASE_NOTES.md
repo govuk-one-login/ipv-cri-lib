@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 2.1.0
+
+* Made the SQS helper test util work better with shared queues and multiple tests running at the same time
+
 ## 2.0.0
 
 * Added support for National Insurance number as SocialSecurityRecord
