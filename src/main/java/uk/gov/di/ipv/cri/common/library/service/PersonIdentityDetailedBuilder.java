@@ -6,6 +6,7 @@ import uk.gov.di.ipv.cri.common.library.domain.personidentity.DrivingPermit;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Passport;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.SocialSecurityRecord;
 
 import java.util.List;
 
@@ -30,6 +31,8 @@ public class PersonIdentityDetailedBuilder {
     }
 
     public static class Builder {
+
+        private List<SocialSecurityRecord> socialSecurityRecords;
         private List<Name> names;
         private List<BirthDate> birthDates;
         private List<Address> addresses;
@@ -60,10 +63,15 @@ public class PersonIdentityDetailedBuilder {
             return this;
         }
 
+        public Builder withNino(List<SocialSecurityRecord> socialSecurityRecords) {
+            this.socialSecurityRecords = socialSecurityRecords;
+            return this;
+        }
+
         @SuppressWarnings("deprecation")
         public PersonIdentityDetailed build() {
             return new PersonIdentityDetailed(
-                    names, birthDates, addresses, drivingPermits, passports);
+                    names, birthDates, addresses, drivingPermits, passports, socialSecurityRecords);
         }
     }
 }

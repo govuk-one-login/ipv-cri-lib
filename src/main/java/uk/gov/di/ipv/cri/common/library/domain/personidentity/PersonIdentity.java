@@ -1,16 +1,21 @@
 package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PersonIdentity {
     private String firstName;
     private String middleNames;
     private String surname;
     private List<Address> addresses;
+    private List<SocialSecurityRecord> socialSecurityRecords;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
@@ -57,5 +62,13 @@ public class PersonIdentity {
 
     public void setAddresses(List<Address> addresses) {
         this.addresses = addresses;
+    }
+
+    public List<SocialSecurityRecord> getSocialSecurityRecord() {
+        return socialSecurityRecords;
+    }
+
+    public void setSocialSecurityRecord(List<SocialSecurityRecord> socialSecurityRecord) {
+        this.socialSecurityRecords = socialSecurityRecord;
     }
 }

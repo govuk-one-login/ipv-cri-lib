@@ -7,11 +7,13 @@ import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.SocialSecurityRecord;
 import uk.gov.di.ipv.cri.common.library.persistence.item.CanonicalAddress;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityDateOfBirth;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityName;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityNamePart;
+import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentitySocialSecurityRecord;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,12 +45,15 @@ public class PersonIdentityMapper {
         if (notNullAndNotEmpty(sharedClaims.getAddresses())) {
             identity.setAddresses(mapAddresses(sharedClaims.getAddresses()));
         }
+        if (notNullAndNotEmpty(sharedClaims.getSocialSecurityRecords())) {
+            identity.setSocialSecurityRecords(
+                    mapSocialSecurityRecords(sharedClaims.getSocialSecurityRecords()));
+        }
         return identity;
     }
 
     PersonIdentity mapToPersonIdentity(PersonIdentityItem personIdentityItem) {
         PersonIdentity personIdentity = new PersonIdentity();
-
         if (notNullAndNotEmpty(personIdentityItem.getNames())) {
             PersonIdentityName personIdentityName = getCurrentName(personIdentityItem.getNames());
             mapName(personIdentityName, personIdentity);
@@ -60,6 +65,11 @@ public class PersonIdentityMapper {
 
         if (notNullAndNotEmpty(personIdentityItem.getAddresses())) {
             personIdentity.setAddresses(mapCanonicalAddresses(personIdentityItem.getAddresses()));
+        }
+
+        if (notNullAndNotEmpty(personIdentityItem.getSocialSecurityRecords())) {
+            personIdentity.setSocialSecurityRecord(
+                    mapSocialSecurityRecord(personIdentityItem.getSocialSecurityRecords()));
         }
 
         return personIdentity;
@@ -77,9 +87,14 @@ public class PersonIdentityMapper {
         if (notNullAndNotEmpty(personIdentityDetailed.getAddresses())) {
             personIdentity.setAddresses(personIdentityDetailed.getAddresses());
         }
+        if (notNullAndNotEmpty(personIdentityDetailed.getSocialSecurityRecords())) {
+            personIdentity.setSocialSecurityRecord(
+                    personIdentityDetailed.getSocialSecurityRecords());
+        }
         return personIdentity;
     }
 
+    @SuppressWarnings({"java:S1481", "java:S1854"})
     PersonIdentityDetailed mapToPersonIdentityDetailed(PersonIdentityItem personIdentityItem) {
         List<Name> names = Collections.emptyList();
         if (notNullAndNotEmpty(personIdentityItem.getNames())) {
@@ -96,12 +111,26 @@ public class PersonIdentityMapper {
             addresses = mapCanonicalAddresses(personIdentityItem.getAddresses());
         }
 
+        List<SocialSecurityRecord> socialSecurityRecords = Collections.emptyList();
+        if (notNullAndNotEmpty(personIdentityItem.getSocialSecurityRecords())) {
+            socialSecurityRecords =
+                    mapPersonIdentitySocialSecurityRecords(
+                            personIdentityItem.getSocialSecurityRecords());
+        }
+
         return PersonIdentityDetailedFactory.createPersonIdentityDetailedWithAddresses(
                 names, dobs, addresses);
     }
 
     private List<Address> mapCanonicalAddresses(List<CanonicalAddress> addresses) {
         return addresses.stream().map(Address::new).collect(Collectors.toList());
+    }
+
+    private List<SocialSecurityRecord> mapSocialSecurityRecord(
+            List<PersonIdentitySocialSecurityRecord> socialSecurityRecords) {
+        return socialSecurityRecords.stream()
+                .map(SocialSecurityRecord::new)
+                .collect(Collectors.toList());
     }
 
     private List<BirthDate> mapPersonIdentityBirthDates(
@@ -134,6 +163,19 @@ public class PersonIdentityMapper {
                                             .collect(Collectors.toList());
                             mappedName.setNameParts(mappedNameParts);
                             return mappedName;
+                        })
+                .collect(Collectors.toList());
+    }
+
+    private List<SocialSecurityRecord> mapPersonIdentitySocialSecurityRecords(
+            List<PersonIdentitySocialSecurityRecord> socialSecurityRecords) {
+        return socialSecurityRecords.stream()
+                .map(
+                        securityRecord -> {
+                            SocialSecurityRecord mappedSocialRecord = new SocialSecurityRecord();
+                            mappedSocialRecord.setPersonalNumber(
+                                    securityRecord.getPersonalNumber());
+                            return mappedSocialRecord;
                         })
                 .collect(Collectors.toList());
     }
@@ -271,6 +313,19 @@ public class PersonIdentityMapper {
                                     a.getDoubleDependentAddressLocality());
 
                             return canonicalAddress;
+                        })
+                .collect(Collectors.toList());
+    }
+
+    private List<PersonIdentitySocialSecurityRecord> mapSocialSecurityRecords(
+            List<SocialSecurityRecord> socialSecurityRecords) {
+        return socialSecurityRecords.stream()
+                .map(
+                        sr -> {
+                            PersonIdentitySocialSecurityRecord personalNumber =
+                                    new PersonIdentitySocialSecurityRecord();
+                            personalNumber.setPersonalNumber(sr.getPersonalNumber());
+                            return personalNumber;
                         })
                 .collect(Collectors.toList());
     }

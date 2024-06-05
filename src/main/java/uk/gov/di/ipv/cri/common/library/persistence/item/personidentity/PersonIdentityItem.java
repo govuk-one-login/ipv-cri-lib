@@ -14,6 +14,7 @@ public class PersonIdentityItem {
     private List<PersonIdentityName> names;
     private List<PersonIdentityDateOfBirth> birthDates;
     private long expiryDate;
+    private List<PersonIdentitySocialSecurityRecord> socialSecurityRecords;
 
     @DynamoDbPartitionKey()
     public UUID getSessionId() {
@@ -54,5 +55,14 @@ public class PersonIdentityItem {
 
     public void setExpiryDate(long expiryDate) {
         this.expiryDate = expiryDate;
+    }
+
+    public List<PersonIdentitySocialSecurityRecord> getSocialSecurityRecords() {
+        return socialSecurityRecords;
+    }
+
+    public void setSocialSecurityRecords(
+            List<PersonIdentitySocialSecurityRecord> socialSecurityRecords) {
+        this.socialSecurityRecords = socialSecurityRecords;
     }
 }

@@ -63,7 +63,7 @@ public class AuditEventFactory {
 
         if (requestHeaders.containsKey(TXMA_AUDIT_ENCODED)) {
             if (Objects.isNull(restricted)) {
-                restricted = new PersonIdentityDetailed(null, null, null, null, null);
+                restricted = new PersonIdentityDetailed(null, null, null, null, null, null);
             }
             DeviceInformation deviceInformation = new DeviceInformation();
             deviceInformation.setEncoded(requestHeaders.get(TXMA_AUDIT_ENCODED));

@@ -1,10 +1,17 @@
 package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SharedClaims {
+    @JsonProperty("socialSecurityRecord")
+    private List<SocialSecurityRecord> socialSecurityRecords;
+
     @JsonProperty("name")
     private List<Name> names;
 
@@ -47,5 +54,13 @@ public class SharedClaims {
 
     public void setAddresses(List<Address> addresses) {
         this.addresses = addresses;
+    }
+
+    public List<SocialSecurityRecord> getSocialSecurityRecords() {
+        return socialSecurityRecords;
+    }
+
+    public void setSocialSecurityRecords(List<SocialSecurityRecord> socialSecurityRecords) {
+        this.socialSecurityRecords = socialSecurityRecords;
     }
 }
