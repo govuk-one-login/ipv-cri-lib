@@ -8,105 +8,70 @@ import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchReq
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
-import java.util.ArrayList;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static uk.gov.di.ipv.cri.common.library.util.ListUtil.mergeDistinct;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES;
 import static uk.gov.di.ipv.cri.common.library.util.ListUtil.split;
 
 /**
  * A utility class to read and delete messages from SQS queues in a predictable manner. The class is
  * a wrapper around {@link SqsClient} and allows to get around the message retrieval limitations of
  * the SQS service.
+ *
+ * <p>The helper has been designed to allow multiple clients to read messages from the same queue
+ * concurrently. While it doesn't implement a proper solution with locks and waiting, it attempts to
+ * remediate most common issues and is suitable for use in test scenarios with these caveats:
+ *
+ * <ul>
+ *   <li>When retrieving specific messages from the queue using the filters, each client should use
+ *       filters with different values to prevent blocking and timeouts.
+ *   <li>Any client may receive and hide messages that another client is trying to get a hold of.
+ *       The logic in the helper makes clients release unwanted messages when there are no more
+ *       messages available in the queue to prevent timeouts. However, this means that the more
+ *       concurrent clients there are, the longer it will take each of them to collect the messages
+ *       they are targeting since they each need to process the queue multiple times.
+ *   <li>The queue should have DLQ disabled since SQS will move any messages that have been received
+ *       <a
+ *       href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sqs-queue.html#cfn-sqs-queue-redrivepolicy">maxReceiveCount</a>
+ *       times to the DLQ and render it unavailable to the clients reading from the queue.
+ * </ul>
  */
 public final class SQSHelper {
 
-    /** The default total timeout for queue operations */
-    public static final int DEFAULT_TIMEOUT_SECONDS = 30;
-
-    /** Helper class to capture received messages */
-    private static class FilteredMessages {
-        public FilteredMessages(List<Message> matchingMessages, List<Message> nonMatchingMessages) {
-            this.matchingMessages = Objects.requireNonNull(matchingMessages);
-            this.nonMatchingMessages = nonMatchingMessages;
-        }
-
-        public List<Message> allMessages() {
-            return Stream.of(matchingMessages, nonMatchingMessages)
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toList());
-        }
-
-        public final List<Message> matchingMessages;
-        public final List<Message> nonMatchingMessages;
-    }
+    private static final int SQS_WAIT_TIME = 20;
 
     private final SqsClient sqsClient;
     private final ObjectMapper objectMapper;
 
-    /**
-     * The total timeout for queue operations. Defaults to {@link SQSHelper#DEFAULT_TIMEOUT_SECONDS}
-     */
-    private int timeoutSeconds;
-
-    private int sqsWaitTimeSeconds;
-    private int sqsMessageVisibilityTimeout;
-
-    /**
-     * Use the {@link SQSHelper#DEFAULT_TIMEOUT_SECONDS default timeout}
-     *
-     * @see SQSHelper#SQSHelper(int, SqsClient, ObjectMapper)
-     */
     public SQSHelper() {
-        this(DEFAULT_TIMEOUT_SECONDS);
-    }
-
-    /**
-     * Specify a total timeout for queue operations
-     *
-     * @see SQSHelper#SQSHelper(int, SqsClient, ObjectMapper)
-     */
-    public SQSHelper(int timeoutSeconds) {
-        this(timeoutSeconds, null, null);
+        this(null, null);
     }
 
     /**
      * Optionally provide a custom SQS client and object mapper. The values can be {@code null} to
-     * use the default constructors. The default timeout value can be accessed through {@link
-     * SQSHelper#DEFAULT_TIMEOUT_SECONDS}
+     * use the default constructors.
      */
-    public SQSHelper(int timeoutSeconds, SqsClient sqsClient, ObjectMapper objectMapper) {
-        this.setTimeout(timeoutSeconds);
+    public SQSHelper(SqsClient sqsClient, ObjectMapper objectMapper) {
         this.sqsClient = sqsClient == null ? SqsClient.create() : sqsClient;
         this.objectMapper = objectMapper == null ? new ObjectMapper() : objectMapper;
-    }
-
-    /**
-     * Set the total timeout for queue operations. Secondary timeouts are calculated based on the
-     * provided value. The default timeout can be accessed through {@link
-     * SQSHelper#DEFAULT_TIMEOUT_SECONDS}
-     *
-     * @param timeoutSeconds The desired total timeout to receive messages from an SQS queue
-     * @implNote The maximum allowed wait time for {@link
-     *     SqsClient#receiveMessage(ReceiveMessageRequest) receiveMessage} is 20 seconds. {@code
-     *     sqsWaitTimeSeconds} is set to the maximum allowed value unless the total timeout is less
-     *     than that.
-     *     <p>{@code sqsMessageVisibilityTimeout} is set to the sum of the other two timeouts to
-     *     allow overhead and ensure messages are not received twice within a single invocation.
-     */
-    public void setTimeout(int timeoutSeconds) {
-        this.timeoutSeconds = timeoutSeconds;
-        this.sqsWaitTimeSeconds = Math.min(20, timeoutSeconds);
-        this.sqsMessageVisibilityTimeout = this.timeoutSeconds + this.sqsWaitTimeSeconds + 5;
     }
 
     /**
@@ -118,15 +83,15 @@ public final class SQSHelper {
      *     messages are returned
      * @return The list of at least {@code count} received messages, or an empty list if {@code
      *     count} is less than 1
-     * @throws InterruptedException If at least {@code count} messages have not been found within
-     *     the {@link SQSHelper#timeoutSeconds timeout}
+     * @throws InterruptedException If at least {@code count} messages have not been found after
+     *     processing the queue
      * @implNote The received messages have their visibility timeout reset at the end of the
      *     invocation, so they can be received by subsequent invocations or calls to {@link
      *     SqsClient#receiveMessage(ReceiveMessageRequest) receiveMessage}
      * @see SqsClient#changeMessageVisibilityBatch(ChangeMessageVisibilityBatchRequest)
      */
     public List<Message> receiveMessages(String queueUrl, int count) throws InterruptedException {
-        return receiveMessages(queueUrl, count, null, false);
+        return receiveMessages(queueUrl, count, null, true);
     }
 
     /**
@@ -137,30 +102,18 @@ public final class SQSHelper {
      *     {@code count} or more messages are returned
      * @param filters Key-value pairs to filter and only select messages whose JSON body contents
      *     match all the provided pairs. Messages without a valid JSON body are ignored.
+     *     <p>The keys are specified as expressions to compile into instances of {@link
+     *     com.fasterxml.jackson.core.JsonPointer JsonPointer}. The expressions must start with a
+     *     {@code /} and use the same token as the sub-key separator. For instance, {@code
+     *     /key/sub-key}.
      * @return The list of at least {@code count} received messages matching the {@code filters}
      * @throws InterruptedException If at least {@code count} messages matching the filters have not
-     *     been found within the {@link SQSHelper#timeoutSeconds timeout}
+     *     been found after processing the queue
      * @see SQSHelper#receiveMessages(String, int)
      */
     public List<Message> receiveMatchingMessages(
             String queueUrl, int count, Map<String, String> filters) throws InterruptedException {
-        return receiveMatchingMessages(queueUrl, count, filters, false);
-    }
-
-    /**
-     * Select messages from the queue and optionally delete any other encountered messages not
-     * matching the specified criteria.
-     *
-     * @param deleteNonMatching Set to {@code true} to delete any messages that were received from
-     *     the queue but did not match the provided {@link SQSHelper#receiveMatchingMessages(String,
-     *     int, Map) filters}. This does not clear the queue but deletes any additional messages
-     *     received from SQS.
-     * @see SQSHelper#receiveMatchingMessages(String, int, Map)
-     */
-    public List<Message> receiveMatchingMessages(
-            String queueUrl, int count, Map<String, String> filters, boolean deleteNonMatching)
-            throws InterruptedException {
-        return receiveMessages(queueUrl, count, Objects.requireNonNull(filters), deleteNonMatching);
+        return receiveMessages(queueUrl, count, Objects.requireNonNull(filters), true);
     }
 
     /**
@@ -173,16 +126,29 @@ public final class SQSHelper {
     }
 
     /**
-     * Delete a number of messages from the queue within the {@link SQSHelper#timeoutSeconds
-     * timeout}. Messages are deleted in the order they're received from SQS. Exactly {@code count}
-     * or more messages are deleted.
+     * Delete a number of messages from the queue in the order they're received from SQS. Exactly
+     * {@code count} or more messages are deleted.
      *
-     * @throws InterruptedException If at least {@code count} messages have not been found within
-     *     the {@link SQSHelper#timeoutSeconds timeout}
+     * @throws InterruptedException If at least {@code count} messages have not been found after
+     *     processing the queue
      * @see SQSHelper#receiveMessages(String, int)
      */
     public void deleteMessages(String queueUrl, int count) throws InterruptedException {
-        deleteMessages(queueUrl, count, null, false);
+        deleteMessages(queueUrl, count, null, true);
+    }
+
+    /**
+     * Attempt to delete at least {@code count} messages from the queue. Any received messages are
+     * deleted until the required number is reached or the queue has been processed. If it has not
+     * been possible to retrieve the specified number of messages, any encountered messages are
+     * deleted and the method returns without an error.
+     *
+     * @return The number of deleted messages
+     * @see SQSHelper#deleteMessages(String, int)
+     * @see SQSHelper#receiveMessages(String, int)
+     */
+    public int tryDeleteMessages(String queueUrl, int count) {
+        return tryDeleteMessages(queueUrl, count, null);
     }
 
     /**
@@ -190,101 +156,169 @@ public final class SQSHelper {
      * filters}.
      *
      * @throws InterruptedException If at least {@code count} messages matching the filters have not
-     *     been found within the {@link SQSHelper#timeoutSeconds timeout}
+     *     been found after processing the queue
+     * @see SQSHelper#deleteMessages(String, int)
      * @see SQSHelper#receiveMatchingMessages(String, int, Map)
      */
     public void deleteMatchingMessages(String queueUrl, int count, Map<String, String> filters)
             throws InterruptedException {
-        deleteMatchingMessages(queueUrl, count, filters, false);
+        deleteMessages(queueUrl, count, Objects.requireNonNull(filters), true);
     }
 
     /**
-     * Delete at least {@code count} messages from the queue and optionally delete any other
-     * encountered messages not matching the specified criteria.
+     * Attempt to delete at least {@code count} messages matching the {@code filters} and optionally
+     * throw if the required number of messages has not been found after processing the queue.
      *
-     * @see SQSHelper#deleteMatchingMessages(String, int, Map)
-     * @see SQSHelper#receiveMatchingMessages(String, int, Map, boolean)
+     * @return The number of deleted messages
+     * @see SQSHelper#tryDeleteMessages(String, int)
+     * @see SQSHelper#receiveMatchingMessages(String, int, Map)
      */
-    public void deleteMatchingMessages(
-            String queueUrl, int count, Map<String, String> filters, boolean deleteNonMatching)
+    public int tryDeleteMatchingMessages(String queueUrl, int count, Map<String, String> filters) {
+        return tryDeleteMessages(queueUrl, count, Objects.requireNonNull(filters));
+    }
+
+    private int deleteMessages(
+            String queueUrl, int count, Map<String, String> filters, boolean throwOnTimeout)
             throws InterruptedException {
-        deleteMessages(queueUrl, count, Objects.requireNonNull(filters), deleteNonMatching);
+        final var messages = receiveMessages(queueUrl, count, filters, throwOnTimeout);
+        deleteMessagesFromList(queueUrl, messages);
+        return messages.size();
+    }
+
+    private int tryDeleteMessages(String queueUrl, int count, Map<String, String> filters) {
+        int deletedMessageCount;
+
+        try {
+            deletedMessageCount = deleteMessages(queueUrl, count, filters, false);
+        } catch (InterruptedException e) {
+            return 0;
+        }
+
+        return deletedMessageCount;
     }
 
     private List<Message> receiveMessages(
-            String queueUrl, int count, Map<String, String> filters, boolean deleteNonMatching)
+            String queueUrl, int count, Map<String, String> filters, boolean throwOnTimeout)
             throws InterruptedException {
-        final FilteredMessages messages = getMessages(queueUrl, count, filters);
+        final var messages = getMessages(queueUrl, count, filters);
 
-        if (deleteNonMatching) {
-            deleteMessagesFromList(queueUrl, messages.nonMatchingMessages);
-            resetMessageVisibility(queueUrl, messages.matchingMessages);
-        } else {
-            resetMessageVisibility(queueUrl, messages.allMessages());
+        if (messages.size() < count && throwOnTimeout) {
+            throw new InterruptedException(
+                    String.format("Received %d/%d messages", messages.size(), count));
         }
 
-        return messages.matchingMessages;
+        return messages;
     }
 
-    private void deleteMessages(
-            String queueUrl, int count, Map<String, String> filters, boolean deleteNonMatching)
-            throws InterruptedException {
-        final FilteredMessages messages = getMessages(queueUrl, count, filters);
+    private List<Message> getMessages(String queueUrl, int count, Map<String, String> filters) {
+        final var targetMessages = new HashMap<String, Message>();
+        final var seenMessageIds = new HashSet<String>();
 
-        if (deleteNonMatching) {
-            deleteMessagesFromList(queueUrl, messages.allMessages());
-            return;
-        }
+        int queueSize;
+        int queueProcessingTime;
+        boolean newMessagesReceived;
+        HashSet<String> receivedMessageIds;
 
-        deleteMessagesFromList(queueUrl, messages.matchingMessages);
+        do {
+            queueSize = getQueueSize(queueUrl);
+            queueProcessingTime = getQueueProcessingTime(queueSize);
 
-        if (filters != null) {
-            resetMessageVisibility(queueUrl, messages.nonMatchingMessages);
-        }
+            final var start =
+                    changeMessageVisibility(
+                            queueUrl, getVisibilityTimeout(queueProcessingTime), targetMessages);
+
+            receivedMessageIds =
+                    processQueue(
+                            queueUrl, start, queueProcessingTime, count, filters, targetMessages);
+
+            newMessagesReceived = newMessagesReceived(receivedMessageIds, seenMessageIds);
+            seenMessageIds.addAll(receivedMessageIds);
+        } while (targetMessages.size() < count
+                && (!queueProcessed(queueSize, receivedMessageIds.size()) || newMessagesReceived));
+
+        resetMessageVisibility(queueUrl, targetMessages);
+        return List.copyOf(targetMessages.values());
     }
 
-    private FilteredMessages getMessages(String queueUrl, int count, Map<String, String> filters)
-            throws InterruptedException {
-        final boolean filterMessages = filters != null;
-        final List<Message> targetMessages = new ArrayList<>();
-        final List<Message> nonMatchingMessages = filterMessages ? new ArrayList<>() : null;
-
-        final ReceiveMessageRequest receiveMessageRequest =
+    private HashSet<String> processQueue(
+            String queueUrl,
+            Instant start,
+            int queueProcessingTime,
+            int targetMessageCount,
+            Map<String, String> filters,
+            HashMap<String, Message> targetMessages) {
+        final var requestBuilder =
                 ReceiveMessageRequest.builder()
-                        .queueUrl(queueUrl)
-                        .maxNumberOfMessages(10)
-                        .waitTimeSeconds(this.sqsWaitTimeSeconds)
-                        .visibilityTimeout(this.sqsMessageVisibilityTimeout)
-                        .build();
+                        .queueUrl(Objects.requireNonNull(queueUrl))
+                        .waitTimeSeconds(SQS_WAIT_TIME)
+                        .maxNumberOfMessages(10);
 
-        final long startTime = System.currentTimeMillis();
+        final boolean filterMessages = filters != null;
+        final var unwantedMessages = filterMessages ? new HashMap<String, Message>() : null;
+        final var receivedMessageIds = new HashSet<String>();
+        List<Message> newMessages;
 
-        while (targetMessages.size() < count) {
-            if (System.currentTimeMillis() - startTime >= timeoutSeconds * 1000L) {
-                throw new InterruptedException(
-                        String.format(
-                                "Received %d/%d messages after %d seconds",
-                                targetMessages.size(), count, timeoutSeconds));
-            }
+        do {
+            newMessages = receiveNewMessages(requestBuilder, queueProcessingTime, start);
+            receivedMessageIds.addAll(
+                    processNewMessages(newMessages, filters, targetMessages, unwantedMessages));
+        } while (!newMessages.isEmpty()
+                && targetMessages.size() < targetMessageCount
+                && elapsedTime(start) < queueProcessingTime);
 
-            final List<Message> newMessages =
-                    this.sqsClient.receiveMessage(receiveMessageRequest).messages();
-
-            if (filterMessages) {
-                final Map<Boolean, List<Message>> messages =
-                        newMessages.stream()
-                                .collect(
-                                        Collectors.partitioningBy(
-                                                message -> messageMatches(message, filters)));
-
-                mergeDistinct(targetMessages, messages.get(true), Message::messageId);
-                mergeDistinct(nonMatchingMessages, messages.get(false), Message::messageId);
-            } else {
-                mergeDistinct(targetMessages, newMessages, Message::messageId);
-            }
+        if (filterMessages) {
+            resetMessageVisibility(queueUrl, unwantedMessages);
         }
 
-        return new FilteredMessages(targetMessages, nonMatchingMessages);
+        return receivedMessageIds;
+    }
+
+    private Set<String> processNewMessages(
+            List<Message> newMessages,
+            Map<String, String> filters,
+            Map<String, Message> targetMessages,
+            Map<String, Message> unwantedMessages) {
+        if (filters != null) {
+            final var matching = sortMessages(newMessages, filters);
+            final var matchingMessageIds = mergeMessages(targetMessages, matching.get(true));
+            final var unwantedMessageIds = mergeMessages(unwantedMessages, matching.get(false));
+
+            return Stream.of(matchingMessageIds, unwantedMessageIds)
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toUnmodifiableSet());
+        } else {
+            return mergeMessages(targetMessages, newMessages);
+        }
+    }
+
+    private List<Message> receiveNewMessages(
+            ReceiveMessageRequest.Builder requestBuilder, int queueProcessingTime, Instant start) {
+        final var remainingTime = Math.max(0, queueProcessingTime - elapsedTime(start));
+
+        return this.sqsClient
+                .receiveMessage(
+                        requestBuilder
+                                .visibilityTimeout(getVisibilityTimeout(remainingTime))
+                                .build())
+                .messages();
+    }
+
+    private int getQueueSize(String queueUrl) {
+        return Integer.parseInt(
+                this.sqsClient
+                        .getQueueAttributes(
+                                GetQueueAttributesRequest.builder()
+                                        .queueUrl(queueUrl)
+                                        .attributeNames(APPROXIMATE_NUMBER_OF_MESSAGES)
+                                        .build())
+                        .attributes()
+                        .get(APPROXIMATE_NUMBER_OF_MESSAGES));
+    }
+
+    private Map<Boolean, List<Message>> sortMessages(
+            List<Message> messages, Map<String, String> filters) {
+        return messages.stream()
+                .collect(Collectors.partitioningBy(message -> messageMatches(message, filters)));
     }
 
     private boolean messageMatches(Message message, Map<String, String> properties) {
@@ -300,28 +334,29 @@ public final class SQSHelper {
                 batch ->
                         this.sqsClient.deleteMessageBatch(
                                 DeleteMessageBatchRequest.builder()
-                                        .queueUrl(queueUrl)
+                                        .queueUrl(Objects.requireNonNull(queueUrl))
                                         .entries(deleteMessageBatchRequest(batch))
                                         .build()));
     }
 
-    private void resetMessageVisibility(String queueUrl, List<Message> messages) {
+    private void resetMessageVisibility(String queueUrl, Map<String, Message> messages) {
+        changeMessageVisibility(queueUrl, 0, messages);
+    }
+
+    private Instant changeMessageVisibility(
+            String queueUrl, int visibilityTimeout, Map<String, Message> messages) {
+        final var start = Instant.now();
         batchOperation(
-                messages,
+                List.copyOf(messages.values()),
                 batch ->
                         this.sqsClient.changeMessageVisibilityBatch(
                                 ChangeMessageVisibilityBatchRequest.builder()
                                         .queueUrl(queueUrl)
-                                        .entries(resetMessageVisibilityBatchRequest(batch))
+                                        .entries(
+                                                changeMessageVisibilityBatchRequest(
+                                                        batch, visibilityTimeout))
                                         .build()));
-    }
-
-    private void batchOperation(List<Message> messages, Consumer<List<Message>> operation) {
-        if (Objects.requireNonNull(messages).isEmpty()) {
-            return;
-        }
-
-        split(messages, 10).forEach(operation);
+        return start;
     }
 
     private JsonNode parseJson(String json) {
@@ -330,6 +365,43 @@ public final class SQSHelper {
         } catch (JsonProcessingException e) {
             return null;
         }
+    }
+
+    private static int getVisibilityTimeout(long remainingTime) {
+        return Math.round(remainingTime) + SQS_WAIT_TIME;
+    }
+
+    private static int getQueueProcessingTime(int queueSize) {
+        return (int) Math.round(Math.max(10, queueSize / 100d) * 2);
+    }
+
+    private static long elapsedTime(Instant start) {
+        return Duration.between(start, Instant.now()).get(ChronoUnit.SECONDS);
+    }
+
+    private static boolean queueProcessed(int initialQueueSize, int receivedMessageCount) {
+        return Math.abs((double) initialQueueSize / receivedMessageCount - 1) < 0.1;
+    }
+
+    private static boolean newMessagesReceived(
+            HashSet<String> receivedMessageIds, HashSet<String> seenMessageIds) {
+        return !seenMessageIds.containsAll(receivedMessageIds);
+    }
+
+    private static Set<String> mergeMessages(
+            Map<String, Message> messages, Collection<Message> newMessages) {
+        final var messagesById = messagesById(newMessages);
+        messages.putAll(messagesById(newMessages));
+        return messagesById.keySet();
+    }
+
+    private static Map<String, Message> messagesById(Collection<Message> messages) {
+        return messages.stream()
+                .collect(toMap(Message::messageId, identity(), (first, second) -> second));
+    }
+
+    private static void batchOperation(List<Message> messages, Consumer<List<Message>> operation) {
+        split(messages, 10).forEach(operation);
     }
 
     private static List<DeleteMessageBatchRequestEntry> deleteMessageBatchRequest(
@@ -345,14 +417,14 @@ public final class SQSHelper {
     }
 
     private static List<ChangeMessageVisibilityBatchRequestEntry>
-            resetMessageVisibilityBatchRequest(List<Message> messages) {
+            changeMessageVisibilityBatchRequest(List<Message> messages, int visibilityTimeout) {
         return messages.stream()
                 .map(
                         message ->
                                 ChangeMessageVisibilityBatchRequestEntry.builder()
                                         .id(message.messageId())
                                         .receiptHandle(message.receiptHandle())
-                                        .visibilityTimeout(0)
+                                        .visibilityTimeout(visibilityTimeout)
                                         .build())
                 .collect(Collectors.toList());
     }

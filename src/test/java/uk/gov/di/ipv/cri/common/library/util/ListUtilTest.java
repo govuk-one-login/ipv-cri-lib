@@ -67,6 +67,12 @@ class ListUtilTest {
     }
 
     @Test
+    void split_shouldReturnEmptyListIfSourceListIsEmpty() {
+        final List<List<Object>> list = ListUtil.split(Collections.emptyList(), 10);
+        assertEquals(0, list.size());
+    }
+
+    @Test
     void split_shouldHandleSingletonList() {
         final List<Integer> list = Collections.singletonList(1);
 
