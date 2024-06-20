@@ -12,6 +12,9 @@ plugins {
 // please update RELEASE_NOTES.md when you update this version
 def buildVersion = "2.1.0"
 
+// set to false when running `publishToMavenLocal` to avoid signing issues
+def signWhenPublishing = true
+
 defaultTasks 'clean', 'spotlessApply', 'build'
 
 ext {
@@ -214,11 +217,13 @@ nexusPublishing {
 }
 
 signing {
-	useInMemoryPgpKeys(
-			System.getenv("MAVEN_CENTRAL_SIGNING_KEY"),
-			System.getenv("MAVEN_CENTRAL_SIGNING_KEY_PASSWORD")
-			)
-	sign publishing.publications
+	if(signWhenPublishing) {
+		useInMemoryPgpKeys(
+				System.getenv("MAVEN_CENTRAL_SIGNING_KEY"),
+				System.getenv("MAVEN_CENTRAL_SIGNING_KEY_PASSWORD")
+		)
+		sign publishing.publications
+	}
 }
 
 publishing {
