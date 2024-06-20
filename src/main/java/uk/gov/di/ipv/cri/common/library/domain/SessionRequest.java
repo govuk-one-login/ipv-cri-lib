@@ -2,6 +2,7 @@ package uk.gov.di.ipv.cri.common.library.domain;
 
 import com.nimbusds.jwt.SignedJWT;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
+import uk.gov.di.ipv.cri.common.library.persistence.item.EvidenceRequest;
 
 import java.net.URI;
 import java.util.Date;
@@ -23,6 +24,7 @@ public class SessionRequest {
     private String persistentSessionId;
     private String clientSessionId;
     private String clientIpAddress;
+    private EvidenceRequest evidenceRequest;
 
     public String getIssuer() {
         return issuer;
@@ -146,5 +148,13 @@ public class SessionRequest {
 
     public void setClientIpAddress(String clientIpAddress) {
         this.clientIpAddress = clientIpAddress;
+    }
+
+    public EvidenceRequest getEvidenceRequest() {
+        return evidenceRequest;
+    }
+
+    public void setEvidenceRequest(EvidenceRequest evidenceRequest) {
+        this.evidenceRequest = evidenceRequest;
     }
 }
