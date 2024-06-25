@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 2.2.1
+
+Fix Javadoc warnings
+
 ## 2.2.0
 
 * Made the SessionItem be able to access the `evidence_request` field 

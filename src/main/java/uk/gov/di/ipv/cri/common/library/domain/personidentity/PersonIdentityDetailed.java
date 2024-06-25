@@ -66,6 +66,7 @@ public class PersonIdentityDetailed {
      * @param addresses null list if not used
      * @param drivingPermits null list if not used
      * @param passports null list if not used
+     * @param socialSecurityRecords list of social security records
      * @deprecated Do not use outside CRI-Lib, CRI's should use PersonIdentityDetailedFactory with
      *     the appropriate createPersonIdentityDetailedWith methods.
      * @see uk.gov.di.ipv.cri.common.library.service.PersonIdentityDetailedFactory
