@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+## 2.2.3
+* Added evidence request parameters to the shared claims endpoint to use verificationScore, strengthScore and strengthPolicy
+
 ## 2.2.2
 Testing of the automated publishing to Maven - no new changes
 
