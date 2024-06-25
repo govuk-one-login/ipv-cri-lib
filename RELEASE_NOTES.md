@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+## 2.2.2
+Testing of the automated publishing to Maven - no new changes
+
 ## 2.2.1
 
 Fix Javadoc warnings
