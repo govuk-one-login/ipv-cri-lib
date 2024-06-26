@@ -46,13 +46,13 @@ public class CommonSteps {
     }
 
     @Given(
-            "user has the test-identity {int}, verificationScore of {int} and strengthScore of {int} in the form of a signed JWT string")
-    public void userHasTheTestIdentityVerificationScoreAndStrengthScoreInTheFormOfASignedJWTString(
-            int testUserDataSheetRowNumber, int verificationScore, int strengthScore)
+            "user has the test-identity {int} and verificationScore of {int} in the form of a signed JWT string")
+    public void userHasTheTestIdentityAndVerificationScoreInTheFormOfASignedJWTString(
+            int testUserDataSheetRowNumber, int verificationScore)
             throws IOException, InterruptedException {
         this.testContext.setSerialisedUserIdentity(
                 this.ipvCoreStubClient.getClaimsForUserWithEvidenceRequested(
-                        testUserDataSheetRowNumber, verificationScore, strengthScore));
+                        testUserDataSheetRowNumber, verificationScore));
         sessionRequestBody =
                 this.ipvCoreStubClient.createSessionRequest(
                         this.testContext.getSerialisedUserIdentity());
