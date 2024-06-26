@@ -46,6 +46,20 @@ public class IpvCoreStubClient {
         return sendHttpRequest(request).body();
     }
 
+    public String getClaimsForUserWithEvidenceRequested(
+            int userDataRowNumber, int verificationScore) throws IOException, InterruptedException {
+        URI uri =
+                new URIBuilder(this.clientConfigurationService.getIPVCoreStubURL())
+                        .setPath("/backend/generateInitialClaimsSet")
+                        .addParameter("cri", clientConfigurationService.getIpvCoreStubCriId())
+                        .addParameter("rowNumber", String.valueOf(userDataRowNumber))
+                        .addParameter("scoringPolicy", "gpg45")
+                        .addParameter("verificationScore", String.valueOf(verificationScore))
+                        .build();
+        HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
+        return sendHttpRequest(request).body();
+    }
+
     public String createSessionRequest(String requestBody)
             throws IOException, InterruptedException {
 
