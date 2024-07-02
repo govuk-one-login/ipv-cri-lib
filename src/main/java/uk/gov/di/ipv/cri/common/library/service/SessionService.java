@@ -104,12 +104,20 @@ public class SessionService {
     private void setSessionItemsToLogging(SessionItem sessionItem) {
         Optional.ofNullable(sessionItem)
                 .ifPresent(
-                        s ->
-                                Optional.ofNullable(s.getClientSessionId())
-                                        .ifPresent(
-                                                id ->
-                                                        LoggingUtils.appendKey(
-                                                                GOVUK_SIGNIN_JOURNEY_ID, id)));
+                        s -> {
+                            Optional.ofNullable(s.getClientSessionId())
+                                    .ifPresent(
+                                            id ->
+                                                    LoggingUtils.appendKey(
+                                                            GOVUK_SIGNIN_JOURNEY_ID, id));
+                            Optional.ofNullable(s.getEvidenceRequest())
+                                    .ifPresent(
+                                            ev ->
+                                                    LoggingUtils.appendKey(
+                                                            "verification_score",
+                                                            String.valueOf(
+                                                                    ev.getVerificationScore())));
+                        });
     }
 
     public SessionItem getSession(String sessionId) {
