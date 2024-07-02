@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+## 2.2.4
+* Merged dependabot PRs
+
 ## 2.2.3
 * Added evidence request parameters to the shared claims endpoint to use verificationScore and strengthPolicy
 
