@@ -18,7 +18,7 @@ ext {
 	dependencyVersions = [
 		jackson_version          : "2.13.1",
 		aws_lambda_events_version: "3.11.6",
-		aws_powertools_version   : "1.12.0",
+		aws_powertools_version   : "1.18.0",
 		nimbusds_oauth_version   : "11.2",
 		nimbusds_jwt_version     : "9.36",
 		junit                    : "5.8.2",
