@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+## 2.2.4
+Added verification_score from evidenceRequested to the logger in the SessionService
+
 ## 2.2.3
 * Added evidence request parameters to the shared claims endpoint to use verificationScore and strengthPolicy
 
