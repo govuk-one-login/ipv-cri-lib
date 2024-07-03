@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           gradle-version: 7.4.2
 
@@ -44,7 +44,7 @@ jobs:
           cache: gradle
 
       - name: Cache build artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: ${{ runner.os }}-cri-lib-java-${{ github.head_ref || github.ref_name }}
           restore-keys: ${{ runner.os }}-cri-lib-java-
@@ -54,7 +54,7 @@ jobs:
             !build/reports
 
       - name: Cache SonarCloud packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
