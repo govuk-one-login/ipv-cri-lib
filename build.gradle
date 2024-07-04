@@ -69,7 +69,7 @@ configurations.all {
 }
 
 dependencies {
-	aws platform('software.amazon.awssdk:bom:2.20.162')
+	aws platform('software.amazon.awssdk:bom:2.26.15')
 
 	cloudformation "software.amazon.awssdk:cloudformation"
 
