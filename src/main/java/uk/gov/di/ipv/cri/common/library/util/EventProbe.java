@@ -14,6 +14,7 @@ import java.util.Objects;
 
 public class EventProbe {
     private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
+    private static final String METRIC_DIMENSION_VERIFICATION_SCORE = "verification_score";
     private static final Logger LOGGER = LogManager.getLogger();
     private static final MetricsLogger METRICS_LOGGER = MetricsUtils.metricsLogger();
 
@@ -65,6 +66,10 @@ public class EventProbe {
             addFieldToLoggingContext(GOVUK_SIGNIN_JOURNEY_ID, journeyId);
         }
         return this;
+    }
+
+    public void addVerificationScoreToMetrics(String verificationScore) {
+        addDimensions(Map.of(METRIC_DIMENSION_VERIFICATION_SCORE, verificationScore));
     }
 
     public void addDimensions(Map<String, String> dimensions) {
