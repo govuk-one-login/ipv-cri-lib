@@ -12,6 +12,8 @@ import software.amazon.cloudwatchlogs.emf.logger.MetricsLogger;
 import software.amazon.cloudwatchlogs.emf.model.DimensionSet;
 import software.amazon.lambda.powertools.metrics.MetricsUtils;
 
+import java.util.Map;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -25,7 +27,7 @@ class EventProbeTest {
     @Captor private ArgumentCaptor<DimensionSet> sessionItemArgumentCaptor;
 
     @Test
-    void shouldAddVerificationScoreToMetrics() {
+    void shouldAddDimensions() {
         try (MockedStatic<MetricsUtils> metricsUtilsMockedStatic =
                 Mockito.mockStatic(MetricsUtils.class)) {
             metricsUtilsMockedStatic
@@ -33,15 +35,13 @@ class EventProbeTest {
                     .thenReturn(mockMetricsLogger);
 
             EventProbe eventProbe = new EventProbe();
-            eventProbe.addVerificationScoreToMetrics("1");
+            eventProbe.addDimensions(Map.of("Name", "Value"));
 
             verify(mockMetricsLogger).putDimensions(sessionItemArgumentCaptor.capture());
             DimensionSet capturedValue = sessionItemArgumentCaptor.getValue();
             assertFalse(capturedValue.getDimensionKeys().isEmpty());
-            assertThat(
-                    capturedValue.getDimensionKeys().iterator().next(),
-                    equalTo("verification_score"));
-            assertThat(capturedValue.getDimensionValue("verification_score"), equalTo("1"));
+            assertThat(capturedValue.getDimensionKeys().iterator().next(), equalTo("Name"));
+            assertThat(capturedValue.getDimensionValue("Name"), equalTo("Value"));
         }
     }
 }
