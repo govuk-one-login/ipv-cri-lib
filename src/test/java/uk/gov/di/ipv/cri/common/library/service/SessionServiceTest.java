@@ -261,7 +261,7 @@ class SessionServiceTest {
                 () -> LoggingUtils.appendKey("govuk_signin_journey_id", "a client session id"),
                 times(1));
         loggingUtilsMockedStatic.verify(
-                () -> LoggingUtils.appendKey("verification_score", "2"), times(1));
+                () -> LoggingUtils.appendKey("requested_verification_score", "2"), times(1));
         loggingUtilsMockedStatic.verifyNoMoreInteractions();
     }
 

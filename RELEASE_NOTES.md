@@ -1,7 +1,7 @@
 # Credential Issuer common libraries Release Notes
 
-## 2.2.5
-Added verification_score from evidenceRequested to the logger in the SessionService
+## 2.3.0
+Added requested_verification_score from evidenceRequested to the logger in the SessionService
 
 ## 2.2.4
 * Merged dependabot PRs

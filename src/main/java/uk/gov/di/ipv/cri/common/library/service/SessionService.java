@@ -20,7 +20,7 @@ import java.util.UUID;
 public class SessionService {
     private static final String SESSION_TABLE_PARAM_NAME = "SessionTableName";
     private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
-    private static final String VERIFICATION_SCORE = "verification_score";
+    private static final String REQUESTED_VERIFICATION_SCORE = "requested_verification_score";
     private final ConfigurationService configurationService;
     private final DataStore<SessionItem> dataStore;
     private final Clock clock;
@@ -116,7 +116,7 @@ public class SessionService {
                                     .ifPresent(
                                             ev ->
                                                     LoggingUtils.appendKey(
-                                                            VERIFICATION_SCORE,
+                                                            REQUESTED_VERIFICATION_SCORE,
                                                             String.valueOf(
                                                                     ev.getVerificationScore())));
                         });
