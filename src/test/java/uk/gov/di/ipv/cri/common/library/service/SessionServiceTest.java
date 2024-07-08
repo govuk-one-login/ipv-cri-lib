@@ -19,6 +19,7 @@ import uk.gov.di.ipv.cri.common.library.exception.AuthorizationCodeExpiredExcept
 import uk.gov.di.ipv.cri.common.library.exception.SessionExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionNotFoundException;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
+import uk.gov.di.ipv.cri.common.library.persistence.item.EvidenceRequest;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.net.URI;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -74,6 +76,7 @@ class SessionServiceTest {
         when(sessionRequest.getPersistentSessionId()).thenReturn("a persistent session id");
         when(sessionRequest.getClientSessionId()).thenReturn("a client session id");
         when(sessionRequest.getClientIpAddress()).thenReturn("192.0.2.0");
+        when(sessionRequest.getEvidenceRequest()).thenReturn(createEvidenceRequest());
 
         try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
                 Mockito.mockStatic(LoggingUtils.class)) {
@@ -108,6 +111,7 @@ class SessionServiceTest {
         item.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
         item.setAuthorizationCodeExpiryDate(
                 Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
+        item.setEvidenceRequest(createEvidenceRequest());
         setClientSessionIds(item);
         List<SessionItem> items = List.of(item);
 
@@ -134,6 +138,7 @@ class SessionServiceTest {
         item.setAccessToken(serialisedAccessToken);
         item.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
         item.setAccessTokenExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
+        item.setEvidenceRequest(createEvidenceRequest());
         setClientSessionIds(item);
         List<SessionItem> items = List.of(item);
 
@@ -210,6 +215,7 @@ class SessionServiceTest {
     @Test
     void shouldUpdateSession() {
         SessionItem sessionItem = new SessionItem();
+        sessionItem.setEvidenceRequest(createEvidenceRequest());
         setClientSessionIds(sessionItem);
         try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
                 Mockito.mockStatic(LoggingUtils.class)) {
@@ -238,15 +244,40 @@ class SessionServiceTest {
         }
     }
 
+    @Test
+    void shouldNotAppendKeysToLoggerIfValuesNotPresent() {
+        SessionItem item = new SessionItem();
+        item.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
+        when(mockDataStore.getItem(SESSION_ID)).thenReturn(item);
+        try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
+                Mockito.mockStatic(LoggingUtils.class)) {
+            assertDoesNotThrow(() -> sessionService.validateSessionId(SESSION_ID));
+            loggingUtilsMockedStatic.verifyNoMoreInteractions();
+        }
+    }
+
     private void verifyLoggingUtilsAppendKeys(MockedStatic<LoggingUtils> loggingUtilsMockedStatic) {
         loggingUtilsMockedStatic.verify(
                 () -> LoggingUtils.appendKey("govuk_signin_journey_id", "a client session id"),
                 times(1));
+        loggingUtilsMockedStatic.verify(
+                () -> LoggingUtils.appendKey("requested_verification_score", "2"), times(1));
         loggingUtilsMockedStatic.verifyNoMoreInteractions();
     }
 
     private void setClientSessionIds(SessionItem item) {
         item.setClientSessionId("a client session id");
         item.setPersistentSessionId("a persistent session id");
+    }
+
+    private EvidenceRequest createEvidenceRequest() {
+        EvidenceRequest evidenceRequest = new EvidenceRequest();
+        evidenceRequest.setScoringPolicy("gpg45");
+        evidenceRequest.setStrengthScore(2);
+        evidenceRequest.setValidityScore(2);
+        evidenceRequest.setVerificationScore(2);
+        evidenceRequest.setActivityHistoryScore(5);
+        evidenceRequest.setIdentityFraudScore(6);
+        return evidenceRequest;
     }
 }
