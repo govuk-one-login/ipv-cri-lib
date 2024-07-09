@@ -11,9 +11,11 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
+import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
 import java.text.ParseException;
 import java.time.Clock;
@@ -34,8 +36,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.common.library.util.VerifiableCredentialClaimsSetBuilder.ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID;
+import static uk.gov.di.ipv.cri.common.library.util.VerifiableCredentialClaimsSetBuilder.ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED;
 
 @ExtendWith(MockitoExtension.class)
+@ExtendWith(SystemStubsExtension.class)
 class VerifiableCredentialClaimsSetBuilderTest {
     private static final String TEST_SUBJECT = UUID.randomUUID().toString();
     private static final String TEST_ISSUER = "kbv-issuer";
@@ -43,14 +48,22 @@ class VerifiableCredentialClaimsSetBuilderTest {
     private static final PersonIdentityDetailed TEST_PERSON_IDENTITY =
             mock(PersonIdentityDetailed.class);
 
+    // Needs to be created here
+    @SystemStub private EnvironmentVariables environmentVariables = new EnvironmentVariables();
+
     @Mock private ConfigurationService mockConfigurationService;
     private Clock clock;
     private VerifiableCredentialClaimsSetBuilder builder;
 
     @BeforeEach
     void setup() {
-        this.clock = Clock.fixed(Instant.parse("2016-11-03T10:15:30Z"), ZoneId.of("UTC"));
-        this.builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
+        clock = Clock.fixed(Instant.parse("2016-11-03T10:15:30Z"), ZoneId.of("UTC"));
+
+        // Defaults
+        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, null);
+        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID, null);
+
+        builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
     }
 
     @Test
@@ -63,9 +76,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
                         "evidence-key-2", "evidence-value-2");
 
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
-        when(mockConfigurationService.getParameterValueByAbsoluteName(
-                        "/release-flags/vc-expiry-removed"))
-                .thenThrow(ParameterNotFoundException.class);
 
         JWTClaimsSet builtClaimSet =
                 this.builder
@@ -99,6 +109,11 @@ class VerifiableCredentialClaimsSetBuilderTest {
     @ValueSource(strings = {"", " ", "false", "anything"})
     void shouldBuildVerifiableCredential(String expiryRemovedReleasedFlagValue)
             throws ParseException {
+
+        environmentVariables.set(
+                ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, expiryRemovedReleasedFlagValue);
+        builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
+
         String[] testContexts = new String[] {"context1", "context2"};
         Map<String, String> evidence =
                 Map.of(
@@ -106,9 +121,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
                         "evidence-key-2", "evidence-value-2");
 
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
-        when(mockConfigurationService.getParameterValueByAbsoluteName(
-                        "/release-flags/vc-expiry-removed"))
-                .thenReturn(expiryRemovedReleasedFlagValue);
 
         JWTClaimsSet builtClaimSet =
                 this.builder
@@ -140,18 +152,19 @@ class VerifiableCredentialClaimsSetBuilderTest {
     @Test
     void shouldBuildVerifiableCredentialWithoutAnExpiryTime() throws ParseException {
         String[] testContexts = new String[] {"context1", "context2"};
+
+        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, true);
+        builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
+
         Map<String, String> evidence =
                 Map.of(
                         "evidence-key-1", "evidence-value-1",
                         "evidence-key-2", "evidence-value-2");
 
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
-        when(mockConfigurationService.getParameterValueByAbsoluteName(
-                        "/release-flags/vc-expiry-removed"))
-                .thenReturn("true");
+
         JWTClaimsSet builtClaimSet =
-                this.builder
-                        .subject(TEST_SUBJECT)
+                builder.subject(TEST_SUBJECT)
                         .timeToLive(6L, ChronoUnit.MONTHS)
                         .verifiableCredentialType(TEST_VC_TYPE)
                         .verifiableCredentialSubject(TEST_PERSON_IDENTITY)
@@ -180,16 +193,15 @@ class VerifiableCredentialClaimsSetBuilderTest {
     @ValueSource(strings = {"", " ", "false", "anything"})
     void shouldBuildVerifiableCredentialWhenVcContainsUniqueIdReleaseFlagIsNotSpecified(
             String expiryRemovedReleasedFlagValue) throws ParseException {
+
+        environmentVariables.set(
+                ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, expiryRemovedReleasedFlagValue);
+        builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
+
         String[] testContexts = new String[] {"context1", "context2"};
         Map<String, String> evidence = Collections.emptyMap();
 
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
-        when(mockConfigurationService.getParameterValueByAbsoluteName(
-                        "/release-flags/vc-expiry-removed"))
-                .thenReturn(expiryRemovedReleasedFlagValue);
-
-        when(mockConfigurationService.getParameterValue("release-flags/vc-contains-unique-id"))
-                .thenThrow(ParameterNotFoundException.class);
 
         JWTClaimsSet builtClaimSet =
                 this.builder
@@ -223,16 +235,16 @@ class VerifiableCredentialClaimsSetBuilderTest {
     @ValueSource(strings = {"", " ", "false", "anything"})
     void shouldBuildVerifiableCredentialWhenVcContainsUniqueIdReleaseFlagIsSpecified(
             String expiryRemovedReleasedFlagValue) throws ParseException {
+
+        environmentVariables.set(
+                ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, expiryRemovedReleasedFlagValue);
+        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID, true);
+        builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
+
         String[] testContexts = new String[] {"context1", "context2"};
         Map<String, String> evidence = Collections.emptyMap();
 
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
-        when(mockConfigurationService.getParameterValueByAbsoluteName(
-                        "/release-flags/vc-expiry-removed"))
-                .thenReturn(expiryRemovedReleasedFlagValue);
-
-        when(mockConfigurationService.getParameterValue("release-flags/vc-contains-unique-id"))
-                .thenReturn("true");
 
         JWTClaimsSet builtClaimSet =
                 this.builder

@@ -1,5 +1,42 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.0.0
+ ***BREAKING CHANGES***
+ 
+ Removal of default constuctors for
+ - ConfigurationService
+ - SessionService
+ - AccessTokenService
+ - AuditService
+
+ Removed feature flags set using parameter store variables (EXPIRY_REMOVED/ CONTAINS_UNIQUE_ID) - to remove some parameter reads
+ - Now set via ENV vars `ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED` / `ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID` on the VC generating lambda - fallback behavour is unchanged
+
+Exclude the netty-nio-client and apache-client now that the AwsCrtHttpClient is the only client in use.
+- This exclusion needs replicated in any Java Lambdas to exclude these clients from the build step and reduce deployment size a small amount and improve lambda initialization. 
+Note: Aws service clients create in a CRI without a http client configured should use the ClientProviderFactory and not rely on the class path to resolve a http client - as there can be more than one http client on the classpath.
+
+**CHANGES**
+
+Add ClientProviderFactory to enable a single source of clients for services.
+The AwsCrtHttpClient used as the sdkHttpClient in all clients, with clients provided by this factory are pre-configured with awsRegion, sdkHttpClient (AwsCrtHttpClient), credentialsProvider and defaultsMode to reduce lambda startup time.
+
+Reworked constructors of ConfigurationService, SessionService, AccessTokenService and AuditService to require reusing already constucted AWS Clients, ConfigurationService's and other parameters.
+
+SSMProvider and SecretsProvider now have a random default max age configured at creation - to mitigate muliple scaled lambdas expiring caches at the same moment and hitting rate limits. Default is a random value between 5 - 15 mins. Optionally configurable per lambda by the env vars `CONFIG_SERVICE_SSM_OPTIMIZED_CACHE_AGE_MIN_MINUTES` and `CONFIG_SERVICE_SSM_OPTIMIZED_CACHE_AGE_MAX_MINUTES`.
+
+**Dependency Changes**
+
+AWS SDK 2.20.162 -> 2.26.16
+
+New Aws Crt Http Client aligned with AWS SDK 2.26.16
+
+AWS Lambda Events 3.11.0 -> 3.11.6
+
+AWS Lambda Powertools 1.12.0 -> 1.18.0
+
+Nimbusds Oauth 11.2 -> 11.4
+
 ## 2.3.0
 Added requested_verification_score from evidenceRequested to the logger in the SessionService
 

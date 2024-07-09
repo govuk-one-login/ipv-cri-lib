@@ -1,10 +1,5 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
-import software.amazon.awssdk.services.ssm.SsmClient;
-import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
@@ -16,11 +11,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class ConfigurationService {
-
     private static final String PARAMETER_NAME_FORMAT = "/%s/%s";
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final Long AUTHORIZATION_CODE_TTL_IN_SECS = 600L;
-    public static final String CONFIG_SERVICE_CACHE_TTL_MINS = "CONFIG_SERVICE_CACHE_TTL_MINS";
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
@@ -43,20 +36,10 @@ public class ConfigurationService {
     }
 
     @ExcludeFromGeneratedCoverageReport
-    public ConfigurationService() {
+    public ConfigurationService(SSMProvider ssmProvider, SecretsProvider secretsProvider) {
         this(
-                ParamManager.getSsmProvider(
-                                SsmClient.builder()
-                                        .region(Region.of(System.getenv("AWS_REGION")))
-                                        .httpClient(UrlConnectionHttpClient.create())
-                                        .build())
-                        .defaultMaxAge(getCacheTTLInMinutes(), ChronoUnit.MINUTES),
-                ParamManager.getSecretsProvider(
-                                SecretsManagerClient.builder()
-                                        .region(Region.of(System.getenv("AWS_REGION")))
-                                        .httpClient(UrlConnectionHttpClient.create())
-                                        .build())
-                        .defaultMaxAge(getCacheTTLInMinutes(), ChronoUnit.MINUTES),
+                ssmProvider,
+                secretsProvider,
                 System.getenv("AWS_STACK_NAME"),
                 System.getenv("COMMON_PARAMETER_NAME_PREFIX"),
                 Optional.ofNullable(System.getenv("SECRET_PREFIX"))
@@ -169,11 +152,5 @@ public class ConfigurationService {
 
     private String getCommonParameterPrefix() {
         return Objects.nonNull(commonParameterPrefix) ? commonParameterPrefix : parameterPrefix;
-    }
-
-    private static int getCacheTTLInMinutes() {
-        return Optional.ofNullable(System.getenv(CONFIG_SERVICE_CACHE_TTL_MINS))
-                .map(Integer::valueOf)
-                .orElse(5);
     }
 }

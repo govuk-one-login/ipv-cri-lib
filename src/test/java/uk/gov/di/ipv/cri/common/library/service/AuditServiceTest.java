@@ -42,7 +42,8 @@ class AuditServiceTest {
     @BeforeEach
     void setup() {
         when(mockConfigurationService.getSqsAuditEventQueueUrl()).thenReturn(SQS_QUEUE_URL);
-        this.auditService =
+        when(mockObjectMapper.registerModule(any())).thenReturn(mockObjectMapper);
+        auditService =
                 new AuditService(
                         mockSqs, mockConfigurationService, mockObjectMapper, mockAuditEventFactory);
     }

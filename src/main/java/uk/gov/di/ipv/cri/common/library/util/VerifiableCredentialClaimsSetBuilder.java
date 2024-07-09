@@ -3,7 +3,6 @@ package uk.gov.di.ipv.cri.common.library.util;
 import com.nimbusds.jwt.JWTClaimNames;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
-import software.amazon.awssdk.services.ssm.model.SsmException;
 import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
 
 import java.time.Clock;
@@ -12,13 +11,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.function.UnaryOperator;
 
 public class VerifiableCredentialClaimsSetBuilder {
-    private static final String EXPIRY_REMOVED = "/release-flags/vc-expiry-removed";
-    private static final String CONTAINS_UNIQUE_ID = "release-flags/vc-contains-unique-id";
+
+    public static final String ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED =
+            "ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED";
+    public static final String ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID =
+            "ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID";
+
     private final ConfigurationService configurationService;
     private final Clock clock;
 
@@ -106,7 +107,7 @@ public class VerifiableCredentialClaimsSetBuilder {
                         .issuer(issuer)
                         .claim(JWTClaimNames.NOT_BEFORE, dateTimeNow.toEpochSecond());
 
-        if (!isReleaseFlag(configurationService::getParameterValueByAbsoluteName, EXPIRY_REMOVED)) {
+        if (!isReleaseFlag(ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED)) {
             builder.claim(JWTClaimNames.EXPIRATION_TIME, getExpirationTimestamp(dateTimeNow));
         }
 
@@ -114,9 +115,10 @@ public class VerifiableCredentialClaimsSetBuilder {
         verifiableCredentialClaims.put(
                 "type", new String[] {"VerifiableCredential", this.verifiableCredentialType});
 
-        if (isReleaseFlag(configurationService::getParameterValue, CONTAINS_UNIQUE_ID)) {
+        if (isReleaseFlag(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID)) {
             builder.claim(JWTClaimNames.JWT_ID, generateUniqueId());
         }
+
         if (Objects.nonNull(this.contexts) && contexts.length > 0) {
             verifiableCredentialClaims.put("@context", contexts);
         }
@@ -130,15 +132,8 @@ public class VerifiableCredentialClaimsSetBuilder {
         return builder.build();
     }
 
-    private boolean isReleaseFlag(UnaryOperator<String> parameterGetter, String flagParameterPath) {
-        try {
-            return Optional.ofNullable(parameterGetter.apply(flagParameterPath))
-                    .map(x -> x.equalsIgnoreCase("true"))
-                    .orElse(false);
-
-        } catch (SsmException e) {
-            return false;
-        }
+    private boolean isReleaseFlag(String environmentVariable) {
+        return Boolean.parseBoolean(System.getenv(environmentVariable));
     }
 
     private long getExpirationTimestamp(OffsetDateTime dateTimeNow) {

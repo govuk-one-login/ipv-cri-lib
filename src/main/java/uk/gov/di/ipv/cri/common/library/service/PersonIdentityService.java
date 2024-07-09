@@ -1,11 +1,11 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.common.library.persistence.DynamoDbEnhancedClientFactory;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 
 import java.util.UUID;
@@ -17,19 +17,9 @@ public class PersonIdentityService {
     private final DataStore<PersonIdentityItem> personIdentityDataStore;
 
     @ExcludeFromGeneratedCoverageReport
-    public PersonIdentityService() {
-        this.configurationService = new ConfigurationService();
-        this.personIdentityMapper = new PersonIdentityMapper();
-        this.personIdentityDataStore =
-                new DataStore<>(
-                        configurationService.getCommonParameterValue(
-                                PERSON_IDENTITY_TABLE_PARAM_NAME),
-                        PersonIdentityItem.class,
-                        new DynamoDbEnhancedClientFactory().getClient());
-    }
-
-    @ExcludeFromGeneratedCoverageReport
-    public PersonIdentityService(ConfigurationService configurationService) {
+    public PersonIdentityService(
+            ConfigurationService configurationService,
+            DynamoDbEnhancedClient dynamoDbEnhancedClient) {
         this(
                 new PersonIdentityMapper(),
                 configurationService,
@@ -37,7 +27,7 @@ public class PersonIdentityService {
                         configurationService.getCommonParameterValue(
                                 PERSON_IDENTITY_TABLE_PARAM_NAME),
                         PersonIdentityItem.class,
-                        new DynamoDbEnhancedClientFactory().getClient()));
+                        dynamoDbEnhancedClient));
     }
 
     public PersonIdentityService(
