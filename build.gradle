@@ -16,7 +16,7 @@ defaultTasks 'clean', 'spotlessApply', 'build'
 
 ext {
 	dependencyVersions = [
-		aws_sdk_version          : "2.26.16",
+		aws_sdk_version          : "2.26.19",
 		aws_lambda_events_version: "3.11.6",
 		aws_powertools_version   : "1.18.0",
 		jackson_version          : "2.17.2",
