@@ -10,7 +10,7 @@ plugins {
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "3.0.0"
+def buildVersion = "3.0.1"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
@@ -19,7 +19,7 @@ ext {
 		aws_sdk_version          : "2.26.16",
 		aws_lambda_events_version: "3.11.6",
 		aws_powertools_version   : "1.18.0",
-		jackson_version          : "2.17.2",
+		jackson_version          : "2.15.2", // Use AWS POM version only
 		nimbusds_oauth_version   : "11.4",
 		nimbusds_jwt_version     : "9.36",
 		junit                    : "5.8.2",
@@ -94,9 +94,9 @@ dependencies {
 
 	lambda_tests "software.amazon.awssdk:aws-lambda-java-tests:1.1.1"
 
-	jackson "com.fasterxml.jackson.core:jackson-core:${dependencyVersions.jackson_version}",
-			"com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.jackson_version}",
-			"com.fasterxml.jackson.core:jackson-annotations:${dependencyVersions.jackson_version}",
+	jackson "com.fasterxml.jackson.core:jackson-core",
+			"com.fasterxml.jackson.core:jackson-databind",
+			"com.fasterxml.jackson.core:jackson-annotations",
 			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${dependencyVersions.jackson_version}",
 			"com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${dependencyVersions.jackson_version}"
 

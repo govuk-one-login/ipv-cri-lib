@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.0.1
+
+    Remove versions specified for the main Jackson dependencies and defer to the ones pull in from `software.amazon.awssdk:bom`. There is a breakage in a later jackson version, which crashes in the sdk classes which expect the older versions. 
+    Note : jackson-datatype-jsr310 and jackson-datatype-jdk8 are not in the aws sdk and are custom dependencies these version have been set at the aws pom versions to avoid a mismatch.
+
 ## 3.0.0
  ***BREAKING CHANGES***
  
