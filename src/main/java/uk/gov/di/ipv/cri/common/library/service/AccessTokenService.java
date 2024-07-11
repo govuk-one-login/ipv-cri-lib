@@ -46,8 +46,8 @@ public class AccessTokenService {
     }
 
     @ExcludeFromGeneratedCoverageReport
-    public AccessTokenService() {
-        this(new ConfigurationService(), new JWTVerifier());
+    public AccessTokenService(ConfigurationService configurationService) {
+        this(configurationService, new JWTVerifier());
     }
 
     public String getAuthorizationCode(TokenRequest tokenRequest) {

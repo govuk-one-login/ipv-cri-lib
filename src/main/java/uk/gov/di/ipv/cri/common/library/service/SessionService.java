@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
 import com.nimbusds.oauth2.sdk.token.AccessToken;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.lambda.powertools.logging.LoggingUtils;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.SessionRequest;
@@ -9,7 +10,6 @@ import uk.gov.di.ipv.cri.common.library.exception.AuthorizationCodeExpiredExcept
 import uk.gov.di.ipv.cri.common.library.exception.SessionExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionNotFoundException;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.common.library.persistence.DynamoDbEnhancedClientFactory;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.common.library.util.ListUtil;
 
@@ -26,23 +26,14 @@ public class SessionService {
     private final Clock clock;
 
     @ExcludeFromGeneratedCoverageReport
-    public SessionService() {
-        this.configurationService = new ConfigurationService();
-        this.dataStore =
-                new DataStore<>(
-                        configurationService.getCommonParameterValue(SESSION_TABLE_PARAM_NAME),
-                        SessionItem.class,
-                        new DynamoDbEnhancedClientFactory().getClient());
-        this.clock = Clock.systemUTC();
-    }
-
-    @ExcludeFromGeneratedCoverageReport
-    public SessionService(ConfigurationService configurationService) {
+    public SessionService(
+            ConfigurationService configurationService,
+            DynamoDbEnhancedClient dynamoDbEnhancedClient) {
         this(
                 new DataStore<>(
                         configurationService.getCommonParameterValue(SESSION_TABLE_PARAM_NAME),
                         SessionItem.class,
-                        new DynamoDbEnhancedClientFactory().getClient()),
+                        dynamoDbEnhancedClient),
                 configurationService,
                 Clock.systemUTC());
     }

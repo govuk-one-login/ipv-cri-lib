@@ -6,13 +6,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.utils.StringUtils;
-import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEvent;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEventContext;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEventType;
 import uk.gov.di.ipv.cri.common.library.exception.SqsException;
-
-import java.time.Clock;
 
 public class AuditService {
     private final SqsClient sqs;
@@ -20,33 +17,13 @@ public class AuditService {
     private final ObjectMapper objectMapper;
     private final AuditEventFactory auditEventFactory;
 
-    @ExcludeFromGeneratedCoverageReport
-    public AuditService() {
-        ConfigurationService configurationService = new ConfigurationService();
-        this.auditEventFactory = new AuditEventFactory(configurationService, Clock.systemUTC());
-        this.sqs = SqsClient.builder().build();
-        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        this.queueUrl = configurationService.getSqsAuditEventQueueUrl();
-        requireNonBlankQueueUrl();
-    }
-
-    @ExcludeFromGeneratedCoverageReport
-    public AuditService(ConfigurationService configurationService) {
-        this(
-                SqsClient.builder().build(),
-                configurationService,
-                new ObjectMapper().registerModule(new JavaTimeModule()),
-                new AuditEventFactory(configurationService, Clock.systemUTC()));
-        requireNonBlankQueueUrl();
-    }
-
     public AuditService(
             SqsClient sqs,
             ConfigurationService configurationService,
             ObjectMapper objectMapper,
             AuditEventFactory auditEventFactory) {
         this.sqs = sqs;
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper.registerModule(new JavaTimeModule());
         this.auditEventFactory = auditEventFactory;
         this.queueUrl = configurationService.getSqsAuditEventQueueUrl();
         requireNonBlankQueueUrl();

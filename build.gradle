@@ -10,16 +10,17 @@ plugins {
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "2.3.0"
+def buildVersion = "3.0.0"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
 ext {
 	dependencyVersions = [
-		jackson_version          : "2.13.1",
+		aws_sdk_version          : "2.26.16",
 		aws_lambda_events_version: "3.11.6",
 		aws_powertools_version   : "1.18.0",
-		nimbusds_oauth_version   : "11.2",
+		jackson_version          : "2.17.2",
+		nimbusds_oauth_version   : "11.4",
 		nimbusds_jwt_version     : "9.36",
 		junit                    : "5.8.2",
 		mockito					 : "4.3.1",
@@ -43,6 +44,7 @@ java {
 
 configurations {
 	aws
+	aws_crt_client
 	cloudformation
 	dynamodb
 	jackson
@@ -62,14 +64,15 @@ configurations {
 	cucumber
 }
 
-// The dynamodb enhanced package loads the apache-client as well as the spi-client, so
-// we need to add the apache-client to the dependencies exclusion to not get a mismatch
 configurations.all {
+	// https://aws.amazon.com/blogs/developer/tuning-the-aws-java-sdk-2-x-to-reduce-startup-time/
 	exclude group:"software.amazon.awssdk", module: "apache-client"
+	exclude group:"software.amazon.awssdk", module: "netty-nio-client"
 }
 
 dependencies {
-	aws platform('software.amazon.awssdk:bom:2.20.162')
+	aws platform("software.amazon.awssdk:bom:${dependencyVersions.aws_sdk_version}")
+	aws_crt_client "software.amazon.awssdk:aws-crt-client:${dependencyVersions.aws_sdk_version}"
 
 	cloudformation "software.amazon.awssdk:cloudformation"
 
@@ -123,6 +126,7 @@ dependencies {
 			configurations.lambda,
 			configurations.jackson,
 			configurations.dynamodb,
+			configurations.aws_crt_client,
 			configurations.nimbus,
 			configurations.powertools,
 			configurations.sqs,
