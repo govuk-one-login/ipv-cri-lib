@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.kms.KmsClient;
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
@@ -69,5 +70,13 @@ class ClientProviderFactoryTest {
         SecretsProvider secretsProvider = clientProviderFactory.getSecretsProvider();
 
         assertNotNull(secretsProvider);
+    }
+
+    @Test
+    void shouldReturnSecretsManagerClient() {
+
+        SecretsManagerClient secretsManagerClient = clientProviderFactory.getSecretsManagerClient();
+
+        assertNotNull(secretsManagerClient);
     }
 }
