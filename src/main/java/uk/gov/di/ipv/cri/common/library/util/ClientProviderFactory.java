@@ -173,7 +173,7 @@ public class ClientProviderFactory {
                 + minCacheSeconds;
     }
 
-    private SecretsManagerClient getSecretsManagerClient() {
+    public SecretsManagerClient getSecretsManagerClient() {
         if (null == secretsManagerClient) {
             secretsManagerClient =
                     SecretsManagerClient.builder()
