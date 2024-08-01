@@ -1,5 +1,7 @@
 # Credential Issuer common libraries Release Notes
+## 3.0.3
 
+    Added a overrideJti method to allow setting jti claims value in Contract-tests
 ## 3.0.2
 
     Changed getSecretsManagerClient() to public in  ClientProviderFactory, inadvertently set as private when first added.

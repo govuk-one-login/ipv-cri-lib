@@ -30,13 +30,26 @@ class SignedJWTFactoryTest {
     private SignedJWTFactory signedJwtFactory;
 
     @Test
-    void shouldCreateASignedJwtSuccessfully()
+    void shouldCreateASignedJwtSuccessfullyFromJWTClaimsSet()
             throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException,
                     ParseException {
         JWTClaimsSet testClaimsSet = new JWTClaimsSet.Builder().build();
         signedJwtFactory = new SignedJWTFactory(new ECDSASigner(getPrivateKey()));
 
         SignedJWT signedJWT = signedJwtFactory.createSignedJwt(testClaimsSet);
+
+        assertThat(signedJWT.verify(new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1))), is(true));
+    }
+
+    @Test
+    void shouldCreateASignedJwtSuccessfullyFromJWTClaimsSetString()
+            throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException,
+                    ParseException {
+        signedJwtFactory = new SignedJWTFactory(new ECDSASigner(getPrivateKey()));
+
+        SignedJWT signedJWT =
+                signedJwtFactory.createSignedJwt(
+                        "{\"iss\":\"dummyAddressComponentId\",\"sub\":\"test-subject\",\"nbf\":4070908800,\"exp\":4070909400,\"jti\":\"dummyJti\"}");
 
         assertThat(signedJWT.verify(new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1))), is(true));
     }
