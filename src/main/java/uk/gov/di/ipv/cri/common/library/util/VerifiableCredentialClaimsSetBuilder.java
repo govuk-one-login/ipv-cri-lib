@@ -30,6 +30,7 @@ public class VerifiableCredentialClaimsSetBuilder {
     private Object evidence;
     private ChronoUnit ttlUnit;
     private long ttl;
+    private JWTClaimsSet.Builder jwtClaimsSetBuilder;
 
     public VerifiableCredentialClaimsSetBuilder(
             ConfigurationService configurationService, Clock clock) {
@@ -102,7 +103,7 @@ public class VerifiableCredentialClaimsSetBuilder {
         OffsetDateTime dateTimeNow = OffsetDateTime.now(this.clock);
 
         JWTClaimsSet.Builder builder =
-                new JWTClaimsSet.Builder()
+                overrideJti()
                         .subject(this.subject)
                         .issuer(issuer)
                         .claim(JWTClaimNames.NOT_BEFORE, dateTimeNow.toEpochSecond());
@@ -130,6 +131,20 @@ public class VerifiableCredentialClaimsSetBuilder {
         builder.claim("vc", verifiableCredentialClaims);
 
         return builder.build();
+    }
+
+    public JWTClaimsSet.Builder overrideJti(String jti) {
+        if (System.getenv(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID).equals("override")) {
+            return overrideJti().jwtID(jti);
+        }
+        return this.jwtClaimsSetBuilder;
+    }
+
+    private JWTClaimsSet.Builder overrideJti() {
+        if (this.jwtClaimsSetBuilder == null) {
+            this.jwtClaimsSetBuilder = new JWTClaimsSet.Builder();
+        }
+        return this.jwtClaimsSetBuilder;
     }
 
     private boolean isReleaseFlag(String environmentVariable) {
