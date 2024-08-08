@@ -48,6 +48,9 @@ AWS Lambda Powertools 1.12.0 -> 1.18.0
 
 Nimbusds Oauth 11.2 -> 11.4
 
+## 3.0.4
+Added methods to SignedJWTFactory to allow CRIs to add kid to jwt headers
+
 ## 2.3.0
 Added requested_verification_score from evidenceRequested to the logger in the SessionService
 
