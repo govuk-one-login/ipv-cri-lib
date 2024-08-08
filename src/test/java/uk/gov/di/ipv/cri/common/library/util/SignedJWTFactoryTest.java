@@ -1,5 +1,7 @@
 package uk.gov.di.ipv.cri.common.library.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
@@ -20,6 +22,7 @@ import java.util.Base64;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 class SignedJWTFactoryTest {
@@ -52,6 +55,36 @@ class SignedJWTFactoryTest {
                         "{\"iss\":\"dummyAddressComponentId\",\"sub\":\"test-subject\",\"nbf\":4070908800,\"exp\":4070909400,\"jti\":\"dummyJti\"}");
 
         assertThat(signedJWT.verify(new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1))), is(true));
+    }
+
+    @Test
+    void shouldCreateASignedJwtSuccessfullyFromJWTClaimsSetWhenKeyIDInHeader()
+            throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException,
+                    ParseException {
+        JWTClaimsSet testClaimsSet = new JWTClaimsSet.Builder().build();
+        signedJwtFactory = new SignedJWTFactory(new ECDSASigner(getPrivateKey()));
+
+        SignedJWT signedJWT = signedJwtFactory.createSignedJwt(testClaimsSet, "issuer", "keyId");
+
+        assertThat(signedJWT.verify(new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1))), is(true));
+    }
+
+    @Test
+    void shouldCreateASignedJwtSuccessfullyWithCorrectKeyIdStructure()
+            throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException,
+                    JsonProcessingException {
+        JWTClaimsSet testClaimsSet = new JWTClaimsSet.Builder().build();
+        signedJwtFactory = new SignedJWTFactory(new ECDSASigner(getPrivateKey()));
+
+        SignedJWT signedJWT = signedJwtFactory.createSignedJwt(testClaimsSet, "issuer", "keyId");
+        System.out.println(signedJWT.getHeader().getKeyID());
+
+        String[] keyIDArray = signedJWT.getHeader().getKeyID().split(":");
+
+        System.out.println(new ObjectMapper().writeValueAsString(signedJWT));
+        assertEquals("did", keyIDArray[0]);
+        assertEquals("web", keyIDArray[1]);
+        assertEquals("issuer", keyIDArray[2]);
     }
 
     private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
