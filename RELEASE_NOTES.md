@@ -1,4 +1,13 @@
 # Credential Issuer common libraries Release Notes
+
+## 3.0.5
+    Amend SignedJWTFactory generateHeaders: 
+    - Changed character prior to 'unique key identifier' from colon to hash so it is now {DID-method-specific identifier}#{unique key identifier}
+    - Strip https:// from the start of the issuer if present
+
+## 3.0.4
+    Added methods to SignedJWTFactory to allow CRIs to add kid to jwt headers
+
 ## 3.0.3
 
     Added a overrideJti method to allow setting jti claims value in Contract-tests
@@ -47,9 +56,6 @@ AWS Lambda Events 3.11.0 -> 3.11.6
 AWS Lambda Powertools 1.12.0 -> 1.18.0
 
 Nimbusds Oauth 11.2 -> 11.4
-
-## 3.0.4
-Added methods to SignedJWTFactory to allow CRIs to add kid to jwt headers
 
 ## 2.3.0
 Added requested_verification_score from evidenceRequested to the logger in the SessionService
