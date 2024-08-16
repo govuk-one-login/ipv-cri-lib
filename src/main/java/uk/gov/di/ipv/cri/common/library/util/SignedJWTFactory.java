@@ -58,11 +58,13 @@ public class SignedJWTFactory {
     private JWSHeader generateHeader(String issuer, String signingKeyId)
             throws NoSuchAlgorithmException {
 
+        issuer = issuer.replaceFirst("https://", "");
+
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(signingKeyId.getBytes(StandardCharsets.UTF_8));
         String hashedKeyId = byteArrayToHex(hash);
 
-        String keyId = KID_PREFIX + issuer + ":" + hashedKeyId;
+        String keyId = KID_PREFIX + issuer + "#" + hashedKeyId;
 
         return new JWSHeader.Builder(JWSAlgorithm.ES256)
                 .type(JOSEObjectType.JWT)
