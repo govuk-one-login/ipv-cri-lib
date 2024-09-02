@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.0.6
+    Added a new counterMetric method that accepts a Unit as an additional parameter.
+
 ## 3.0.5
     Amend SignedJWTFactory generateHeaders: 
     - Changed character prior to 'unique key identifier' from colon to hash so it is now {DID-method-specific identifier}#{unique key identifier}
