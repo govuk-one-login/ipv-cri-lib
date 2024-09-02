@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.cloudwatchlogs.emf.logger.MetricsLogger;
 import software.amazon.cloudwatchlogs.emf.model.DimensionSet;
+import software.amazon.cloudwatchlogs.emf.model.Unit;
 import software.amazon.lambda.powertools.logging.LoggingUtils;
 import software.amazon.lambda.powertools.metrics.MetricsUtils;
 
@@ -47,6 +48,11 @@ public class EventProbe {
 
     public EventProbe counterMetric(String key, double value) {
         METRICS_LOGGER.putMetric(key, value);
+        return this;
+    }
+
+    public EventProbe counterMetric(String key, double value, Unit unit) {
+        METRICS_LOGGER.putMetric(key, value, unit);
         return this;
     }
 
