@@ -43,6 +43,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SessionServiceTest {
     private static final String SESSION_ID = UUID.randomUUID().toString();
+    private static final String INT_USER_CONTEXT = "international_user";
     private static Instant fixedInstant;
     private SessionService sessionService;
 
@@ -77,6 +78,7 @@ class SessionServiceTest {
         when(sessionRequest.getClientSessionId()).thenReturn("a client session id");
         when(sessionRequest.getClientIpAddress()).thenReturn("192.0.2.0");
         when(sessionRequest.getEvidenceRequest()).thenReturn(createEvidenceRequest());
+        when(sessionRequest.getContext()).thenReturn(INT_USER_CONTEXT);
 
         try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
                 Mockito.mockStatic(LoggingUtils.class)) {
@@ -97,6 +99,7 @@ class SessionServiceTest {
                 capturedValue.getRedirectUri(),
                 equalTo(URI.create("https://www.example.com/callback")));
         assertThat(capturedValue.getAttemptCount(), equalTo(0));
+        assertThat(capturedValue.getContext(), equalTo(INT_USER_CONTEXT));
     }
 
     @Test

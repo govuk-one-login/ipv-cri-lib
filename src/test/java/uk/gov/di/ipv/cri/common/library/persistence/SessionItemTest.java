@@ -18,6 +18,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SessionItemTest {
+    private static final String INT_USER_CONTEXT = "international_user";
+
     @Mock private DataStore<SessionItem> dataStore;
 
     @InjectMocks private SessionService sessionService;
@@ -38,6 +40,8 @@ class SessionItemTest {
         evidenceRequest.setIdentityFraudScore(6);
         sessionItem.setEvidenceRequest(evidenceRequest);
 
+        sessionItem.setContext(INT_USER_CONTEXT);
+
         when(dataStore.getItem(any())).thenReturn(sessionItem);
     }
 
@@ -55,5 +59,7 @@ class SessionItemTest {
         assertEquals(4, evidenceRequest.getVerificationScore());
         assertEquals(5, evidenceRequest.getActivityHistoryScore());
         assertEquals(6, evidenceRequest.getIdentityFraudScore());
+
+        assertEquals(INT_USER_CONTEXT, sessionItem.getContext());
     }
 }

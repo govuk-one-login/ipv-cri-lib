@@ -27,6 +27,7 @@ public class SessionItem {
     private String clientIpAddress;
     private int attemptCount;
     private EvidenceRequest evidenceRequest;
+    private String context;
 
     public SessionItem() {
         sessionId = UUID.randomUUID();
@@ -161,6 +162,14 @@ public class SessionItem {
 
     public void setEvidenceRequest(EvidenceRequest evidenceRequest) {
         this.evidenceRequest = evidenceRequest;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
     }
 
     @Override
