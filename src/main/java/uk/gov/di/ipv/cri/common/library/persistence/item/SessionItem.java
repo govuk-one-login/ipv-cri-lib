@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.common.library.persistence.item;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 
@@ -27,7 +28,7 @@ public class SessionItem {
     private String clientIpAddress;
     private int attemptCount;
     private EvidenceRequest evidenceRequest;
-    private String context;
+    private ContextClaim context;
 
     public SessionItem() {
         sessionId = UUID.randomUUID();
@@ -164,11 +165,12 @@ public class SessionItem {
         this.evidenceRequest = evidenceRequest;
     }
 
-    public String getContext() {
+    @DynamoDbConvertedBy(ContextClaimConverter.class)
+    public ContextClaim getContext() {
         return context;
     }
 
-    public void setContext(String context) {
+    public void setContext(ContextClaim context) {
         this.context = context;
     }
 

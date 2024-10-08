@@ -19,6 +19,7 @@ import uk.gov.di.ipv.cri.common.library.exception.AuthorizationCodeExpiredExcept
 import uk.gov.di.ipv.cri.common.library.exception.SessionExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionNotFoundException;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
+import uk.gov.di.ipv.cri.common.library.persistence.item.ContextClaim;
 import uk.gov.di.ipv.cri.common.library.persistence.item.EvidenceRequest;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
@@ -43,7 +44,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SessionServiceTest {
     private static final String SESSION_ID = UUID.randomUUID().toString();
-    private static final String INT_USER_CONTEXT = "international_user";
     private static Instant fixedInstant;
     private SessionService sessionService;
 
@@ -67,16 +67,18 @@ class SessionServiceTest {
         final long sessionExpirationEpoch = 10L;
         when(mockConfigurationService.getSessionExpirationEpoch())
                 .thenReturn(sessionExpirationEpoch);
-        SessionRequest sessionRequest = new SessionRequest();
-        sessionRequest.setClientId("a client id");
-        sessionRequest.setState("state");
-        sessionRequest.setRedirectUri(URI.create("https://www.example.com/callback"));
-        sessionRequest.setSubject("a subject");
-        sessionRequest.setPersistentSessionId("a persistent session id");
-        sessionRequest.setClientSessionId("a client session id");
-        sessionRequest.setClientIpAddress("192.0.2.0");
-        sessionRequest.setEvidenceRequest(createEvidenceRequest());
-        sessionRequest.setContext(INT_USER_CONTEXT);
+        SessionRequest sessionRequest = mock(SessionRequest.class);
+
+        when(sessionRequest.getClientId()).thenReturn("a client id");
+        when(sessionRequest.getState()).thenReturn("state");
+        when(sessionRequest.getRedirectUri())
+                .thenReturn(URI.create("https://www.example.com/callback"));
+        when(sessionRequest.getSubject()).thenReturn("a subject");
+        when(sessionRequest.getPersistentSessionId()).thenReturn("a persistent session id");
+        when(sessionRequest.getClientSessionId()).thenReturn("a client session id");
+        when(sessionRequest.getClientIpAddress()).thenReturn("192.0.2.0");
+        when(sessionRequest.getEvidenceRequest()).thenReturn(createEvidenceRequest());
+        when(sessionRequest.getContext()).thenReturn(ContextClaim.INTERNATIONAL_USER);
 
         try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
                 Mockito.mockStatic(LoggingUtils.class)) {
@@ -87,19 +89,17 @@ class SessionServiceTest {
         SessionItem capturedValue = sessionItemArgumentCaptor.getValue();
         assertNotNull(capturedValue.getSessionId());
         assertThat(capturedValue.getExpiryDate(), equalTo(sessionExpirationEpoch));
-        assertThat(capturedValue.getClientId(), equalTo(sessionRequest.getClientId()));
-        assertThat(capturedValue.getState(), equalTo(sessionRequest.getState()));
-        assertThat(capturedValue.getSubject(), equalTo(sessionRequest.getSubject()));
+        assertThat(capturedValue.getClientId(), equalTo("a client id"));
+        assertThat(capturedValue.getState(), equalTo("state"));
+        assertThat(capturedValue.getSubject(), equalTo("a subject"));
+        assertThat(capturedValue.getPersistentSessionId(), equalTo("a persistent session id"));
+        assertThat(capturedValue.getClientSessionId(), equalTo("a client session id"));
+        assertThat(capturedValue.getClientIpAddress(), equalTo("192.0.2.0"));
         assertThat(
-                capturedValue.getPersistentSessionId(),
-                equalTo(sessionRequest.getPersistentSessionId()));
-        assertThat(
-                capturedValue.getClientSessionId(), equalTo(sessionRequest.getClientSessionId()));
-        assertThat(
-                capturedValue.getClientIpAddress(), equalTo(sessionRequest.getClientIpAddress()));
-        assertThat(capturedValue.getRedirectUri(), equalTo(sessionRequest.getRedirectUri()));
+                capturedValue.getRedirectUri(),
+                equalTo(URI.create("https://www.example.com/callback")));
         assertThat(capturedValue.getAttemptCount(), equalTo(0));
-        assertThat(capturedValue.getContext(), equalTo(sessionRequest.getContext()));
+        assertThat(capturedValue.getContext(), equalTo(ContextClaim.INTERNATIONAL_USER));
     }
 
     @Test

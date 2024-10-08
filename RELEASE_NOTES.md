@@ -1,7 +1,7 @@
 # Credential Issuer common libraries Release Notes
 
 ## 3.1.0
-    Added context field to SessionRequest and SessionItem. 
+    Added handling of context if present in the JAR. 
 
 ## 3.0.6
     Added a new counterMetric method that accepts a Unit as an additional parameter.
