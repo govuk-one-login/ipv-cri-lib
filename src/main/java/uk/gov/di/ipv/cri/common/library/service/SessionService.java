@@ -60,6 +60,7 @@ public class SessionService {
         sessionItem.setClientSessionId(sessionRequest.getClientSessionId());
         sessionItem.setClientIpAddress(sessionRequest.getClientIpAddress());
         sessionItem.setAttemptCount(0);
+        sessionItem.setContext(sessionRequest.getContext());
         setSessionItemsToLogging(sessionItem);
 
         dataStore.create(sessionItem);

@@ -25,6 +25,7 @@ public class SessionRequest {
     private String clientSessionId;
     private String clientIpAddress;
     private EvidenceRequest evidenceRequest;
+    private String context;
 
     public String getIssuer() {
         return issuer;
@@ -156,5 +157,13 @@ public class SessionRequest {
 
     public void setEvidenceRequest(EvidenceRequest evidenceRequest) {
         this.evidenceRequest = evidenceRequest;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
     }
 }
