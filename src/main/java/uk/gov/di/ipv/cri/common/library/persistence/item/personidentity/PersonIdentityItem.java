@@ -15,6 +15,7 @@ public class PersonIdentityItem {
     private List<PersonIdentityDateOfBirth> birthDates;
     private long expiryDate;
     private List<PersonIdentitySocialSecurityRecord> socialSecurityRecords;
+    private List<PersonIdentityDrivingPermit> drivingPermits;
 
     @DynamoDbPartitionKey()
     public UUID getSessionId() {
@@ -64,5 +65,13 @@ public class PersonIdentityItem {
     public void setSocialSecurityRecords(
             List<PersonIdentitySocialSecurityRecord> socialSecurityRecords) {
         this.socialSecurityRecords = socialSecurityRecords;
+    }
+
+    public List<PersonIdentityDrivingPermit> getDrivingPermits() {
+        return drivingPermits;
+    }
+
+    public void setDrivingPermits(List<PersonIdentityDrivingPermit> drivingPermits) {
+        this.drivingPermits = drivingPermits;
     }
 }

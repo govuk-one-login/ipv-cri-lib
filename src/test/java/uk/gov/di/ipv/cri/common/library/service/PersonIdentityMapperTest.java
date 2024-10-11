@@ -7,6 +7,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.AddressType;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.DrivingPermit;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
@@ -15,6 +16,7 @@ import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.SocialSecurityRecord;
 import uk.gov.di.ipv.cri.common.library.persistence.item.CanonicalAddress;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityDateOfBirth;
+import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityDrivingPermit;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityName;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityNamePart;
@@ -208,6 +210,16 @@ class PersonIdentityMapperTest {
         socialSecurityRecord.setPersonalNumber("AA000003D");
         sharedClaims.setSocialSecurityRecords(List.of(socialSecurityRecord));
 
+        DrivingPermit drivingPermit = new DrivingPermit();
+        drivingPermit.setPersonalNumber("personalNumber");
+        drivingPermit.setExpiryDate(LocalDate.of(2029, 10, 21).toString());
+        drivingPermit.setIssueDate(LocalDate.of(2011, 10, 21).toString());
+        drivingPermit.setIssueNumber("issueNumber");
+        drivingPermit.setIssuedBy("issuedBy");
+        drivingPermit.setFullAddress("full address");
+
+        sharedClaims.setDrivingPermits(List.of(drivingPermit));
+
         PersonIdentityItem mappedPersonIdentityItem =
                 personIdentityMapper.mapToPersonIdentityItem(sharedClaims);
 
@@ -215,6 +227,8 @@ class PersonIdentityMapperTest {
         CanonicalAddress mappedAddress = mappedPersonIdentityItem.getAddresses().get(0);
         PersonIdentitySocialSecurityRecord mappedSocialSecurityRecord =
                 mappedPersonIdentityItem.getSocialSecurityRecords().get(0);
+        PersonIdentityDrivingPermit mappedDrivingPermit =
+                mappedPersonIdentityItem.getDrivingPermits().get(0);
 
         assertEquals(firstNamePart.getValue(), mappedName.getNameParts().get(0).getValue());
         assertEquals(firstNamePart.getType(), mappedName.getNameParts().get(0).getType());
@@ -232,6 +246,13 @@ class PersonIdentityMapperTest {
         assertEquals(
                 socialSecurityRecord.getPersonalNumber(),
                 mappedSocialSecurityRecord.getPersonalNumber());
+
+        assertEquals(drivingPermit.getPersonalNumber(), mappedDrivingPermit.getPersonalNumber());
+        assertEquals(drivingPermit.getExpiryDate(), mappedDrivingPermit.getExpiryDate());
+        assertEquals(drivingPermit.getIssueDate(), mappedDrivingPermit.getIssueDate());
+        assertEquals(drivingPermit.getIssueNumber(), mappedDrivingPermit.getIssueNumber());
+        assertEquals(drivingPermit.getIssuedBy(), mappedDrivingPermit.getIssuedBy());
+        assertEquals(drivingPermit.getFullAddress(), mappedDrivingPermit.getFullAddress());
     }
 
     @Test
@@ -269,12 +290,21 @@ class PersonIdentityMapperTest {
                 new PersonIdentitySocialSecurityRecord();
         personIdentitySocialSecurityRecord.setPersonalNumber("AA000003D");
 
+        PersonIdentityDrivingPermit personIdentityDrivingPermit = new PersonIdentityDrivingPermit();
+        personIdentityDrivingPermit.setPersonalNumber("personalNumber");
+        personIdentityDrivingPermit.setExpiryDate(LocalDate.of(2029, 10, 21).toString());
+        personIdentityDrivingPermit.setIssueDate(LocalDate.of(2011, 10, 21).toString());
+        personIdentityDrivingPermit.setIssueNumber("issueNumber");
+        personIdentityDrivingPermit.setIssuedBy("issuedBy");
+        personIdentityDrivingPermit.setFullAddress("fullAddress");
+
         PersonIdentityItem testPersonIdentityItem = new PersonIdentityItem();
         testPersonIdentityItem.setNames(List.of(name));
         testPersonIdentityItem.setBirthDates(List.of(birthDate));
         testPersonIdentityItem.setAddresses(List.of(address));
         testPersonIdentityItem.setSocialSecurityRecords(
                 List.of(personIdentitySocialSecurityRecord));
+        testPersonIdentityItem.setDrivingPermits(List.of(personIdentityDrivingPermit));
 
         PersonIdentityDetailed mappedPersonIdentity =
                 personIdentityMapper.mapToPersonIdentityDetailed(testPersonIdentityItem);
@@ -303,6 +333,20 @@ class PersonIdentityMapperTest {
         assertEquals(address.getStreetName(), mappedAddress.getStreetName());
         assertEquals(address.getSubBuildingName(), mappedAddress.getSubBuildingName());
         assertEquals(address.getUprn(), mappedAddress.getUprn());
+
+        DrivingPermit mappedDrivingPermit = mappedPersonIdentity.getDrivingPermits().get(0);
+        assertEquals(
+                personIdentityDrivingPermit.getPersonalNumber(),
+                mappedDrivingPermit.getPersonalNumber());
+        assertEquals(
+                personIdentityDrivingPermit.getExpiryDate(), mappedDrivingPermit.getExpiryDate());
+        assertEquals(
+                personIdentityDrivingPermit.getIssueDate(), mappedDrivingPermit.getIssueDate());
+        assertEquals(
+                personIdentityDrivingPermit.getIssueNumber(), mappedDrivingPermit.getIssueNumber());
+        assertEquals(personIdentityDrivingPermit.getIssuedBy(), mappedDrivingPermit.getIssuedBy());
+        assertEquals(
+                personIdentityDrivingPermit.getFullAddress(), mappedDrivingPermit.getFullAddress());
 
         // CRIs using a java backend currently shouldn't have a nino sent to them,
         // functionality has been added in case this changes in the future but for now

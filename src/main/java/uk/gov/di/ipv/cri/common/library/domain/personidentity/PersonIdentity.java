@@ -16,6 +16,7 @@ public class PersonIdentity {
     private String surname;
     private List<Address> addresses;
     private List<SocialSecurityRecord> socialSecurityRecords;
+    private List<DrivingPermit> drivingPermits;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
@@ -70,5 +71,13 @@ public class PersonIdentity {
 
     public void setSocialSecurityRecord(List<SocialSecurityRecord> socialSecurityRecord) {
         this.socialSecurityRecords = socialSecurityRecord;
+    }
+
+    public List<DrivingPermit> getDrivingPermits() {
+        return drivingPermits;
+    }
+
+    public void setDrivingPermits(List<DrivingPermit> drivingPermits) {
+        this.drivingPermits = drivingPermits;
     }
 }
