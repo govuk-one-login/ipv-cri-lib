@@ -1,5 +1,12 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.1.1
+    - Updated drivingPermit model to include fullAddress
+    - Updated PersonIdentity to include DrivingPermit
+    - Updated SharedClaims to include DrivingPermit
+    - Created PersonIdentityDrivingPermit Dynamo Bean and added this to personIdentity for mapping purposes
+    - Updated PersonIdentityMapper to map drivingPermit in shared claims to the PersonIdentity
+
 ## 3.1.0
     Added context field to SessionRequest and SessionItem. 
 

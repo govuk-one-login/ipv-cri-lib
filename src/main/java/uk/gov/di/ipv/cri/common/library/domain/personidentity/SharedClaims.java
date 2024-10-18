@@ -24,6 +24,9 @@ public class SharedClaims {
     @JsonProperty("address")
     private List<Address> addresses;
 
+    @JsonProperty("drivingPermit")
+    private List<DrivingPermit> drivingPermits;
+
     public List<Name> getNames() {
         return names;
     }
@@ -62,5 +65,13 @@ public class SharedClaims {
 
     public void setSocialSecurityRecords(List<SocialSecurityRecord> socialSecurityRecords) {
         this.socialSecurityRecords = socialSecurityRecords;
+    }
+
+    public List<DrivingPermit> getDrivingPermits() {
+        return drivingPermits;
+    }
+
+    public void setDrivingPermits(List<DrivingPermit> drivingPermits) {
+        this.drivingPermits = drivingPermits;
     }
 }

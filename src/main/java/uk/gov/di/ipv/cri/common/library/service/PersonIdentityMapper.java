@@ -2,6 +2,7 @@ package uk.gov.di.ipv.cri.common.library.service;
 
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.DrivingPermit;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
@@ -10,6 +11,7 @@ import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.SocialSecurityRecord;
 import uk.gov.di.ipv.cri.common.library.persistence.item.CanonicalAddress;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityDateOfBirth;
+import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityDrivingPermit;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityName;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityNamePart;
@@ -49,6 +51,10 @@ public class PersonIdentityMapper {
             identity.setSocialSecurityRecords(
                     mapSocialSecurityRecords(sharedClaims.getSocialSecurityRecords()));
         }
+        if (notNullAndNotEmpty(sharedClaims.getDrivingPermits())) {
+            identity.setDrivingPermits(
+                    mapPersonIdentityDrivingPermits(sharedClaims.getDrivingPermits()));
+        }
         return identity;
     }
 
@@ -70,6 +76,11 @@ public class PersonIdentityMapper {
         if (notNullAndNotEmpty(personIdentityItem.getSocialSecurityRecords())) {
             personIdentity.setSocialSecurityRecord(
                     mapSocialSecurityRecord(personIdentityItem.getSocialSecurityRecords()));
+        }
+
+        if (notNullAndNotEmpty(personIdentityItem.getDrivingPermits())) {
+            personIdentity.setDrivingPermits(
+                    mapDrivingPermits(personIdentityItem.getDrivingPermits()));
         }
 
         return personIdentity;
@@ -116,6 +127,13 @@ public class PersonIdentityMapper {
             socialSecurityRecords =
                     mapPersonIdentitySocialSecurityRecords(
                             personIdentityItem.getSocialSecurityRecords());
+        }
+
+        List<DrivingPermit> drivingPermits = Collections.emptyList();
+        if (notNullAndNotEmpty(personIdentityItem.getDrivingPermits())) {
+            drivingPermits = mapDrivingPermits(personIdentityItem.getDrivingPermits());
+            return PersonIdentityDetailedFactory.createPersonIdentityDetailedWithDrivingPermit(
+                    names, dobs, addresses, drivingPermits);
         }
 
         return PersonIdentityDetailedFactory.createPersonIdentityDetailedWithAddresses(
@@ -176,6 +194,25 @@ public class PersonIdentityMapper {
                             mappedSocialRecord.setPersonalNumber(
                                     securityRecord.getPersonalNumber());
                             return mappedSocialRecord;
+                        })
+                .collect(Collectors.toList());
+    }
+
+    private List<PersonIdentityDrivingPermit> mapPersonIdentityDrivingPermits(
+            List<DrivingPermit> drivingPermits) {
+        return drivingPermits.stream()
+                .map(
+                        drivingPermit -> {
+                            PersonIdentityDrivingPermit mappedDrivingPermit =
+                                    new PersonIdentityDrivingPermit();
+                            mappedDrivingPermit.setPersonalNumber(
+                                    drivingPermit.getPersonalNumber());
+                            mappedDrivingPermit.setExpiryDate(drivingPermit.getExpiryDate());
+                            mappedDrivingPermit.setIssueDate(drivingPermit.getIssueDate());
+                            mappedDrivingPermit.setIssueNumber(drivingPermit.getIssueNumber());
+                            mappedDrivingPermit.setIssuedBy(drivingPermit.getIssuedBy());
+                            mappedDrivingPermit.setFullAddress(drivingPermit.getFullAddress());
+                            return mappedDrivingPermit;
                         })
                 .collect(Collectors.toList());
     }
@@ -326,6 +363,26 @@ public class PersonIdentityMapper {
                                     new PersonIdentitySocialSecurityRecord();
                             personalNumber.setPersonalNumber(sr.getPersonalNumber());
                             return personalNumber;
+                        })
+                .collect(Collectors.toList());
+    }
+
+    private List<DrivingPermit> mapDrivingPermits(
+            List<PersonIdentityDrivingPermit> drivingPermits) {
+        return drivingPermits.stream()
+                .map(
+                        dp -> {
+                            DrivingPermit drivingPermit = new DrivingPermit();
+                            drivingPermit.setPersonalNumber(dp.getPersonalNumber());
+                            drivingPermit.setExpiryDate(dp.getExpiryDate());
+                            drivingPermit.setIssueDate(dp.getIssueDate());
+                            if (Objects.nonNull(dp.getIssueNumber())) {
+                                drivingPermit.setIssueNumber(dp.getIssueNumber());
+                            }
+                            drivingPermit.setIssuedBy(dp.getIssuedBy());
+                            drivingPermit.setFullAddress(dp.getFullAddress());
+
+                            return drivingPermit;
                         })
                 .collect(Collectors.toList());
     }

@@ -23,6 +23,9 @@ public class DrivingPermit {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private String issueDate;
 
+    @JsonProperty("fullAddress")
+    private String fullAddress;
+
     public String getPersonalNumber() {
         return personalNumber;
     }
@@ -61,5 +64,13 @@ public class DrivingPermit {
 
     public void setIssueDate(String issueDate) {
         this.issueDate = issueDate;
+    }
+
+    public String getFullAddress() {
+        return fullAddress;
+    }
+
+    public void setFullAddress(String fullAddress) {
+        this.fullAddress = fullAddress;
     }
 }
