@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 
 public class IpvCoreStubClient {
     private static final String JSON_MIME_MEDIA_TYPE = "application/json";
@@ -35,28 +36,17 @@ public class IpvCoreStubClient {
                         .build();
     }
 
-    public String getClaimsForUser(int userDataRowNumber) throws IOException, InterruptedException {
-        URI uri =
+    public String getClaimsForUser(Map<String, String> parameters)
+            throws IOException, InterruptedException {
+        URIBuilder uriBuilder =
                 new URIBuilder(this.clientConfigurationService.getIPVCoreStubURL())
-                        .setPath("/backend/generateInitialClaimsSet")
-                        .addParameter("cri", clientConfigurationService.getIpvCoreStubCriId())
-                        .addParameter("rowNumber", String.valueOf(userDataRowNumber))
-                        .build();
-        HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
-        return sendHttpRequest(request).body();
-    }
+                        .setPath("/backend/generateInitialClaimsSet");
 
-    public String getClaimsForUserWithEvidenceRequested(
-            int userDataRowNumber, int verificationScore) throws IOException, InterruptedException {
-        URI uri =
-                new URIBuilder(this.clientConfigurationService.getIPVCoreStubURL())
-                        .setPath("/backend/generateInitialClaimsSet")
-                        .addParameter("cri", clientConfigurationService.getIpvCoreStubCriId())
-                        .addParameter("rowNumber", String.valueOf(userDataRowNumber))
-                        .addParameter("scoringPolicy", "gpg45")
-                        .addParameter("verificationScore", String.valueOf(verificationScore))
-                        .build();
+        parameters.forEach(uriBuilder::addParameter);
+
+        URI uri = uriBuilder.build();
         HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
+
         return sendHttpRequest(request).body();
     }
 
