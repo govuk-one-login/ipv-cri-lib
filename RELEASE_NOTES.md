@@ -1,5 +1,12 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.1.2
+    - Refactor getClaimsForUser to allow single parameter
+    - Removed original getClaimsForUser, use new getClaimsForUser
+    - Removed getClaimsForUserWithEvidenceRequested, use new getClaimsForUser
+    - Added new commonsstep for user with a context
+
+
 ## 3.1.1
     - Updated drivingPermit model to include fullAddress
     - Updated PersonIdentity to include DrivingPermit
