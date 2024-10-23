@@ -21,14 +21,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class CommonSteps {
     private final ObjectMapper objectMapper;
     private final CommonApiClient commonApiClient;
+
     private final IpvCoreStubClient ipvCoreStubClient;
     private final CriTestContext testContext;
+    private final ClientConfigurationService clientConfigurationService;
 
     private String sessionRequestBody;
     private String authorizationCode;
 
     public CommonSteps(
             ClientConfigurationService clientConfigurationService, CriTestContext testContext) {
+        this.clientConfigurationService = clientConfigurationService;
         this.commonApiClient = new CommonApiClient(clientConfigurationService);
         this.ipvCoreStubClient = new IpvCoreStubClient(clientConfigurationService);
         this.objectMapper = new ObjectMapper();
@@ -39,7 +42,26 @@ public class CommonSteps {
     public void userHasTheTestIdentityInTheFormOfASignedJWTString(int testUserDataSheetRowNumber)
             throws IOException, InterruptedException {
         this.testContext.setSerialisedUserIdentity(
-                this.ipvCoreStubClient.getClaimsForUser(testUserDataSheetRowNumber));
+                this.ipvCoreStubClient.getClaimsForUser(
+                        Map.of(
+                                "cri", clientConfigurationService.getIpvCoreStubCriId(),
+                                "rowNumber", String.valueOf(testUserDataSheetRowNumber))));
+        sessionRequestBody =
+                this.ipvCoreStubClient.createSessionRequest(
+                        this.testContext.getSerialisedUserIdentity());
+    }
+
+    @Given(
+            "user has the test-identity {int} and context of {string} in the form of a signed JWT string")
+    public void userHasTheTestIdentityAndContextOfInTheFormOfASignedJWTString(
+            int testUserDataSheetRowNumber, String userContext)
+            throws IOException, InterruptedException {
+        this.testContext.setSerialisedUserIdentity(
+                this.ipvCoreStubClient.getClaimsForUser(
+                        Map.of(
+                                "cri", clientConfigurationService.getIpvCoreStubCriId(),
+                                "rowNumber", String.valueOf(testUserDataSheetRowNumber),
+                                "context", userContext)));
         sessionRequestBody =
                 this.ipvCoreStubClient.createSessionRequest(
                         this.testContext.getSerialisedUserIdentity());
@@ -50,9 +72,15 @@ public class CommonSteps {
     public void userHasTheTestIdentityAndVerificationScoreInTheFormOfASignedJWTString(
             int testUserDataSheetRowNumber, int verificationScore)
             throws IOException, InterruptedException {
+
         this.testContext.setSerialisedUserIdentity(
-                this.ipvCoreStubClient.getClaimsForUserWithEvidenceRequested(
-                        testUserDataSheetRowNumber, verificationScore));
+                this.ipvCoreStubClient.getClaimsForUser(
+                        Map.of(
+                                "cri", clientConfigurationService.getIpvCoreStubCriId(),
+                                "rowNumber", String.valueOf(testUserDataSheetRowNumber),
+                                "scoringPolicy", "gpg45",
+                                "verificationScore", String.valueOf(verificationScore))));
+
         sessionRequestBody =
                 this.ipvCoreStubClient.createSessionRequest(
                         this.testContext.getSerialisedUserIdentity());
