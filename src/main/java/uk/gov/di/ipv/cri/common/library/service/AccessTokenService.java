@@ -149,7 +149,8 @@ public class AccessTokenService {
             AuthorizationCodeGrant authorizationGrant,
             ClientID clientID,
             SessionItem sessionItem)
-            throws AccessTokenValidationException, AccessTokenRequestException,
+            throws AccessTokenValidationException,
+                    AccessTokenRequestException,
                     SessionValidationException {
 
         AuthorizationCode authorizationCode = authorizationGrant.getAuthorizationCode();

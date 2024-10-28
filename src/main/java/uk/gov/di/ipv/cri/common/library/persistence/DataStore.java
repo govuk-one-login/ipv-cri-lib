@@ -11,12 +11,9 @@ import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import uk.gov.di.ipv.cri.common.library.util.ClientProviderFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,10 +34,17 @@ public class DataStore<T> {
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
     }
 
+    /**
+     * To be removed as, calling this will not allow sharing a single DynamoDbEnhancedClient.
+     *
+     * @deprecated
+     */
+    @SuppressWarnings("java:S1133")
+    @Deprecated(forRemoval = true)
     public static DynamoDbEnhancedClient getClient() {
-        DynamoDbClientBuilder clientBuilder = getDynamoDbClientBuilder(DynamoDbClient.builder());
+        ClientProviderFactory clientProviderFactory = new ClientProviderFactory();
 
-        return DynamoDbEnhancedClient.builder().dynamoDbClient(clientBuilder.build()).build();
+        return clientProviderFactory.getDynamoDbEnhancedClient();
     }
 
     public void create(T item) {
@@ -137,9 +141,5 @@ public class DataStore<T> {
     private BatchWriteResult persistBatch(WriteBatch writeBatch) {
         return this.dynamoDbEnhancedClient.batchWriteItem(
                 BatchWriteItemEnhancedRequest.builder().writeBatches(writeBatch).build());
-    }
-
-    private static DynamoDbClientBuilder getDynamoDbClientBuilder(DynamoDbClientBuilder builder) {
-        return builder.httpClient(UrlConnectionHttpClient.create()).region(Region.EU_WEST_2);
     }
 }

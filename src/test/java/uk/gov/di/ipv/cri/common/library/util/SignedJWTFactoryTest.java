@@ -34,7 +34,9 @@ class SignedJWTFactoryTest {
 
     @Test
     void shouldCreateASignedJwtSuccessfullyFromJWTClaimsSet()
-            throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException,
+            throws JOSEException,
+                    InvalidKeySpecException,
+                    NoSuchAlgorithmException,
                     ParseException {
         JWTClaimsSet testClaimsSet = new JWTClaimsSet.Builder().build();
         signedJwtFactory = new SignedJWTFactory(new ECDSASigner(getPrivateKey()));
@@ -46,7 +48,9 @@ class SignedJWTFactoryTest {
 
     @Test
     void shouldCreateASignedJwtSuccessfullyFromJWTClaimsSetString()
-            throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException,
+            throws JOSEException,
+                    InvalidKeySpecException,
+                    NoSuchAlgorithmException,
                     ParseException {
         signedJwtFactory = new SignedJWTFactory(new ECDSASigner(getPrivateKey()));
 
@@ -59,7 +63,9 @@ class SignedJWTFactoryTest {
 
     @Test
     void shouldCreateASignedJwtSuccessfullyFromJWTClaimsSetWhenKeyIDInHeader()
-            throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException,
+            throws JOSEException,
+                    InvalidKeySpecException,
+                    NoSuchAlgorithmException,
                     ParseException {
         JWTClaimsSet testClaimsSet = new JWTClaimsSet.Builder().build();
         signedJwtFactory = new SignedJWTFactory(new ECDSASigner(getPrivateKey()));

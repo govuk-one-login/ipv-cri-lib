@@ -3,6 +3,7 @@ package uk.gov.di.ipv.cri.common.library.service;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.DrivingPermit;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.DrivingPermitIssuer;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
@@ -54,6 +55,9 @@ public class PersonIdentityMapper {
         if (notNullAndNotEmpty(sharedClaims.getDrivingPermits())) {
             identity.setDrivingPermits(
                     mapPersonIdentityDrivingPermits(sharedClaims.getDrivingPermits()));
+
+            identity.setAddresses(
+                    mapAddressesFromDrivingPermitFullAddress(sharedClaims.getDrivingPermits()));
         }
         return identity;
     }
@@ -385,5 +389,92 @@ public class PersonIdentityMapper {
                             return drivingPermit;
                         })
                 .collect(Collectors.toList());
+    }
+
+    private List<CanonicalAddress> mapAddressesFromDrivingPermitFullAddress(
+            List<DrivingPermit> drivingPermits) {
+        return drivingPermits.stream()
+                .map(
+                        dp -> {
+                            if (Objects.nonNull(dp.getFullAddress())) {
+                                CanonicalAddress canonicalAddress = new CanonicalAddress();
+
+                                canonicalAddress.setPostalCode(
+                                        DrivingPermitIssuer.DVA.equalsIgnoreCase(dp.getIssuedBy())
+                                                ? extractPostalCodeFromDVADrivingPermitFullAddress(
+                                                        dp)
+                                                : extractPostalCodeFromDVLADrivingPermitFullAddress(
+                                                        dp));
+
+                                return canonicalAddress;
+                            }
+
+                            // Failed to extract postcode
+                            return null;
+                        })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private String extractPostalCodeFromDVADrivingPermitFullAddress(DrivingPermit dp) {
+
+        if (!DrivingPermitIssuer.DVA.equalsIgnoreCase(dp.getIssuedBy())) {
+            return null;
+        }
+
+        String postalCode = null;
+
+        String fullAddress = dp.getFullAddress().toUpperCase();
+        int len = fullAddress.length();
+
+        int pos = fullAddress.lastIndexOf("BT");
+        String possiblePostcode = pos >= 0 ? fullAddress.substring(pos, len) : "";
+
+        if (possiblePostcode.length() >= 6) {
+            // Remove Leading/Trailing Padding but not any separator space
+            possiblePostcode =
+                    possiblePostcode.startsWith(",")
+                            ? possiblePostcode.substring(1)
+                            : possiblePostcode;
+            possiblePostcode = possiblePostcode.stripLeading();
+            possiblePostcode = possiblePostcode.stripTrailing();
+            postalCode = possiblePostcode;
+        }
+
+        return postalCode;
+    }
+
+    private String extractPostalCodeFromDVLADrivingPermitFullAddress(DrivingPermit dp) {
+
+        if (!DrivingPermitIssuer.DVLA.equalsIgnoreCase(dp.getIssuedBy())) {
+            return null;
+        }
+
+        String postalCode = null;
+
+        String fullAddress = dp.getFullAddress().toUpperCase();
+        int len = fullAddress.length();
+
+        if (fullAddress.length() >= 8) {
+            fullAddress = fullAddress.substring(len - 8);
+
+            // Remove Leading/Trailing Padding but not any separator space
+            fullAddress = fullAddress.startsWith(",") ? fullAddress.substring(1) : fullAddress;
+            fullAddress = fullAddress.stripLeading();
+            fullAddress = fullAddress.stripTrailing();
+
+            postalCode = fullAddress;
+        } else if (fullAddress.length() == 7) {
+            // Remove Leading/Trailing Padding but not any separator space
+            fullAddress = fullAddress.startsWith(",") ? fullAddress.substring(1) : fullAddress;
+            fullAddress = fullAddress.stripLeading();
+            fullAddress = fullAddress.stripTrailing();
+
+            postalCode = fullAddress;
+        } else if (fullAddress.length() == 6) {
+            postalCode = fullAddress;
+        }
+
+        return postalCode;
     }
 }

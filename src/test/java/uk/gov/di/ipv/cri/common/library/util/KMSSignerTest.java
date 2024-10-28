@@ -64,7 +64,9 @@ class KMSSignerTest {
 
     @Test
     void shouldSignJWSHeaderSuccessfully()
-            throws JOSEException, NoSuchAlgorithmException, SignatureException,
+            throws JOSEException,
+                    NoSuchAlgorithmException,
+                    SignatureException,
                     InvalidKeyException {
         JWSHeader mockJWSHeader = mock(JWSHeader.class);
         byte[] payload = "test payload".getBytes();
@@ -93,7 +95,9 @@ class KMSSignerTest {
 
     @Test
     void shouldSignJWSObject()
-            throws JOSEException, NoSuchAlgorithmException, SignatureException,
+            throws JOSEException,
+                    NoSuchAlgorithmException,
+                    SignatureException,
                     InvalidKeyException {
         var signResponse = mock(SignResponse.class);
         when(mockKmsClient.sign(any(SignRequest.class))).thenReturn(signResponse);

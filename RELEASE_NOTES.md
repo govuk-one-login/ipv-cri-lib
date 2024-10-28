@@ -1,5 +1,14 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.1.3
+
+    - Add support for extracting (best effort) a postcode from the full address field in driving permit shared claims.
+    - Update GoogleJavaFormat used by Spotless to 1.18.1
+    - Increase AWS SDK to 2.28.2
+    - Add missing SSM gradle configuration
+    - Correct static method DataStore.getClient() having a hidden DynamoDbEnhancedClient builder and not using the DynamoDbEnhancedClient provided by the clientProviderFactory
+    - Mark DataStore.getClient() as deprecated for removal as the approach leads to a client per datastore and prevents sharing a single DynamoDbEnhancedClient. 
+
 ## 3.1.2
     - Refactor getClaimsForUser to allow single parameter
     - Removed original getClaimsForUser, use new getClaimsForUser

@@ -149,7 +149,8 @@ public class SessionService {
     }
 
     public SessionItem getSessionByAuthorisationCode(String authCode)
-            throws SessionExpiredException, AuthorizationCodeExpiredException,
+            throws SessionExpiredException,
+                    AuthorizationCodeExpiredException,
                     SessionNotFoundException {
         SessionItem sessionItem;
 

@@ -104,7 +104,8 @@ class SessionServiceTest {
 
     @Test
     void shouldGetSessionItemByAuthorizationCodeIndexSuccessfully()
-            throws AuthorizationCodeExpiredException, SessionExpiredException,
+            throws AuthorizationCodeExpiredException,
+                    SessionExpiredException,
                     SessionNotFoundException {
 
         String authCodeValue = UUID.randomUUID().toString();
