@@ -123,6 +123,13 @@ public class CommonSteps {
         this.testContext.setResponse(this.commonApiClient.sendTokenRequest(privateKeyJWT));
     }
 
+    @When("user sends a GET request to events end point")
+    public void userSendsAGetRequestToEventsEndpoint() throws IOException, InterruptedException {
+        System.out.println(this.commonApiClient.sendEventRequest(testContext.getSessionId()));
+        this.testContext.setResponse(
+                this.commonApiClient.sendEventRequest(this.testContext.getSessionId()));
+    }
+
     @Then("user gets a session-id")
     public void userGetsASessionId() {
         assertNotNull(this.testContext.getSessionId());
