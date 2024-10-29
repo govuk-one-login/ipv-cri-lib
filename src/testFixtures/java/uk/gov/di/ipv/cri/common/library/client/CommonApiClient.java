@@ -116,7 +116,7 @@ public class CommonApiClient {
                                 + ENV
                                 + ".account.gov.uk/events?partitionKey=SESSION%23"
                                 + sessionId
-                                + "&sortKey=TXMA%23IPV_HMRC_RECORD_CHECK_CRI_START");
+                                + "&sortKey=TXMA");
 
         return sendRequest(
                 signRequest(

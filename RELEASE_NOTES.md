@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.2.0
+    - Updated audit event tests to use the new test harness events endpoint
+    - Added AWS credentials to sign the HTTP request for the events endpoint
+
 ## 3.1.3
 
     - Add support for extracting (best effort) a postcode from the full address field in driving permit shared claims.
@@ -7,7 +11,7 @@
     - Increase AWS SDK to 2.28.2
     - Add missing SSM gradle configuration
     - Correct static method DataStore.getClient() having a hidden DynamoDbEnhancedClient builder and not using the DynamoDbEnhancedClient provided by the clientProviderFactory
-    - Mark DataStore.getClient() as deprecated for removal as the approach leads to a client per datastore and prevents sharing a single DynamoDbEnhancedClient. 
+    - Mark DataStore.getClient() as deprecated for removal as the approach leads to a client per datastore and prevents sharing a single DynamoDbEnhancedClient.
 
 ## 3.1.2
     - Refactor getClaimsForUser to allow single parameter
