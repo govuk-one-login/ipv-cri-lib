@@ -52,7 +52,8 @@ class AccessTokenServiceTest {
 
     @Test
     void shouldThrowExceptionForMissingJTI()
-            throws AccessTokenValidationException, SessionValidationException,
+            throws AccessTokenValidationException,
+                    SessionValidationException,
                     ClientConfigurationException {
 
         String jwtMissingJti =
@@ -298,7 +299,8 @@ class AccessTokenServiceTest {
 
     @Test
     void shouldValidateTokenRequestSuccessfully()
-            throws AccessTokenValidationException, SessionValidationException,
+            throws AccessTokenValidationException,
+                    SessionValidationException,
                     ClientConfigurationException {
 
         String authCodeValue = "12345";
@@ -343,7 +345,8 @@ class AccessTokenServiceTest {
 
     @Test
     void shouldThrowExceptionForMissingClientConfiguration()
-            throws AccessTokenValidationException, SessionValidationException,
+            throws AccessTokenValidationException,
+                    SessionValidationException,
                     ClientConfigurationException {
 
         String authCodeValue = "12345";

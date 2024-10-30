@@ -3,6 +3,8 @@ package uk.gov.di.ipv.cri.common.library.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.AddressType;
@@ -210,16 +212,6 @@ class PersonIdentityMapperTest {
         socialSecurityRecord.setPersonalNumber("AA000003D");
         sharedClaims.setSocialSecurityRecords(List.of(socialSecurityRecord));
 
-        DrivingPermit drivingPermit = new DrivingPermit();
-        drivingPermit.setPersonalNumber("personalNumber");
-        drivingPermit.setExpiryDate(LocalDate.of(2029, 10, 21).toString());
-        drivingPermit.setIssueDate(LocalDate.of(2011, 10, 21).toString());
-        drivingPermit.setIssueNumber("issueNumber");
-        drivingPermit.setIssuedBy("issuedBy");
-        drivingPermit.setFullAddress("full address");
-
-        sharedClaims.setDrivingPermits(List.of(drivingPermit));
-
         PersonIdentityItem mappedPersonIdentityItem =
                 personIdentityMapper.mapToPersonIdentityItem(sharedClaims);
 
@@ -227,8 +219,6 @@ class PersonIdentityMapperTest {
         CanonicalAddress mappedAddress = mappedPersonIdentityItem.getAddresses().get(0);
         PersonIdentitySocialSecurityRecord mappedSocialSecurityRecord =
                 mappedPersonIdentityItem.getSocialSecurityRecords().get(0);
-        PersonIdentityDrivingPermit mappedDrivingPermit =
-                mappedPersonIdentityItem.getDrivingPermits().get(0);
 
         assertEquals(firstNamePart.getValue(), mappedName.getNameParts().get(0).getValue());
         assertEquals(firstNamePart.getType(), mappedName.getNameParts().get(0).getType());
@@ -246,6 +236,117 @@ class PersonIdentityMapperTest {
         assertEquals(
                 socialSecurityRecord.getPersonalNumber(),
                 mappedSocialSecurityRecord.getPersonalNumber());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "DVA,,", // No full address
+        // Just postcodes
+        "DVA, 'BT11AB', BT11AB", // Edgecase full address is just a 6 char postcode
+        "DVA, 'BT1 1AB', BT1 1AB", // Edgecase full address is just a 6 char postcode mid space
+        "DVA, ',BT11AB', BT11AB", // Edgecase OCR failure, 6 char postcode with comma
+        "DVA, ',BT1 1AB', BT1 1AB", // Edgecase as above but with space
+        "DVA, ',BT121AB', BT121AB", // Edgecase OCR failure, 7 char postcode with comma
+        "DVA, ',BT12 1AB', BT12 1AB", // Edgecase as above but with space
+        "DVA, 'BT11 1AB', BT11 1AB", // 8 Exactly
+        "DVA, ',BT11 1AB', BT11 1AB", // 8 Exactly, with leading comma
+        // Full Address
+        "DVA, 'Building, Road, Town, County, BT11AB', BT11AB", // 6Char postcode/ address-commas
+        "DVA, 'Building Road Town County BT11AB',BT11AB", // 6Char postcode/ address-spaces
+        "DVA, 'Building, Road, Town, County, BT1 1AB', BT1 1AB", // 7Char postcode/ address-commas
+        "DVA, 'Building Road Town County BT1 1AB',BT1 1AB", // 7Char postcode address-spaces
+        "DVA, 'Building, Road, Town, County, BT121AB', BT121AB", // 7Char postcode address-commas
+        "DVA, 'Building Road Town County BT12 1AB',BT12 1AB", // 7Char postcode/ address-spaces
+        "DVA, 'Building, Road, Town, County, BT12 1AB', BT12 1AB", // 8Char postcode/ Address commas
+        "DVA, 'Building Road Town County BT12 1AB',BT12 1AB", // 8Char postcode, address-spaces
+        // DVA No postcode Tests
+        "DVA, 'Building, Road, Town, County,',", // No postcode / Address commas
+        "DVA, 'Building Road Town County', ", // No postcode/ Address spaces
+        // DVLA
+        "DVLA,,", // No full address
+        // Just postcodes
+        "DVLA, 'AB11AB', AB11AB", // Edgecase full address is just a 6 char postcode
+        "DVLA, 'AB1 1AB', AB1 1AB", // Edgecase full address is just a 6 char postcode mid space
+        "DVLA, ',AB11AB', AB11AB", // Edgecase OCR failure, 6 char postcode with comma
+        "DVLA, ',AB1 1AB', AB1 1AB", // Edgecase as above but with space
+        "DVLA, ',AB121AB', AB121AB", // Edgecase OCR failure, 7 char postcode with comma
+        "DVLA, ',AB12 1AB', AB12 1AB", // Edgecase as above but with space
+        "DVLA, 'AB11 1AB', AB11 1AB", // 8 Exactly
+        "DVLA, ',AB11 1AB', AB11 1AB", // 8 Exactly, with leading comma
+        // DVLA Full Address
+        "DVLA, 'Building, Road, Town, County, AB11AB', AB11AB", // 6Char postcode/ address-commas
+        "DVLA, 'Building Road Town County AB11AB',Y AB11AB", // 6Char postcode/ address-spaces
+        "DVLA, 'Building, Road, Town, County, AB1 1AB', AB1 1AB", // 7Char postcode/ address-commas
+        "DVLA, 'Building Road Town County AB1 1AB',AB1 1AB", // 7Char postcode address-spaces
+        "DVLA, 'Building, Road, Town, County, AB121AB', AB121AB", // 7Char postcode address-commas
+        "DVLA, 'Building Road Town County AB12 1AB',AB12 1AB", // 7Char postcode/ address-spaces
+        "DVLA, 'Building, Road, Town, County, AB12 1AB', AB12 1AB", // 8Char postcode/
+        // address-commas
+        "DVLA, 'Building Road Town County AB12 1AB',AB12 1AB", // 8Char postcode, address-spaces
+        // DVLA No postcode Tests
+        "DVLA, 'Building, Road, Town, County,', 'COUNTY,'", // No postcode / Address-commas
+        "DVLA, 'Building Road Town County', 'N COUNTY'", // No postcode/ Address-spaces
+    })
+    void shouldMapDrivingPermitSharedClaimsToPersonIdentityItem(
+            String issuer, String fullAddress, String expectedPostcode) {
+        SharedClaims sharedClaims = new SharedClaims();
+
+        NamePart firstNamePart = new NamePart();
+        firstNamePart.setType("GivenName");
+        firstNamePart.setValue("Jon");
+        NamePart surnamePart = new NamePart();
+        surnamePart.setType("FamilyName");
+        surnamePart.setValue("Smith");
+        Name name = new Name();
+        name.setNameParts(List.of(firstNamePart, surnamePart));
+        sharedClaims.setNames(List.of(name));
+
+        BirthDate birthDate = new BirthDate();
+        birthDate.setValue(LocalDate.of(1984, 6, 27));
+        sharedClaims.setBirthDates(List.of(birthDate));
+
+        DrivingPermit drivingPermit = new DrivingPermit();
+        drivingPermit.setPersonalNumber("personalNumber");
+        drivingPermit.setExpiryDate(LocalDate.of(2029, 10, 21).toString());
+        drivingPermit.setIssueDate(LocalDate.of(2011, 10, 21).toString());
+        drivingPermit.setIssueNumber("issueNumber");
+        drivingPermit.setIssuedBy(issuer);
+
+        drivingPermit.setFullAddress(fullAddress);
+
+        sharedClaims.setDrivingPermits(List.of(drivingPermit));
+
+        PersonIdentityItem mappedPersonIdentityItem =
+                personIdentityMapper.mapToPersonIdentityItem(sharedClaims);
+
+        PersonIdentityName mappedName = mappedPersonIdentityItem.getNames().get(0);
+        CanonicalAddress mappedAddress = null;
+        if (!mappedPersonIdentityItem.getAddresses().isEmpty()) {
+            mappedAddress = mappedPersonIdentityItem.getAddresses().get(0);
+        }
+
+        PersonIdentityDrivingPermit mappedDrivingPermit =
+                mappedPersonIdentityItem.getDrivingPermits().get(0);
+
+        assertEquals(firstNamePart.getValue(), mappedName.getNameParts().get(0).getValue());
+        assertEquals(firstNamePart.getType(), mappedName.getNameParts().get(0).getType());
+        assertEquals(surnamePart.getValue(), mappedName.getNameParts().get(1).getValue());
+        assertEquals(surnamePart.getType(), mappedName.getNameParts().get(1).getType());
+        assertEquals(
+                birthDate.getValue(), mappedPersonIdentityItem.getBirthDates().get(0).getValue());
+
+        // Address will be created from the full address and will include just the postcode
+        if (mappedAddress != null) {
+            assertNull(mappedAddress.getAddressLocality());
+            assertNull(mappedAddress.getBuildingName());
+            assertNull(mappedAddress.getBuildingNumber());
+            assertNull(mappedAddress.getStreetName());
+            assertEquals(expectedPostcode, mappedAddress.getPostalCode());
+            assertNull(mappedAddress.getValidFrom());
+            assertNull(mappedAddress.getValidUntil());
+        } else {
+            assertNull(drivingPermit.getFullAddress());
+        }
 
         assertEquals(drivingPermit.getPersonalNumber(), mappedDrivingPermit.getPersonalNumber());
         assertEquals(drivingPermit.getExpiryDate(), mappedDrivingPermit.getExpiryDate());

@@ -10,13 +10,13 @@ plugins {
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "3.1.2"
+def buildVersion = "3.1.3"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
 ext {
 	dependencyVersions = [
-		aws_sdk_version          : "2.26.16",
+		aws_sdk_version          : "2.28.8",
 		aws_lambda_events_version: "3.11.6",
 		aws_powertools_version   : "1.18.0",
 		jackson_version          : "2.15.2", // Use AWS POM version only
@@ -86,6 +86,8 @@ dependencies {
 			"software.amazon.lambda:powertools-parameters:${dependencyVersions.aws_powertools_version}"
 
 	sqs "software.amazon.awssdk:sqs"
+
+	ssm "software.amazon.awssdk:ssm"
 
 	sso "software.amazon.awssdk:sso",
 			"software.amazon.awssdk:ssooidc"
@@ -177,7 +179,7 @@ sonar {
 spotless {
 	java {
 		target "**/src/**/*.java"
-		googleJavaFormat("1.13.0").aosp()
+		googleJavaFormat("1.18.1").aosp()
 		importOrder "", "javax", "java", "\\#"
 		endWithNewline()
 	}
