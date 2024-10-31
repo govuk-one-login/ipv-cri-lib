@@ -100,7 +100,8 @@ dependencies {
 			"com.fasterxml.jackson.core:jackson-databind",
 			"com.fasterxml.jackson.core:jackson-annotations",
 			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${dependencyVersions.jackson_version}",
-			"com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${dependencyVersions.jackson_version}"
+			"com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${dependencyVersions.jackson_version}",
+			"com.github.erosb:everit-json-schema:1.14.4"
 
 	powertools "software.amazon.lambda:powertools-logging:${dependencyVersions.aws_powertools_version}",
 			"software.amazon.lambda:powertools-metrics:${dependencyVersions.aws_powertools_version}"
@@ -123,7 +124,6 @@ dependencies {
 }
 
 dependencies {
-
 	implementation configurations.aws,
 			configurations.lambda,
 			configurations.jackson,
