@@ -17,22 +17,15 @@ public class CanonicalAddress {
     private String subBuildingName;
     private String buildingNumber;
     private String buildingName;
-
     private String dependentThoroughfare;
-
     private String dependentStreetName;
-
     private String streetName;
-
     private String doubleDependentAddressLocality;
-
     private String dependentAddressLocality;
-
     private String addressLocality;
-
     private String postalCode;
-
     private String addressCountry;
+    private String addressRegion;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date validFrom;
@@ -146,6 +139,14 @@ public class CanonicalAddress {
 
     public void setAddressCountry(String addressCountry) {
         this.addressCountry = addressCountry;
+    }
+
+    public String getAddressRegion() {
+        return addressRegion;
+    }
+
+    public void setAddressRegion(String addressRegion) {
+        this.addressRegion = addressRegion;
     }
 
     public LocalDate getValidFrom() {
