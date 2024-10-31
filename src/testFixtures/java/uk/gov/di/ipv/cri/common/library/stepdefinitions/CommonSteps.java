@@ -125,7 +125,6 @@ public class CommonSteps {
 
     @When("user sends a GET request to events end point")
     public void userSendsAGetRequestToEventsEndpoint() throws IOException, InterruptedException {
-        System.out.println(this.commonApiClient.sendEventRequest(testContext.getSessionId()));
         this.testContext.setResponse(
                 this.commonApiClient.sendEventRequest(this.testContext.getSessionId()));
     }

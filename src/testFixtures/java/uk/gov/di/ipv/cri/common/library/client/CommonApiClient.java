@@ -7,22 +7,26 @@ import software.amazon.awssdk.http.SdkHttpRequest;
 import software.amazon.awssdk.http.auth.aws.signer.AwsV4HttpSigner;
 import software.amazon.awssdk.http.auth.spi.signer.SignedRequest;
 import software.amazon.awssdk.regions.Region;
+import uk.gov.di.ipv.cri.common.library.aws.CloudFormationHelper;
 import uk.gov.di.ipv.cri.common.library.util.URIBuilder;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 public class CommonApiClient {
     private final HttpClient httpClient;
     private final ClientConfigurationService clientConfigurationService;
 
-    private static final String STACK_NAME = "test-resources";
-    private static final String ENV = System.getenv("Environment");
+    private static final String TEST_RESOURCES_STACK = System.getenv("TEST_RESOURCES_STACK");
+    private static final String TEST_HARNESS_URL =
+            CloudFormationHelper.getOutput(
+                    TEST_RESOURCES_STACK == null ? "test-resources" : TEST_RESOURCES_STACK,
+                    "TestHarnessExecuteUrl");
     private static final String AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
     private static final String AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
     private static final String AWS_SESSION_TOKEN = System.getenv("AWS_SESSION_TOKEN");
@@ -108,15 +112,14 @@ public class CommonApiClient {
     public HttpResponse<String> sendEventRequest(String sessionId)
             throws IOException, InterruptedException {
 
-        URI eventsEndpointURI =
-                URI.create(
-                        "https://"
-                                + STACK_NAME
-                                + ".review-a."
-                                + ENV
-                                + ".account.gov.uk/events?partitionKey=SESSION%23"
-                                + sessionId
-                                + "&sortKey=TXMA");
+        final URI eventsEndpointURI =
+                new URIBuilder(TEST_HARNESS_URL)
+                        .setPath("events")
+                        .addParameter(
+                                "partitionKey",
+                                URLEncoder.encode("SESSION#", StandardCharsets.UTF_8) + sessionId)
+                        .addParameter("sortKey", "TXMA")
+                        .build();
 
         return sendRequest(
                 signRequest(
@@ -148,14 +151,15 @@ public class CommonApiClient {
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder();
         requestBuilder.GET();
         requestBuilder.uri(sdkHttpRequest.getUri());
-        for (Map.Entry<String, List<String>> entry : sdkHttpRequest.headers().entrySet()) {
-            for (String value : entry.getValue()) {
-                if (entry.getKey().equalsIgnoreCase("host")) {
-                    continue;
-                }
-                requestBuilder.header(entry.getKey(), value);
-            }
-        }
+        sdkHttpRequest.headers().entrySet().stream()
+                .filter(entry -> !entry.getKey().equalsIgnoreCase("host"))
+                .forEach(
+                        entry ->
+                                entry.getValue()
+                                        .forEach(
+                                                value ->
+                                                        requestBuilder.header(
+                                                                entry.getKey(), value)));
         return sendHttpRequest(requestBuilder.build());
     }
 
