@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.2.0
+    - Adds addressRegion to CanonicalAddress
+
 ## 3.1.3
 
     - Add support for extracting (best effort) a postcode from the full address field in driving permit shared claims.
