@@ -15,6 +15,7 @@ public class ClientConfigurationService {
     private final String ipvCoreStubPassword;
     private final String ipvCoreStubCriId;
     private final String ipvCoreStubClientId;
+    private final String testResourcesStackName;
 
     public ClientConfigurationService() {
         this.environment =
@@ -58,6 +59,9 @@ public class ClientConfigurationService {
                                 MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT, "IPV_CORE_STUB_CRI_ID"));
         this.ipvCoreStubClientId =
                 Optional.ofNullable(System.getenv("DEFAULT_CLIENT_ID")).orElse("ipv-core-stub");
+        this.testResourcesStackName =
+                Optional.ofNullable(System.getenv("TEST_RESOURCES_STACK_NAME"))
+                        .orElse("test-resources");
     }
 
     public String getPrivateApiEndpoint() {
@@ -70,6 +74,10 @@ public class ClientConfigurationService {
 
     public String getPublicApiKey() {
         return this.publicApiKey;
+    }
+
+    public String getTestResourcesStackName() {
+        return this.testResourcesStackName;
     }
 
     public String getIPVCoreStubURL() {
