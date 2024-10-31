@@ -1,11 +1,9 @@
 package uk.gov.di.ipv.cri.common.library.client;
 
-import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
-import software.amazon.awssdk.http.SdkHttpFullRequest;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpMethod;
 import software.amazon.awssdk.http.SdkHttpRequest;
 import software.amazon.awssdk.http.auth.aws.signer.AwsV4HttpSigner;
-import software.amazon.awssdk.http.auth.spi.signer.SignedRequest;
 import software.amazon.awssdk.regions.Region;
 import uk.gov.di.ipv.cri.common.library.aws.CloudFormationHelper;
 import uk.gov.di.ipv.cri.common.library.util.URIBuilder;
@@ -20,25 +18,20 @@ import java.nio.charset.StandardCharsets;
 
 public class CommonApiClient {
     private final HttpClient httpClient;
+    private final String testHarnessUrl;
     private final ClientConfigurationService clientConfigurationService;
 
-    private static final String TEST_RESOURCES_STACK = System.getenv("TEST_RESOURCES_STACK");
-    private static final String TEST_HARNESS_URL =
-            CloudFormationHelper.getOutput(
-                    TEST_RESOURCES_STACK == null ? "test-resources" : TEST_RESOURCES_STACK,
-                    "TestHarnessExecuteUrl");
-    private static final String AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
-    private static final String AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
-    private static final String AWS_SESSION_TOKEN = System.getenv("AWS_SESSION_TOKEN");
-    private static final String AWS_SERVICE = "execute-api";
-    private static final Region REGION = Region.EU_WEST_2;
+    private static final String JSON_MIME_MEDIA_TYPE = "application/json";
 
     public CommonApiClient(ClientConfigurationService clientConfigurationService) {
         this.clientConfigurationService = clientConfigurationService;
         this.httpClient = HttpClient.newBuilder().build();
-    }
 
-    private static final String JSON_MIME_MEDIA_TYPE = "application/json";
+        this.testHarnessUrl =
+                CloudFormationHelper.getOutput(
+                        clientConfigurationService.getTestResourcesStackName(),
+                        "TestHarnessExecuteUrl");
+    }
 
     public HttpResponse<String> sendAuthorizationRequest(String sessionId)
             throws IOException, InterruptedException {
@@ -109,60 +102,6 @@ public class CommonApiClient {
         return sendHttpRequest(request);
     }
 
-    public HttpResponse<String> sendEventRequest(String sessionId)
-            throws IOException, InterruptedException {
-
-        final URI eventsEndpointURI =
-                new URIBuilder(TEST_HARNESS_URL)
-                        .setPath("events")
-                        .addParameter(
-                                "partitionKey",
-                                URLEncoder.encode("SESSION#", StandardCharsets.UTF_8) + sessionId)
-                        .addParameter("sortKey", "TXMA")
-                        .build();
-
-        return sendRequest(
-                signRequest(
-                        SdkHttpFullRequest.builder()
-                                .method(SdkHttpMethod.GET)
-                                .uri(eventsEndpointURI)
-                                .build(),
-                        AwsSessionCredentials.create(
-                                AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)));
-    }
-
-    private SdkHttpRequest signRequest(
-            SdkHttpFullRequest unsignedRequest, AwsSessionCredentials credentials) {
-        AwsV4HttpSigner signer = AwsV4HttpSigner.create();
-        SignedRequest signedRequest =
-                signer.sign(
-                        r ->
-                                r.identity(credentials)
-                                        .request(unsignedRequest)
-                                        .putProperty(
-                                                AwsV4HttpSigner.SERVICE_SIGNING_NAME, AWS_SERVICE)
-                                        .putProperty(AwsV4HttpSigner.REGION_NAME, REGION.id()));
-
-        return signedRequest.request();
-    }
-
-    private HttpResponse<String> sendRequest(SdkHttpRequest sdkHttpRequest)
-            throws IOException, InterruptedException {
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder();
-        requestBuilder.GET();
-        requestBuilder.uri(sdkHttpRequest.getUri());
-        sdkHttpRequest.headers().entrySet().stream()
-                .filter(entry -> !entry.getKey().equalsIgnoreCase("host"))
-                .forEach(
-                        entry ->
-                                entry.getValue()
-                                        .forEach(
-                                                value ->
-                                                        requestBuilder.header(
-                                                                entry.getKey(), value)));
-        return sendHttpRequest(requestBuilder.build());
-    }
-
     public HttpResponse<String> sendTokenRequest(String privateKeyJwt)
             throws IOException, InterruptedException {
         var request =
@@ -184,8 +123,64 @@ public class CommonApiClient {
         return sendHttpRequest(request);
     }
 
+    public HttpResponse<String> sendEventRequest(String sessionId)
+            throws IOException, InterruptedException {
+        final URI eventsEndpointURI =
+                new URIBuilder(this.testHarnessUrl)
+                        .setPath("events")
+                        .addParameter(
+                                "partitionKey",
+                                URLEncoder.encode(
+                                        String.format("%s%s", "SESSION#", sessionId),
+                                        StandardCharsets.UTF_8))
+                        .addParameter("sortKey", "TXMA")
+                        .build();
+
+        final SdkHttpRequest request =
+                SdkHttpRequest.builder().method(SdkHttpMethod.GET).uri(eventsEndpointURI).build();
+
+        return sendSignedRequest(request);
+    }
+
     private HttpResponse<String> sendHttpRequest(HttpRequest request)
             throws IOException, InterruptedException {
         return this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> sendSignedRequest(SdkHttpRequest unsignedRequest)
+            throws IOException, InterruptedException {
+        final SdkHttpRequest signedRequest = signRequest(unsignedRequest);
+
+        final HttpRequest.Builder httpRequest =
+                HttpRequest.newBuilder().GET().uri(signedRequest.getUri());
+
+        signedRequest.headers().entrySet().stream()
+                .filter(entry -> !entry.getKey().equalsIgnoreCase("host"))
+                .forEach(
+                        entry ->
+                                entry.getValue()
+                                        .forEach(
+                                                value ->
+                                                        httpRequest.header(entry.getKey(), value)));
+
+        return sendHttpRequest(httpRequest.build());
+    }
+
+    private SdkHttpRequest signRequest(SdkHttpRequest unsignedRequest) {
+        try (DefaultCredentialsProvider credentialsProvider = DefaultCredentialsProvider.create()) {
+            return AwsV4HttpSigner.create()
+                    .sign(
+                            signRequest ->
+                                    signRequest
+                                            .request(unsignedRequest)
+                                            .identity(credentialsProvider.resolveCredentials())
+                                            .putProperty(
+                                                    AwsV4HttpSigner.SERVICE_SIGNING_NAME,
+                                                    "execute-api")
+                                            .putProperty(
+                                                    AwsV4HttpSigner.REGION_NAME,
+                                                    Region.EU_WEST_2.id()))
+                    .request();
+        }
     }
 }
