@@ -140,6 +140,7 @@ dependencies {
 
 	testFixturesApi configurations.aws
 	testFixturesApi configurations.sqs
+	testFixturesApi configurations.aws_crt_client
 	testFixturesApi configurations.cloudformation
 	testFixturesApi	configurations.cucumber
 
