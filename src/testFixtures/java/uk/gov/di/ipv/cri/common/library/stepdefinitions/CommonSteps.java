@@ -10,6 +10,7 @@ import io.cucumber.java.en.When;
 import uk.gov.di.ipv.cri.common.library.client.ClientConfigurationService;
 import uk.gov.di.ipv.cri.common.library.client.CommonApiClient;
 import uk.gov.di.ipv.cri.common.library.client.IpvCoreStubClient;
+import uk.gov.di.ipv.cri.common.library.client.TestResourcesClient;
 
 import java.io.IOException;
 import java.util.Map;
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class CommonSteps {
     private final ObjectMapper objectMapper;
     private final CommonApiClient commonApiClient;
+    private final TestResourcesClient testResourcesClient;
 
     private final IpvCoreStubClient ipvCoreStubClient;
     private final CriTestContext testContext;
@@ -33,6 +35,7 @@ public class CommonSteps {
             ClientConfigurationService clientConfigurationService, CriTestContext testContext) {
         this.clientConfigurationService = clientConfigurationService;
         this.commonApiClient = new CommonApiClient(clientConfigurationService);
+        this.testResourcesClient = new TestResourcesClient(clientConfigurationService);
         this.ipvCoreStubClient = new IpvCoreStubClient(clientConfigurationService);
         this.objectMapper = new ObjectMapper();
         this.testContext = testContext;
@@ -126,7 +129,10 @@ public class CommonSteps {
     @When("user sends a GET request to events end point")
     public void userSendsAGetRequestToEventsEndpoint() throws IOException, InterruptedException {
         this.testContext.setResponse(
-                this.commonApiClient.sendEventRequest(this.testContext.getSessionId()));
+                this.testResourcesClient.sendEventRequest(this.testContext.getSessionId()));
+
+        //        this.testContext.setResponse(
+        //                this.commonApiClient.sendEventRequest(this.testContext.getSessionId()));
     }
 
     @Then("user gets a session-id")

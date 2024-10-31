@@ -1,8 +1,11 @@
 package uk.gov.di.ipv.cri.common.library.stepdefinitions;
 
+import software.amazon.awssdk.http.HttpExecuteResponse;
+
 import java.net.http.HttpResponse;
 
 public class CriTestContext {
+    private HttpExecuteResponse testHarnessResponse;
     private HttpResponse<String> response;
     private String sessionId;
     private String accessToken;
@@ -12,8 +15,16 @@ public class CriTestContext {
         return response;
     }
 
+    public HttpExecuteResponse getTestHarnessResponse() {
+        return testHarnessResponse;
+    }
+
     public void setResponse(HttpResponse<String> response) {
         this.response = response;
+    }
+
+    public void setResponse(HttpExecuteResponse response) {
+        this.testHarnessResponse = response;
     }
 
     public String getSessionId() {
