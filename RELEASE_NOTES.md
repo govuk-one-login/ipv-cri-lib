@@ -1,6 +1,11 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.2.1
+
+    - Loosen Driving Permit Postcode extraction from DVA licenses
+
 ## 3.2.0
+
     - Adds addressRegion to CanonicalAddress
 
 ## 3.1.3

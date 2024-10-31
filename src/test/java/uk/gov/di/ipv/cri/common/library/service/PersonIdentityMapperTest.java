@@ -252,7 +252,7 @@ class PersonIdentityMapperTest {
         "DVA, ',BT11 1AB', BT11 1AB", // 8 Exactly, with leading comma
         // Full Address
         "DVA, 'Building, Road, Town, County, BT11AB', BT11AB", // 6Char postcode/ address-commas
-        "DVA, 'Building Road Town County BT11AB',BT11AB", // 6Char postcode/ address-spaces
+        "DVA, 'Building Road Town County BT11AB',Y BT11AB", // 6Char postcode/ address-spaces
         "DVA, 'Building, Road, Town, County, BT1 1AB', BT1 1AB", // 7Char postcode/ address-commas
         "DVA, 'Building Road Town County BT1 1AB',BT1 1AB", // 7Char postcode address-spaces
         "DVA, 'Building, Road, Town, County, BT121AB', BT121AB", // 7Char postcode address-commas
@@ -260,8 +260,8 @@ class PersonIdentityMapperTest {
         "DVA, 'Building, Road, Town, County, BT12 1AB', BT12 1AB", // 8Char postcode/ Address commas
         "DVA, 'Building Road Town County BT12 1AB',BT12 1AB", // 8Char postcode, address-spaces
         // DVA No postcode Tests
-        "DVA, 'Building, Road, Town, County,',", // No postcode / Address commas
-        "DVA, 'Building Road Town County', ", // No postcode/ Address spaces
+        "DVA, 'Building, Road, Town, County', COUNTY", // No postcode / Address commas
+        "DVA, 'Building Road Town County', N COUNTY", // No postcode/ Address spaces
         // DVLA
         "DVLA,,", // No full address
         // Just postcodes

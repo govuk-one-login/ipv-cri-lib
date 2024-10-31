@@ -3,7 +3,6 @@ package uk.gov.di.ipv.cri.common.library.service;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Address;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.DrivingPermit;
-import uk.gov.di.ipv.cri.common.library.domain.personidentity.DrivingPermitIssuer;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentity;
@@ -400,11 +399,7 @@ public class PersonIdentityMapper {
                                 CanonicalAddress canonicalAddress = new CanonicalAddress();
 
                                 canonicalAddress.setPostalCode(
-                                        DrivingPermitIssuer.DVA.equalsIgnoreCase(dp.getIssuedBy())
-                                                ? extractPostalCodeFromDVADrivingPermitFullAddress(
-                                                        dp)
-                                                : extractPostalCodeFromDVLADrivingPermitFullAddress(
-                                                        dp));
+                                        extractPostalCodeFromDrivingPermitFullAddress(dp));
 
                                 return canonicalAddress;
                             }
@@ -416,39 +411,7 @@ public class PersonIdentityMapper {
                 .collect(Collectors.toList());
     }
 
-    private String extractPostalCodeFromDVADrivingPermitFullAddress(DrivingPermit dp) {
-
-        if (!DrivingPermitIssuer.DVA.equalsIgnoreCase(dp.getIssuedBy())) {
-            return null;
-        }
-
-        String postalCode = null;
-
-        String fullAddress = dp.getFullAddress().toUpperCase();
-        int len = fullAddress.length();
-
-        int pos = fullAddress.lastIndexOf("BT");
-        String possiblePostcode = pos >= 0 ? fullAddress.substring(pos, len) : "";
-
-        if (possiblePostcode.length() >= 6) {
-            // Remove Leading/Trailing Padding but not any separator space
-            possiblePostcode =
-                    possiblePostcode.startsWith(",")
-                            ? possiblePostcode.substring(1)
-                            : possiblePostcode;
-            possiblePostcode = possiblePostcode.stripLeading();
-            possiblePostcode = possiblePostcode.stripTrailing();
-            postalCode = possiblePostcode;
-        }
-
-        return postalCode;
-    }
-
-    private String extractPostalCodeFromDVLADrivingPermitFullAddress(DrivingPermit dp) {
-
-        if (!DrivingPermitIssuer.DVLA.equalsIgnoreCase(dp.getIssuedBy())) {
-            return null;
-        }
+    private String extractPostalCodeFromDrivingPermitFullAddress(DrivingPermit dp) {
 
         String postalCode = null;
 
