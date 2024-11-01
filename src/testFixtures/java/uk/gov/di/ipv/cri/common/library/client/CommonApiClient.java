@@ -8,16 +8,15 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class CommonApiClient {
-
     private final HttpClient httpClient;
     private final ClientConfigurationService clientConfigurationService;
+
+    private static final String JSON_MIME_MEDIA_TYPE = "application/json";
 
     public CommonApiClient(ClientConfigurationService clientConfigurationService) {
         this.clientConfigurationService = clientConfigurationService;
         this.httpClient = HttpClient.newBuilder().build();
     }
-
-    private static final String JSON_MIME_MEDIA_TYPE = "application/json";
 
     public HttpResponse<String> sendAuthorizationRequest(String sessionId)
             throws IOException, InterruptedException {
