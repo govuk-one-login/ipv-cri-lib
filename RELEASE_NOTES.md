@@ -3,6 +3,7 @@
 ## 3.4.0
 
     - Adds addressRegion to Address
+    - Excludes Address.java from Sonar duplication checks as it is very similar to CanonicalAddress.java
 
 ## 3.3.0
 
@@ -26,7 +27,7 @@
     - Increase AWS SDK to 2.28.2
     - Add missing SSM gradle configuration
     - Correct static method DataStore.getClient() having a hidden DynamoDbEnhancedClient builder and not using the DynamoDbEnhancedClient provided by the clientProviderFactory
-    - Mark DataStore.getClient() as deprecated for removal as the approach leads to a client per datastore and prevents sharing a single DynamoDbEnhancedClient. 
+    - Mark DataStore.getClient() as deprecated for removal as the approach leads to a client per datastore and prevents sharing a single DynamoDbEnhancedClient.
 
 ## 3.1.2
     - Refactor getClaimsForUser to allow single parameter
