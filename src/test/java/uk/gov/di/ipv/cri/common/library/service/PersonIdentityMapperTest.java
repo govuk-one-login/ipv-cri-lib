@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -362,105 +363,138 @@ class PersonIdentityMapperTest {
         assertEquals(drivingPermit.getFullAddress(), mappedDrivingPermit.getFullAddress());
     }
 
-    @Test
-    void shouldMapPersonIdentityItemToPersonIdentityDetailed() {
-        PersonIdentityNamePart firstNamePart = new PersonIdentityNamePart();
-        firstNamePart.setType("GivenName");
-        firstNamePart.setValue("Jon");
-        PersonIdentityNamePart surnamePart = new PersonIdentityNamePart();
-        surnamePart.setType("FamilyName");
-        surnamePart.setValue("Smith");
-        PersonIdentityName name = new PersonIdentityName();
-        name.setNameParts(List.of(firstNamePart, surnamePart));
+    @Nested
+    class MapPersonIdentityItemToPersonIdentityDetailed {
 
-        PersonIdentityDateOfBirth birthDate = new PersonIdentityDateOfBirth();
-        birthDate.setValue(LocalDate.of(1980, 10, 20));
+        private final PersonIdentityNamePart firstNamePart = new PersonIdentityNamePart();
+        private final PersonIdentityNamePart surnamePart = new PersonIdentityNamePart();
+        private final PersonIdentityDateOfBirth birthDate = new PersonIdentityDateOfBirth();
+        private final CanonicalAddress address = new CanonicalAddress();
+        private final PersonIdentityDrivingPermit personIdentityDrivingPermit =
+                new PersonIdentityDrivingPermit();
 
-        CanonicalAddress address = new CanonicalAddress();
-        address.setAddressCountry("GB");
-        address.setAddressRegion("dummyRegion");
-        address.setAddressLocality("locality");
-        address.setBuildingNumber("buildingNum");
-        address.setBuildingName("buildingName");
-        address.setDepartmentName("deptName");
-        address.setDependentAddressLocality("depAddressLocality");
-        address.setDependentStreetName("depStreetName");
-        address.setDoubleDependentAddressLocality("doubleDepAddressLocality");
-        address.setOrganisationName("orgName");
-        address.setPostalCode("postcode");
-        address.setStreetName("street");
-        address.setSubBuildingName("subBuildingName");
-        address.setUprn(2394501657L);
-        address.setValidFrom(LocalDate.of(2011, 10, 21));
-        address.setValidUntil(LocalDate.of(2017, 11, 25));
+        private PersonIdentityDetailed mappedPersonIdentity;
 
-        PersonIdentitySocialSecurityRecord personIdentitySocialSecurityRecord =
-                new PersonIdentitySocialSecurityRecord();
-        personIdentitySocialSecurityRecord.setPersonalNumber("AA000003D");
+        @BeforeEach
+        void setup() {
+            firstNamePart.setType("GivenName");
+            firstNamePart.setValue("Jon");
+            surnamePart.setType("FamilyName");
+            surnamePart.setValue("Smith");
+            PersonIdentityName name = new PersonIdentityName();
+            name.setNameParts(List.of(firstNamePart, surnamePart));
 
-        PersonIdentityDrivingPermit personIdentityDrivingPermit = new PersonIdentityDrivingPermit();
-        personIdentityDrivingPermit.setPersonalNumber("personalNumber");
-        personIdentityDrivingPermit.setExpiryDate(LocalDate.of(2029, 10, 21).toString());
-        personIdentityDrivingPermit.setIssueDate(LocalDate.of(2011, 10, 21).toString());
-        personIdentityDrivingPermit.setIssueNumber("issueNumber");
-        personIdentityDrivingPermit.setIssuedBy("issuedBy");
-        personIdentityDrivingPermit.setFullAddress("fullAddress");
+            birthDate.setValue(LocalDate.of(1980, 10, 20));
 
-        PersonIdentityItem testPersonIdentityItem = new PersonIdentityItem();
-        testPersonIdentityItem.setNames(List.of(name));
-        testPersonIdentityItem.setBirthDates(List.of(birthDate));
-        testPersonIdentityItem.setAddresses(List.of(address));
-        testPersonIdentityItem.setSocialSecurityRecords(
-                List.of(personIdentitySocialSecurityRecord));
-        testPersonIdentityItem.setDrivingPermits(List.of(personIdentityDrivingPermit));
+            address.setAddressCountry("GB");
+            address.setAddressRegion("dummyRegion");
+            address.setAddressLocality("locality");
+            address.setBuildingNumber("buildingNum");
+            address.setBuildingName("buildingName");
+            address.setDepartmentName("deptName");
+            address.setDependentAddressLocality("depAddressLocality");
+            address.setDependentStreetName("depStreetName");
+            address.setDoubleDependentAddressLocality("doubleDepAddressLocality");
+            address.setOrganisationName("orgName");
+            address.setPostalCode("postcode");
+            address.setStreetName("street");
+            address.setSubBuildingName("subBuildingName");
+            address.setUprn(2394501657L);
+            address.setValidFrom(LocalDate.of(2011, 10, 21));
+            address.setValidUntil(LocalDate.of(2017, 11, 25));
 
-        PersonIdentityDetailed mappedPersonIdentity =
-                personIdentityMapper.mapToPersonIdentityDetailed(testPersonIdentityItem);
+            PersonIdentitySocialSecurityRecord personIdentitySocialSecurityRecord =
+                    new PersonIdentitySocialSecurityRecord();
+            personIdentitySocialSecurityRecord.setPersonalNumber("AA000003D");
 
-        List<NamePart> mappedNameParts = mappedPersonIdentity.getNames().get(0).getNameParts();
-        assertEquals(firstNamePart.getValue(), mappedNameParts.get(0).getValue());
-        assertEquals(firstNamePart.getType(), mappedNameParts.get(0).getType());
-        assertEquals(surnamePart.getValue(), mappedNameParts.get(1).getValue());
-        assertEquals(surnamePart.getType(), mappedNameParts.get(1).getType());
-        assertEquals(birthDate.getValue(), mappedPersonIdentity.getBirthDates().get(0).getValue());
-        Address mappedAddress = mappedPersonIdentity.getAddresses().get(0);
-        assertEquals(address.getAddressCountry(), mappedAddress.getAddressCountry());
-        assertEquals(address.getAddressRegion(), mappedAddress.getAddressRegion());
-        assertEquals(address.getAddressLocality(), mappedAddress.getAddressLocality());
+            personIdentityDrivingPermit.setPersonalNumber("personalNumber");
+            personIdentityDrivingPermit.setExpiryDate(LocalDate.of(2029, 10, 21).toString());
+            personIdentityDrivingPermit.setIssueDate(LocalDate.of(2011, 10, 21).toString());
+            personIdentityDrivingPermit.setIssueNumber("issueNumber");
+            personIdentityDrivingPermit.setIssuedBy("issuedBy");
+            personIdentityDrivingPermit.setFullAddress("fullAddress");
 
-        assertEquals(address.getBuildingNumber(), mappedAddress.getBuildingNumber());
-        assertEquals(address.getBuildingName(), mappedAddress.getBuildingName());
-        assertEquals(address.getDepartmentName(), mappedAddress.getDepartmentName());
-        assertEquals(
-                address.getDependentAddressLocality(), mappedAddress.getDependentAddressLocality());
-        assertEquals(address.getDependentStreetName(), mappedAddress.getDependentStreetName());
-        assertEquals(
-                address.getDoubleDependentAddressLocality(),
-                mappedAddress.getDoubleDependentAddressLocality());
-        assertEquals(address.getOrganisationName(), mappedAddress.getOrganisationName());
-        assertEquals(address.getPostalCode(), mappedAddress.getPostalCode());
-        assertEquals(address.getStreetName(), mappedAddress.getStreetName());
-        assertEquals(address.getSubBuildingName(), mappedAddress.getSubBuildingName());
-        assertEquals(address.getUprn(), mappedAddress.getUprn());
+            PersonIdentityItem testPersonIdentityItem = new PersonIdentityItem();
+            testPersonIdentityItem.setNames(List.of(name));
+            testPersonIdentityItem.setBirthDates(List.of(birthDate));
+            testPersonIdentityItem.setAddresses(List.of(address));
+            testPersonIdentityItem.setSocialSecurityRecords(
+                    List.of(personIdentitySocialSecurityRecord));
+            testPersonIdentityItem.setDrivingPermits(List.of(personIdentityDrivingPermit));
 
-        DrivingPermit mappedDrivingPermit = mappedPersonIdentity.getDrivingPermits().get(0);
-        assertEquals(
-                personIdentityDrivingPermit.getPersonalNumber(),
-                mappedDrivingPermit.getPersonalNumber());
-        assertEquals(
-                personIdentityDrivingPermit.getExpiryDate(), mappedDrivingPermit.getExpiryDate());
-        assertEquals(
-                personIdentityDrivingPermit.getIssueDate(), mappedDrivingPermit.getIssueDate());
-        assertEquals(
-                personIdentityDrivingPermit.getIssueNumber(), mappedDrivingPermit.getIssueNumber());
-        assertEquals(personIdentityDrivingPermit.getIssuedBy(), mappedDrivingPermit.getIssuedBy());
-        assertEquals(
-                personIdentityDrivingPermit.getFullAddress(), mappedDrivingPermit.getFullAddress());
+            mappedPersonIdentity =
+                    personIdentityMapper.mapToPersonIdentityDetailed(testPersonIdentityItem);
+        }
 
-        // CRIs using a java backend currently shouldn't have a nino sent to them,
-        // functionality has been added in case this changes in the future but for now
-        // this checks the value hasn't been mapped into the personIdentity
-        assertNull(mappedPersonIdentity.getSocialSecurityRecords());
+        @Test
+        void shouldMapNameParts() {
+            List<NamePart> mappedNameParts = mappedPersonIdentity.getNames().get(0).getNameParts();
+            assertEquals(firstNamePart.getValue(), mappedNameParts.get(0).getValue());
+            assertEquals(firstNamePart.getType(), mappedNameParts.get(0).getType());
+            assertEquals(surnamePart.getValue(), mappedNameParts.get(1).getValue());
+            assertEquals(surnamePart.getType(), mappedNameParts.get(1).getType());
+            assertEquals(
+                    birthDate.getValue(), mappedPersonIdentity.getBirthDates().get(0).getValue());
+        }
+
+        @Test
+        void shouldMapBirthDay() {
+            assertEquals(
+                    birthDate.getValue(), mappedPersonIdentity.getBirthDates().get(0).getValue());
+        }
+
+        @Test
+        void shouldMapAddress() {
+            Address mappedAddress = mappedPersonIdentity.getAddresses().get(0);
+            assertEquals(address.getAddressCountry(), mappedAddress.getAddressCountry());
+            assertEquals(address.getAddressRegion(), mappedAddress.getAddressRegion());
+            assertEquals(address.getAddressLocality(), mappedAddress.getAddressLocality());
+
+            assertEquals(address.getBuildingNumber(), mappedAddress.getBuildingNumber());
+            assertEquals(address.getBuildingName(), mappedAddress.getBuildingName());
+            assertEquals(address.getDepartmentName(), mappedAddress.getDepartmentName());
+            assertEquals(
+                    address.getDependentAddressLocality(),
+                    mappedAddress.getDependentAddressLocality());
+            assertEquals(address.getDependentStreetName(), mappedAddress.getDependentStreetName());
+            assertEquals(
+                    address.getDoubleDependentAddressLocality(),
+                    mappedAddress.getDoubleDependentAddressLocality());
+            assertEquals(address.getOrganisationName(), mappedAddress.getOrganisationName());
+            assertEquals(address.getPostalCode(), mappedAddress.getPostalCode());
+            assertEquals(address.getStreetName(), mappedAddress.getStreetName());
+            assertEquals(address.getSubBuildingName(), mappedAddress.getSubBuildingName());
+            assertEquals(address.getUprn(), mappedAddress.getUprn());
+        }
+
+        @Test
+        void shouldMapDrivingPermit() {
+            DrivingPermit mappedDrivingPermit = mappedPersonIdentity.getDrivingPermits().get(0);
+            assertEquals(
+                    personIdentityDrivingPermit.getPersonalNumber(),
+                    mappedDrivingPermit.getPersonalNumber());
+            assertEquals(
+                    personIdentityDrivingPermit.getExpiryDate(),
+                    mappedDrivingPermit.getExpiryDate());
+            assertEquals(
+                    personIdentityDrivingPermit.getIssueDate(), mappedDrivingPermit.getIssueDate());
+            assertEquals(
+                    personIdentityDrivingPermit.getIssueNumber(),
+                    mappedDrivingPermit.getIssueNumber());
+            assertEquals(
+                    personIdentityDrivingPermit.getIssuedBy(), mappedDrivingPermit.getIssuedBy());
+            assertEquals(
+                    personIdentityDrivingPermit.getFullAddress(),
+                    mappedDrivingPermit.getFullAddress());
+        }
+
+        @Test
+        void socialSecurityRecordsShouldBeNull() {
+            // CRIs using a java backend currently shouldn't have a nino sent to them,
+            // functionality has been added in case this changes in the future but for now
+            // this checks the value hasn't been mapped into the personIdentity
+            assertNull(mappedPersonIdentity.getSocialSecurityRecords());
+        }
     }
 
     @Test
