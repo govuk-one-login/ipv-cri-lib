@@ -339,6 +339,7 @@ public class PersonIdentityMapper {
                             canonicalAddress.setDependentStreetName(a.getDependentStreetName());
                             canonicalAddress.setStreetName(a.getStreetName());
                             canonicalAddress.setAddressCountry(a.getAddressCountry());
+                            canonicalAddress.setAddressRegion(a.getAddressRegion());
                             canonicalAddress.setPostalCode(a.getPostalCode());
                             if (Objects.nonNull(a.getValidFrom())) {
                                 canonicalAddress.setValidFrom(a.getValidFrom());

@@ -62,6 +62,7 @@ class PersonIdentityMapperTest {
         address.setStreetName("street");
         address.setAddressLocality("locality");
         address.setPostalCode("postcode");
+        address.setAddressRegion("dummyRegion");
         address.setValidFrom(TODAY);
 
         PersonIdentitySocialSecurityRecord socialSecurityRecord =
@@ -87,6 +88,7 @@ class PersonIdentityMapperTest {
         assertEquals(address.getAddressLocality(), mappedAddress.getAddressLocality());
         assertEquals(address.getPostalCode(), mappedAddress.getPostalCode());
         assertEquals(address.getValidFrom(), mappedAddress.getValidFrom());
+        assertEquals(address.getAddressRegion(), mappedAddress.getAddressRegion());
         assertEquals(AddressType.CURRENT, mappedAddress.getAddressType());
         assertEquals(
                 socialSecurityRecord.getPersonalNumber(),
@@ -166,6 +168,7 @@ class PersonIdentityMapperTest {
         previousAddress.setBuildingNumber("buildingNum");
         previousAddress.setStreetName("street");
         previousAddress.setPostalCode("postcode");
+        previousAddress.setAddressRegion("dummyRegion");
         previousAddress.setValidUntil(TODAY.minus(1L, ChronoUnit.DAYS));
 
         PersonIdentityItem testPersonIdentityItem = new PersonIdentityItem();
@@ -205,6 +208,7 @@ class PersonIdentityMapperTest {
         address.setStreetName("street");
         address.setAddressLocality("locality");
         address.setPostalCode("postcode");
+        address.setAddressRegion("dummyRegion");
         address.setValidFrom(TODAY);
         sharedClaims.setAddresses(List.of(address));
 
@@ -231,6 +235,7 @@ class PersonIdentityMapperTest {
         assertEquals(address.getBuildingNumber(), mappedAddress.getBuildingNumber());
         assertEquals(address.getStreetName(), mappedAddress.getStreetName());
         assertEquals(address.getPostalCode(), mappedAddress.getPostalCode());
+        assertEquals(address.getAddressRegion(), mappedAddress.getAddressRegion());
         assertEquals(TODAY, mappedAddress.getValidFrom());
         assertNull(mappedAddress.getValidUntil());
         assertEquals(
@@ -342,6 +347,7 @@ class PersonIdentityMapperTest {
             assertNull(mappedAddress.getBuildingNumber());
             assertNull(mappedAddress.getStreetName());
             assertEquals(expectedPostcode, mappedAddress.getPostalCode());
+            assertNull(mappedAddress.getAddressRegion());
             assertNull(mappedAddress.getValidFrom());
             assertNull(mappedAddress.getValidUntil());
         } else {
@@ -372,6 +378,7 @@ class PersonIdentityMapperTest {
 
         CanonicalAddress address = new CanonicalAddress();
         address.setAddressCountry("GB");
+        address.setAddressRegion("dummyRegion");
         address.setAddressLocality("locality");
         address.setBuildingNumber("buildingNum");
         address.setBuildingName("buildingName");
@@ -418,6 +425,7 @@ class PersonIdentityMapperTest {
         assertEquals(birthDate.getValue(), mappedPersonIdentity.getBirthDates().get(0).getValue());
         Address mappedAddress = mappedPersonIdentity.getAddresses().get(0);
         assertEquals(address.getAddressCountry(), mappedAddress.getAddressCountry());
+        assertEquals(address.getAddressRegion(), mappedAddress.getAddressRegion());
         assertEquals(address.getAddressLocality(), mappedAddress.getAddressLocality());
 
         assertEquals(address.getBuildingNumber(), mappedAddress.getBuildingNumber());
