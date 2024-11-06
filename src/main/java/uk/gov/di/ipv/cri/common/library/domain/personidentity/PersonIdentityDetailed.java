@@ -1,5 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.domain.personidentity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -72,14 +73,16 @@ public class PersonIdentityDetailed {
      * @see uk.gov.di.ipv.cri.common.library.service.PersonIdentityDetailedFactory
      *     createPersonIdentityDetailedWith
      */
+    @JsonCreator
     @Deprecated(since = "1.5.0")
     public PersonIdentityDetailed(
-            List<Name> names,
-            List<BirthDate> birthDates,
-            List<Address> addresses,
-            List<DrivingPermit> drivingPermits,
-            List<Passport> passports,
-            List<SocialSecurityRecord> socialSecurityRecords) {
+            @JsonProperty("name") List<Name> names,
+            @JsonProperty("birthDate") List<BirthDate> birthDates,
+            @JsonProperty("address") List<Address> addresses,
+            @JsonProperty("drivingPermit") List<DrivingPermit> drivingPermits,
+            @JsonProperty("passport") List<Passport> passports,
+            @JsonProperty("socialSecurityRecord")
+                    List<SocialSecurityRecord> socialSecurityRecords) {
         this.names = names;
         this.birthDates = birthDates;
         this.addresses = addresses;

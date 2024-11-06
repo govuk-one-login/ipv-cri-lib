@@ -10,13 +10,13 @@ plugins {
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "3.2.1"
+def buildVersion = "3.3.0"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
 ext {
 	dependencyVersions = [
-		aws_sdk_version          : "2.28.8",
+		aws_sdk_version          : "2.29.1",
 		aws_lambda_events_version: "3.11.6",
 		aws_powertools_version   : "1.18.0",
 		jackson_version          : "2.15.2", // Use AWS POM version only
@@ -100,7 +100,8 @@ dependencies {
 			"com.fasterxml.jackson.core:jackson-databind",
 			"com.fasterxml.jackson.core:jackson-annotations",
 			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${dependencyVersions.jackson_version}",
-			"com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${dependencyVersions.jackson_version}"
+			"com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${dependencyVersions.jackson_version}",
+			"com.github.erosb:everit-json-schema:1.14.4"
 
 	powertools "software.amazon.lambda:powertools-logging:${dependencyVersions.aws_powertools_version}",
 			"software.amazon.lambda:powertools-metrics:${dependencyVersions.aws_powertools_version}"
@@ -123,7 +124,6 @@ dependencies {
 }
 
 dependencies {
-
 	implementation configurations.aws,
 			configurations.lambda,
 			configurations.jackson,
@@ -140,6 +140,7 @@ dependencies {
 
 	testFixturesApi configurations.aws
 	testFixturesApi configurations.sqs
+	testFixturesApi configurations.aws_crt_client
 	testFixturesApi configurations.cloudformation
 	testFixturesApi	configurations.cucumber
 

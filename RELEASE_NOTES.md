@@ -1,5 +1,12 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.3.0
+
+    - Updated audit event tests to use the new test harness events endpoint
+    - Added AWS credentials to sign the HTTP request for the events endpoint
+    - Added a Test Harness API client to interact with the test resources API
+    - Updated CriTestContext to expose test harness responses to the tests
+
 ## 3.2.1
 
     - Loosen Driving Permit Postcode extraction from DVA licenses
@@ -15,7 +22,7 @@
     - Increase AWS SDK to 2.28.2
     - Add missing SSM gradle configuration
     - Correct static method DataStore.getClient() having a hidden DynamoDbEnhancedClient builder and not using the DynamoDbEnhancedClient provided by the clientProviderFactory
-    - Mark DataStore.getClient() as deprecated for removal as the approach leads to a client per datastore and prevents sharing a single DynamoDbEnhancedClient. 
+    - Mark DataStore.getClient() as deprecated for removal as the approach leads to a client per datastore and prevents sharing a single DynamoDbEnhancedClient.
 
 ## 3.1.2
     - Refactor getClaimsForUser to allow single parameter

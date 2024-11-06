@@ -20,7 +20,9 @@ public class AuditEvent<T> {
     @JsonProperty("component_id")
     private final String issuer;
 
+    @JsonProperty("restricted")
     private PersonIdentityDetailed restricted;
+
     private AuditEventUser user;
     private T extensions;
 
