@@ -33,7 +33,6 @@ public class TestResourcesClient {
                         "TestHarnessExecuteUrl");
     }
 
-    /** Convert the response body to a string and close its input stream */
     public static String getResponseBody(HttpExecuteResponse response) throws IOException {
         if (response.responseBody().isEmpty()) {
             return null;
