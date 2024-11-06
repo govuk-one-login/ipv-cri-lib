@@ -25,6 +25,7 @@ public class Address {
     private String addressLocality;
     private String postalCode;
     private String addressCountry;
+    private String addressRegion;
 
     public Address() {
         this(new CanonicalAddress());
@@ -44,6 +45,7 @@ public class Address {
         this.addressLocality = address.getAddressLocality();
         this.postalCode = address.getPostalCode();
         this.addressCountry = address.getAddressCountry();
+        this.addressRegion = address.getAddressRegion();
         this.validFrom = address.getValidFrom();
         this.validUntil = address.getValidUntil();
     }
@@ -156,6 +158,14 @@ public class Address {
 
     public void setAddressCountry(String addressCountry) {
         this.addressCountry = addressCountry;
+    }
+
+    public String getAddressRegion() {
+        return addressRegion;
+    }
+
+    public void setAddressRegion(String addressRegion) {
+        this.addressRegion = addressRegion;
     }
 
     public LocalDate getValidFrom() {

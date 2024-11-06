@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.4.0
+
+    - Adds addressRegion to Address
+    - Excludes Address.java from Sonar duplication checks as it is very similar to CanonicalAddress.java
+
 ## 3.3.0
 
     - Updated audit event tests to use the new test harness events endpoint
