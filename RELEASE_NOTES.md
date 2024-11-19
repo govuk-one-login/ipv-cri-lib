@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.5.0
+
+    - Event endpoint is updated to use two parameters both sessionId and eventName that is passed in the feature file
+
 ## 3.4.0
 
     - Adds addressRegion to Address
