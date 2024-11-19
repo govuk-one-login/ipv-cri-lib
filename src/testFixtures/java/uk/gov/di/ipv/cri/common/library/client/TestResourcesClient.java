@@ -43,7 +43,8 @@ public class TestResourcesClient {
         }
     }
 
-    public HttpExecuteResponse sendEventRequest(String sessionId) throws IOException {
+    public HttpExecuteResponse sendEventRequest(String sessionId, String eventName)
+            throws IOException {
         final URI eventsEndpointURI =
                 new URIBuilder(this.testHarnessUrl)
                         .setPath("events")
@@ -52,7 +53,11 @@ public class TestResourcesClient {
                                 URLEncoder.encode(
                                         String.format("%s%s", "SESSION#", sessionId),
                                         StandardCharsets.UTF_8))
-                        .addParameter("sortKey", "TXMA")
+                        .addParameter(
+                                "sortKey",
+                                URLEncoder.encode(
+                                        String.format("%s%s", "TXMA#", eventName),
+                                        StandardCharsets.UTF_8))
                         .build();
 
         final SdkHttpFullRequest request =
