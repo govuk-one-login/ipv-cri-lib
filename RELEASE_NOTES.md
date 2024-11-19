@@ -2,7 +2,7 @@
 
 ## 3.5.0
 
-    - Event endpoint is updated to use two parameters both sessionId and eventName that is passed in the feature file
+    - sendEventRequest method now accepts `eventName` parameter as an additional filter
 
 ## 3.4.0
 
