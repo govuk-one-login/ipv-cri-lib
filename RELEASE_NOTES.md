@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.7.0
+
+    - ClientProviderFactory selects the appropriate AwsCredentialsProvider to use for AWS clients (EnvironmentVariableCredentialsProvider/ContainerCredentialsProvider.builder) based the current init environment - lambda snap start container or lambda run-time init environment.
+
 ## 3.6.0
 
     - Added @Deprecated tag to unused SQS helper class as tests now uses new test harness implemention

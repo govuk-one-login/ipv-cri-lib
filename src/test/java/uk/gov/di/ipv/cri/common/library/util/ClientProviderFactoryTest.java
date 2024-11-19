@@ -4,6 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
@@ -14,6 +17,7 @@ import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,8 +31,32 @@ class ClientProviderFactoryTest {
     void setUp() {
         environmentVariables.set("AWS_REGION", "eu-west-2");
         environmentVariables.set("AWS_STACK_NAME", "TEST_STACK");
+        environmentVariables.set("AWS_CONTAINER_CREDENTIALS_FULL_URI", null);
 
         clientProviderFactory = new ClientProviderFactory();
+    }
+
+    @Test
+    void shouldSelectEnvironmentVariableCredentialsProvider() {
+        environmentVariables.set("AWS_CONTAINER_CREDENTIALS_FULL_URI", null);
+
+        ClientProviderFactory thisTestOnly = new ClientProviderFactory();
+
+        AwsCredentialsProvider awsCredentialsProvider = thisTestOnly.getAwsCredentialsProvider();
+        assertNotNull(awsCredentialsProvider);
+        assertEquals(
+                EnvironmentVariableCredentialsProvider.class, awsCredentialsProvider.getClass());
+    }
+
+    @Test
+    void shouldSelectContainerCredentialsProvider() {
+        environmentVariables.set("AWS_CONTAINER_CREDENTIALS_FULL_URI", "TEST_URI");
+
+        ClientProviderFactory thisTestOnly = new ClientProviderFactory();
+
+        AwsCredentialsProvider awsCredentialsProvider = thisTestOnly.getAwsCredentialsProvider();
+        assertNotNull(awsCredentialsProvider);
+        assertEquals(ContainerCredentialsProvider.class, awsCredentialsProvider.getClass());
     }
 
     @Test
