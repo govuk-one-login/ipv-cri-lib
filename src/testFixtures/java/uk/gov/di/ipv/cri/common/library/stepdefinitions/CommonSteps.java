@@ -126,10 +126,11 @@ public class CommonSteps {
         this.testContext.setResponse(this.commonApiClient.sendTokenRequest(privateKeyJWT));
     }
 
-    @When("user sends a GET request to events end point")
-    public void userSendsAGetRequestToEventsEndpoint() throws IOException {
+    @When("user sends a GET request to events end point for {string}")
+    public void userSendsAGetRequestToEventsEndpoint(String eventName) throws IOException {
         this.testContext.setResponse(
-                this.testResourcesClient.sendEventRequest(this.testContext.getSessionId()));
+                this.testResourcesClient.sendEventRequest(
+                        this.testContext.getSessionId(), eventName));
     }
 
     @Then("user gets a session-id")
