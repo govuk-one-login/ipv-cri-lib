@@ -54,6 +54,14 @@ import static uk.gov.di.ipv.cri.common.library.util.ListUtil.split;
  *       times to the DLQ and render it unavailable to the clients reading from the queue.
  * </ul>
  */
+
+/**
+ * @deprecated as new [Test
+ *     Harness](https://github.com/govuk-one-login/ipv-cri-common-lambdas/tree/main/test-resources)
+ *     implementation allows us to assert that TxMA events written by CRIs and supports automated
+ *     testing of the CloudFront headers
+ */
+@Deprecated(since = "3.6.0")
 public final class SQSHelper {
 
     private static final int SQS_WAIT_TIME = 20;
