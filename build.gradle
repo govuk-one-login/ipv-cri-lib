@@ -10,7 +10,7 @@ plugins {
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "3.5.0"
+def buildVersion = "3.6.0"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 

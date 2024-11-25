@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 3.6.0
+
+    - Added @Deprecated tag to unused SQS helper class as tests now uses new test harness implemention
+
 ## 3.5.0
 
     - sendEventRequest method now accepts `eventName` parameter as an additional filter
