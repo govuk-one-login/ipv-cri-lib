@@ -38,6 +38,7 @@ public class DataStore<T> {
      * To be removed as, calling this will not allow sharing a single DynamoDbEnhancedClient.
      *
      * @deprecated
+     * @return DynamoDbEnhancedClient
      */
     @SuppressWarnings("java:S1133")
     @Deprecated(forRemoval = true)

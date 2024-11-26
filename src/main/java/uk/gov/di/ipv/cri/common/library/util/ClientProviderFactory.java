@@ -2,6 +2,8 @@ package uk.gov.di.ipv.cri.common.library.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.awscore.defaultsmode.DefaultsMode;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -35,7 +37,7 @@ public class ClientProviderFactory {
     // https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/lambda-optimize-starttime.html
     // https://aws.amazon.com/blogs/developer/tuning-the-aws-java-sdk-2-x-to-reduce-startup-time/
     private final Region awsRegion;
-    private final EnvironmentVariableCredentialsProvider environmentVariableCredentialsProvider;
+    private final AwsCredentialsProvider awsCredentialsProvider;
 
     // https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/awscore/defaultsmode/DefaultsMode.html
     // https://docs.aws.amazon.com/sdkref/latest/guide/feature-smart-config-defaults.html
@@ -54,7 +56,17 @@ public class ClientProviderFactory {
         awsRegion = Region.of(System.getenv("AWS_REGION"));
         // AWS SDK CRT Client (SYNC) - connection defaults are in SdkHttpConfigurationOption
         sdkHttpClient = AwsCrtHttpClient.builder().maxConcurrency(100).build();
-        environmentVariableCredentialsProvider = EnvironmentVariableCredentialsProvider.create();
+
+        // Check if started inside a snap start container and use appropriate provider
+        // see https://docs.aws.amazon.com/lambda/latest/dg/snapstart-activate.html
+        awsCredentialsProvider =
+                System.getenv("AWS_CONTAINER_CREDENTIALS_FULL_URI") == null
+                        ? EnvironmentVariableCredentialsProvider.create()
+                        : ContainerCredentialsProvider.builder().build();
+    }
+
+    public AwsCredentialsProvider getAwsCredentialsProvider() {
+        return awsCredentialsProvider;
     }
 
     public KmsClient getKMSClient() {
@@ -64,7 +76,7 @@ public class ClientProviderFactory {
                     KmsClient.builder()
                             .region(awsRegion)
                             .httpClient(sdkHttpClient)
-                            .credentialsProvider(environmentVariableCredentialsProvider)
+                            .credentialsProvider(awsCredentialsProvider)
                             .defaultsMode(DEFAULTS_MODE)
                             .build();
         }
@@ -79,7 +91,7 @@ public class ClientProviderFactory {
                     SqsClient.builder()
                             .region(awsRegion)
                             .httpClient(sdkHttpClient)
-                            .credentialsProvider(environmentVariableCredentialsProvider)
+                            .credentialsProvider(awsCredentialsProvider)
                             .defaultsMode(DEFAULTS_MODE)
                             .build();
         }
@@ -94,7 +106,7 @@ public class ClientProviderFactory {
                     DynamoDbClient.builder()
                             .region(awsRegion)
                             .httpClient(sdkHttpClient)
-                            .credentialsProvider(environmentVariableCredentialsProvider)
+                            .credentialsProvider(awsCredentialsProvider)
                             .defaultsMode(DEFAULTS_MODE)
                             .build();
 
@@ -114,7 +126,7 @@ public class ClientProviderFactory {
                     SsmClient.builder()
                             .region(awsRegion)
                             .httpClient(sdkHttpClient)
-                            .credentialsProvider(environmentVariableCredentialsProvider)
+                            .credentialsProvider(awsCredentialsProvider)
                             .defaultsMode(DEFAULTS_MODE)
                             .build();
 
@@ -179,7 +191,7 @@ public class ClientProviderFactory {
                     SecretsManagerClient.builder()
                             .region(awsRegion)
                             .httpClient(sdkHttpClient)
-                            .credentialsProvider(environmentVariableCredentialsProvider)
+                            .credentialsProvider(awsCredentialsProvider)
                             .defaultsMode(DEFAULTS_MODE)
                             .build();
         }
