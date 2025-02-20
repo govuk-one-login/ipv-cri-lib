@@ -1,5 +1,12 @@
 # Credential Issuer common libraries Release Notes
 
+## 4.0.0
+
+    - In ClientProviderFactory add support for manual opentelemetry instrumentation of AWS SDK clients and allow excluding SDK clients used by Powertools providers.
+    - Switch to post-compile weaving for aspects (per Powertools recommendation) and set an AspectJRT version compatible with Java11+
+    - Add getAcmClient() to ClientProviderFactory to enable getting an ACM client and for it to use the shared crt http client, centralizing setup.
+    - Add getSsmClient() to ClientProviderFactory to enable getting an Ssm client and for it to use the shared crt http client, centralizing setup.
+
 ## 3.7.0
 
     - ClientProviderFactory selects the appropriate AwsCredentialsProvider to use for AWS clients (EnvironmentVariableCredentialsProvider/ContainerCredentialsProvider.builder) based the current init environment - lambda snap start container or lambda run-time init environment.
