@@ -1,5 +1,6 @@
 # Credential Issuer common libraries
 
+
 A library of common functions that can be used across credential issuers for validation, event transmission, describing common data etc.
 
 ## Releasing CRI libs to Maven Central
