@@ -7,10 +7,11 @@ plugins {
 	id "maven-publish"
 	id "signing"
 	id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
+	id 'io.freefair.aspectj.post-compile-weaving' version '6.6.3' // https://github.com/freefair/gradle-plugins
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "3.7.0"
+def buildVersion = "4.0.0"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
@@ -18,6 +19,7 @@ ext {
 	dependencyVersions = [
 		aws_sdk_version          : "2.29.1",
 		aws_lambda_events_version: "3.11.6",
+		aspectjrt_version        : "1.9.20.1", // https://docs.powertools.aws.dev/lambda/java/#java-compatibility (Java11)
 		aws_powertools_version   : "1.18.0",
 		jackson_version          : "2.15.2", // Use AWS POM version only
 		nimbusds_oauth_version   : "11.4",
@@ -25,7 +27,8 @@ ext {
 		junit                    : "5.8.2",
 		mockito					 : "4.3.1",
 		glassfish_version        : "3.0.3",
-		cucumber_version         : "7.9.0"
+		cucumber_version         : "7.9.0",
+		opentelemetry_version    : "2.12.0-alpha"
 	]
 }
 
@@ -52,6 +55,7 @@ configurations {
 	sqs
 	sso
 	kms
+	acm
 	lambda_tests
 	lettuce
 	nimbus
@@ -59,9 +63,11 @@ configurations {
 	tests
 	test_runtime
 	gson
+	aspectjrt
 	powertools
 	mockito
 	cucumber
+	opentel
 }
 
 configurations.all {
@@ -94,6 +100,8 @@ dependencies {
 
 	kms "software.amazon.awssdk:kms"
 
+	acm "software.amazon.awssdk:acm"
+
 	lambda_tests "software.amazon.awssdk:aws-lambda-java-tests:1.1.1"
 
 	jackson "com.fasterxml.jackson.core:jackson-core",
@@ -102,6 +110,8 @@ dependencies {
 			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${dependencyVersions.jackson_version}",
 			"com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${dependencyVersions.jackson_version}",
 			"com.github.erosb:everit-json-schema:1.14.4"
+
+	aspectjrt "org.aspectj:aspectjrt:${dependencyVersions.aspectjrt_version}"
 
 	powertools "software.amazon.lambda:powertools-logging:${dependencyVersions.aws_powertools_version}",
 			"software.amazon.lambda:powertools-metrics:${dependencyVersions.aws_powertools_version}"
@@ -119,6 +129,9 @@ dependencies {
 
 	test_runtime "org.junit.jupiter:junit-jupiter-engine:${dependencyVersions.junit}"
 
+	opentel platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:${dependencyVersions.opentelemetry_version}"),
+			"io.opentelemetry.instrumentation:opentelemetry-aws-sdk-2.2"
+
 	cucumber "io.cucumber:cucumber-java:${dependencyVersions.cucumber_version}",
 			"io.cucumber:cucumber-picocontainer:${dependencyVersions.cucumber_version}"
 }
@@ -130,9 +143,12 @@ dependencies {
 			configurations.dynamodb,
 			configurations.aws_crt_client,
 			configurations.nimbus,
+			configurations.aspectjrt,
 			configurations.powertools,
 			configurations.sqs,
-			configurations.kms
+			configurations.kms,
+			configurations.acm,
+			configurations.opentel
 
 	testImplementation configurations.tests
 
@@ -143,6 +159,7 @@ dependencies {
 	testFixturesApi configurations.aws_crt_client
 	testFixturesApi configurations.cloudformation
 	testFixturesApi	configurations.cucumber
+	testFixturesApi	configurations.aspectjrt
 
 	testFixturesImplementation configurations.jackson
 	testFixturesImplementation configurations.tests

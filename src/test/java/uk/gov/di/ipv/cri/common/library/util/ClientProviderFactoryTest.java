@@ -1,16 +1,19 @@
 package uk.gov.di.ipv.cri.common.library.util;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.services.acm.AcmClient;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
@@ -25,86 +28,284 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class ClientProviderFactoryTest {
     @SystemStub private EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
-    private ClientProviderFactory clientProviderFactory;
-
     @BeforeEach
     void setUp() {
         environmentVariables.set("AWS_REGION", "eu-west-2");
         environmentVariables.set("AWS_STACK_NAME", "TEST_STACK");
         environmentVariables.set("AWS_CONTAINER_CREDENTIALS_FULL_URI", null);
-
-        clientProviderFactory = new ClientProviderFactory();
     }
 
-    @Test
-    void shouldSelectEnvironmentVariableCredentialsProvider() {
-        environmentVariables.set("AWS_CONTAINER_CREDENTIALS_FULL_URI", null);
+    @ParameterizedTest
+    @CsvSource({"null", "HasValuePresent"})
+    void shouldCreateClientProviderWithDefaultConstructorAndConfiguredCorrectly(
+            String awsContainerCredentialsFullUri) {
+        environmentVariables.set(
+                "AWS_CONTAINER_CREDENTIALS_FULL_URI", awsContainerCredentialsFullUri);
 
-        ClientProviderFactory thisTestOnly = new ClientProviderFactory();
+        ClientProviderFactory clientProviderFactory = new ClientProviderFactory();
 
-        AwsCredentialsProvider awsCredentialsProvider = thisTestOnly.getAwsCredentialsProvider();
-        assertNotNull(awsCredentialsProvider);
-        assertEquals(
-                EnvironmentVariableCredentialsProvider.class, awsCredentialsProvider.getClass());
+        AwsCredentialsProvider awsCredentialsProvider1 =
+                clientProviderFactory.getAwsCredentialsProvider();
+        assertNotNull(awsCredentialsProvider1);
+
+        AwsCredentialsProvider awsCredentialsProvider2 =
+                clientProviderFactory.getAwsCredentialsProvider();
+        assertNotNull(awsCredentialsProvider2);
+
+        assertEquals(awsCredentialsProvider1, awsCredentialsProvider2);
+
+        if (null == awsContainerCredentialsFullUri) {
+            assertEquals(
+                    EnvironmentVariableCredentialsProvider.class,
+                    awsCredentialsProvider1.getClass());
+            assertEquals(
+                    EnvironmentVariableCredentialsProvider.class,
+                    awsCredentialsProvider2.getClass());
+        } else {
+            assertEquals(ContainerCredentialsProvider.class, awsCredentialsProvider1.getClass());
+            assertEquals(ContainerCredentialsProvider.class, awsCredentialsProvider2.getClass());
+        }
     }
 
-    @Test
-    void shouldSelectContainerCredentialsProvider() {
-        environmentVariables.set("AWS_CONTAINER_CREDENTIALS_FULL_URI", "TEST_URI");
+    @ParameterizedTest
+    @CsvSource({
+        "null, false, false", // Non-SnapStart, AutoTel
+        "null, true, false", // Non-SnapStart, ManualTel, No Tracing Providers
+        "null, true, true", // Non-SnapStart, ManualTel, Tracing Providers
+        "HasValuePresent, false, false", // SnapStart, AutoTel
+        "HasValuePresent, true, false", // SnapStart, ManualTel, No Tracing Providers
+        "HasValuePresent, true, true", // SnapStart, ManualTel, Tracing Providers
+    })
+    void shouldCreateClientProviderWithParameterConstructorAndConfiguredCorrectly(
+            String awsContainerCredentialsFullUri,
+            boolean usingNonAutomaticOpenTelemetry,
+            boolean avoidExecutionInterceptorsOnClientsUsedByPowerTools) {
+        environmentVariables.set(
+                "AWS_CONTAINER_CREDENTIALS_FULL_URI", awsContainerCredentialsFullUri);
 
-        ClientProviderFactory thisTestOnly = new ClientProviderFactory();
+        ClientProviderFactory clientProviderFactory =
+                new ClientProviderFactory(
+                        usingNonAutomaticOpenTelemetry,
+                        avoidExecutionInterceptorsOnClientsUsedByPowerTools);
 
-        AwsCredentialsProvider awsCredentialsProvider = thisTestOnly.getAwsCredentialsProvider();
-        assertNotNull(awsCredentialsProvider);
-        assertEquals(ContainerCredentialsProvider.class, awsCredentialsProvider.getClass());
+        AwsCredentialsProvider awsCredentialsProvider1 =
+                clientProviderFactory.getAwsCredentialsProvider();
+        assertNotNull(awsCredentialsProvider1);
+
+        AwsCredentialsProvider awsCredentialsProvider2 =
+                clientProviderFactory.getAwsCredentialsProvider();
+        assertNotNull(awsCredentialsProvider2);
+
+        assertEquals(awsCredentialsProvider1, awsCredentialsProvider2);
+
+        if (null == awsContainerCredentialsFullUri) {
+            assertEquals(
+                    EnvironmentVariableCredentialsProvider.class,
+                    awsCredentialsProvider1.getClass());
+            assertEquals(
+                    EnvironmentVariableCredentialsProvider.class,
+                    awsCredentialsProvider2.getClass());
+        } else {
+            assertEquals(ContainerCredentialsProvider.class, awsCredentialsProvider1.getClass());
+            assertEquals(ContainerCredentialsProvider.class, awsCredentialsProvider2.getClass());
+        }
     }
 
-    @Test
-    void shouldReturnKMSClient() {
+    @ParameterizedTest
+    @CsvSource({
+        "false, false", // AutoTel
+        "true, false", // ManualTel, No Tracing Providers
+        "true, true", // ManualTel, Tracing Providers
+    })
+    void shouldReturnKMSClient(
+            boolean usingNonAutomaticOpenTelemetry,
+            boolean avoidExecutionInterceptorsOnClientsUsedByPowerTools) {
 
-        KmsClient kmsClient = clientProviderFactory.getKMSClient();
+        ClientProviderFactory clientProviderFactory =
+                new ClientProviderFactory(
+                        usingNonAutomaticOpenTelemetry,
+                        avoidExecutionInterceptorsOnClientsUsedByPowerTools);
 
-        assertNotNull(kmsClient);
+        KmsClient kmsClient1 = clientProviderFactory.getKMSClient();
+        assertNotNull(kmsClient1);
+
+        KmsClient kmsClient2 = clientProviderFactory.getKMSClient();
+        assertNotNull(kmsClient2);
+
+        assertEquals(kmsClient1, kmsClient2);
     }
 
-    @Test
-    void shouldReturnSqsClient() {
+    @ParameterizedTest
+    @CsvSource({
+        "false, false", // AutoTel
+        "true, false", // ManualTel, No Tracing Providers
+        "true, true", // ManualTel, Tracing Providers
+    })
+    void shouldReturnSqsClient(
+            boolean usingNonAutomaticOpenTelemetry,
+            boolean avoidExecutionInterceptorsOnClientsUsedByPowerTools) {
 
-        SqsClient sqsClient = clientProviderFactory.getSqsClient();
+        ClientProviderFactory clientProviderFactory =
+                new ClientProviderFactory(
+                        usingNonAutomaticOpenTelemetry,
+                        avoidExecutionInterceptorsOnClientsUsedByPowerTools);
 
-        assertNotNull(sqsClient);
+        SqsClient sqsClient1 = clientProviderFactory.getSqsClient();
+        assertNotNull(sqsClient1);
+
+        SqsClient sqsClient2 = clientProviderFactory.getSqsClient();
+        assertNotNull(sqsClient2);
+
+        // Sqs Client is wrapped in a proxy when OpelTel is used breaking equals comparison
+        // To confirm the wrapped sqsClient is the same we use the hashcode directly
+        assertEquals(sqsClient1.hashCode(), sqsClient2.hashCode());
     }
 
-    @Test
-    void shouldReturnDynamoDbEnhancedClient() {
+    @ParameterizedTest
+    @CsvSource({
+        "false, false", // AutoTel
+        "true, false", // ManualTel, No Tracing Providers
+        "true, true", // ManualTel, Tracing Providers
+    })
+    void shouldReturnDynamoDbEnhancedClient(
+            boolean usingNonAutomaticOpenTelemetry,
+            boolean avoidExecutionInterceptorsOnClientsUsedByPowerTools) {
 
-        DynamoDbEnhancedClient dynamoDbEnhancedClient =
+        ClientProviderFactory clientProviderFactory =
+                new ClientProviderFactory(
+                        usingNonAutomaticOpenTelemetry,
+                        avoidExecutionInterceptorsOnClientsUsedByPowerTools);
+
+        DynamoDbEnhancedClient dynamoDbEnhancedClient1 =
                 clientProviderFactory.getDynamoDbEnhancedClient();
+        assertNotNull(dynamoDbEnhancedClient1);
 
-        assertNotNull(dynamoDbEnhancedClient);
+        DynamoDbEnhancedClient dynamoDbEnhancedClient2 =
+                clientProviderFactory.getDynamoDbEnhancedClient();
+        assertNotNull(dynamoDbEnhancedClient2);
+
+        assertEquals(dynamoDbEnhancedClient1, dynamoDbEnhancedClient2);
     }
 
-    @Test
-    void shouldReturnSSMProvider() {
+    @ParameterizedTest
+    @CsvSource({
+        "false, false", // AutoTel
+        "true, false", // ManualTel, No Tracing Providers
+        "true, true", // ManualTel, Tracing Providers
+    })
+    void shouldReturnSsmClient(
+            boolean usingNonAutomaticOpenTelemetry,
+            boolean avoidExecutionInterceptorsOnClientsUsedByPowerTools) {
 
-        SSMProvider ssmProvider = clientProviderFactory.getSSMProvider();
+        ClientProviderFactory clientProviderFactory =
+                new ClientProviderFactory(
+                        usingNonAutomaticOpenTelemetry,
+                        avoidExecutionInterceptorsOnClientsUsedByPowerTools);
 
-        assertNotNull(ssmProvider);
+        SsmClient ssmClient1 = clientProviderFactory.getSsmClient();
+        assertNotNull(ssmClient1);
+
+        SsmClient ssmClient2 = clientProviderFactory.getSsmClient();
+        assertNotNull(ssmClient2);
+
+        assertEquals(ssmClient1, ssmClient2);
     }
 
-    @Test
-    void shouldReturnSecretsProvider() {
+    @ParameterizedTest
+    @CsvSource({
+        "false, false", // AutoTel
+        "true, false", // ManualTel, No Tracing Providers
+        "true, true", // ManualTel, Tracing Providers
+    })
+    void shouldReturnSSMProvider(
+            boolean usingNonAutomaticOpenTelemetry,
+            boolean avoidExecutionInterceptorsOnClientsUsedByPowerTools) {
 
-        SecretsProvider secretsProvider = clientProviderFactory.getSecretsProvider();
+        ClientProviderFactory clientProviderFactory =
+                new ClientProviderFactory(
+                        usingNonAutomaticOpenTelemetry,
+                        avoidExecutionInterceptorsOnClientsUsedByPowerTools);
 
-        assertNotNull(secretsProvider);
+        SSMProvider ssmProvider1 = clientProviderFactory.getSSMProvider();
+        assertNotNull(ssmProvider1);
+
+        SSMProvider ssmProvider2 = clientProviderFactory.getSSMProvider();
+        assertNotNull(ssmProvider2);
+
+        assertEquals(ssmProvider1, ssmProvider2);
     }
 
-    @Test
-    void shouldReturnSecretsManagerClient() {
+    @ParameterizedTest
+    @CsvSource({
+        "false, false", // AutoTel
+        "true, false", // ManualTel, No Tracing Providers
+        "true, true", // ManualTel, Tracing Providers
+    })
+    void shouldReturnSecretsProvider(
+            boolean usingNonAutomaticOpenTelemetry,
+            boolean avoidExecutionInterceptorsOnClientsUsedByPowerTools) {
 
-        SecretsManagerClient secretsManagerClient = clientProviderFactory.getSecretsManagerClient();
+        ClientProviderFactory clientProviderFactory =
+                new ClientProviderFactory(
+                        usingNonAutomaticOpenTelemetry,
+                        avoidExecutionInterceptorsOnClientsUsedByPowerTools);
 
-        assertNotNull(secretsManagerClient);
+        SecretsProvider secretsProvider1 = clientProviderFactory.getSecretsProvider();
+        assertNotNull(secretsProvider1);
+
+        SecretsProvider secretsProvider2 = clientProviderFactory.getSecretsProvider();
+        assertNotNull(secretsProvider2);
+
+        assertEquals(secretsProvider1, secretsProvider2);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "false, false", // AutoTel
+        "true, false", // ManualTel, No Tracing Providers
+        "true, true", // ManualTel, Tracing Providers
+    })
+    void shouldReturnSecretsManagerClient(
+            boolean usingNonAutomaticOpenTelemetry,
+            boolean avoidExecutionInterceptorsOnClientsUsedByPowerTools) {
+
+        ClientProviderFactory clientProviderFactory =
+                new ClientProviderFactory(
+                        usingNonAutomaticOpenTelemetry,
+                        avoidExecutionInterceptorsOnClientsUsedByPowerTools);
+
+        SecretsManagerClient secretsManagerClient1 =
+                clientProviderFactory.getSecretsManagerClient();
+        assertNotNull(secretsManagerClient1);
+
+        SecretsManagerClient secretsManagerClient2 =
+                clientProviderFactory.getSecretsManagerClient();
+        assertNotNull(secretsManagerClient2);
+
+        assertEquals(secretsManagerClient1, secretsManagerClient2);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "false, false", // AutoTel
+        "true, false", // ManualTel, No Tracing Providers
+        "true, true", // ManualTel, Tracing Providers
+    })
+    void shouldReturnAcmClient(
+            boolean usingNonAutomaticOpenTelemetry,
+            boolean avoidExecutionInterceptorsOnClientsUsedByPowerTools) {
+
+        ClientProviderFactory clientProviderFactory =
+                new ClientProviderFactory(
+                        usingNonAutomaticOpenTelemetry,
+                        avoidExecutionInterceptorsOnClientsUsedByPowerTools);
+
+        AcmClient acmClient1 = clientProviderFactory.getAcmClient();
+        assertNotNull(acmClient1);
+
+        AcmClient acmClient2 = clientProviderFactory.getAcmClient();
+        assertNotNull(acmClient2);
+
+        assertEquals(acmClient1, acmClient2);
     }
 }

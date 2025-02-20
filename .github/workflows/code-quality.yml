@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run pre-commit
-        uses: govuk-one-login/github-actions/code-quality/run-pre-commit@cd7d35dde348251237efbbaee5345e95adef0321
+        uses: govuk-one-login/github-actions/code-quality/run-pre-commit@4616241694c035be4ea4a10fc0fe6521c0f079f8
         with:
           all-files: true
 
