@@ -82,6 +82,10 @@ public class SessionService {
     public SessionItem validateSessionId(String sessionId)
             throws SessionNotFoundException, SessionExpiredException {
 
+        if (sessionId == null || sessionId.isBlank()) {
+            throw new SessionNotFoundException("session id empty");
+        }
+
         SessionItem sessionItem = dataStore.getItem(sessionId);
         setSessionItemsToLogging(sessionItem);
         if (sessionItem == null) {

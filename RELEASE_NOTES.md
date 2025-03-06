@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 4.1.0
+
+    - Adds null and blank check to the sessionID passed into validateSession, now throws SessionNotFoundException instead of a DynamoDBException
+
 ## 4.0.0
 
     - In ClientProviderFactory add support for manual opentelemetry instrumentation of AWS SDK clients and allow excluding SDK clients used by Powertools providers.
