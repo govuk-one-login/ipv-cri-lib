@@ -35,7 +35,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -174,6 +176,21 @@ class SessionServiceTest {
         when(mockDataStore.getItem(SESSION_ID)).thenReturn(null);
         assertThrows(
                 SessionNotFoundException.class, () -> sessionService.validateSessionId(SESSION_ID));
+    }
+
+    @Test
+    void shouldThrowSessionNotFoundWhenSessionIdNull() {
+        assertThrows(SessionNotFoundException.class, () -> sessionService.validateSessionId(null));
+        verify(mockDataStore, never()).getItem(any());
+    }
+
+    @Test
+    void shouldThrowSessionNotFoundWhenSessionIdBlank() {
+        assertThrows(SessionNotFoundException.class, () -> sessionService.validateSessionId(""));
+        verify(mockDataStore, never()).getItem(any());
+
+        assertThrows(SessionNotFoundException.class, () -> sessionService.validateSessionId("   "));
+        verify(mockDataStore, never()).getItem(any());
     }
 
     @Test
