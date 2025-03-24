@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 4.2.0
+
+    - Adds a generic RetryManager that allows for retry logic
+    - Updated SessionService#getSessionByAccessToken to retry on failure, 3x upto 1 second to fix GSI eventual consistentency
+
 ## 4.1.0
 
     - Adds null and blank check to the sessionID passed into validateSession, now throws SessionNotFoundException instead of a DynamoDBException
