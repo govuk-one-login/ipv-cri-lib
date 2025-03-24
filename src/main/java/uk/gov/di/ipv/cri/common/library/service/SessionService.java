@@ -130,7 +130,12 @@ public class SessionService {
     public SessionItem getSessionByAccessToken(AccessToken accessToken)
             throws SessionExpiredException, AccessTokenExpiredException, SessionNotFoundException {
 
-        RetryConfig retryConfig = new RetryConfig.Builder().delayBetweenAttempts(334).build();
+        RetryConfig retryConfig =
+                new RetryConfig.Builder()
+                        .delayBetweenAttempts(100)
+                        .maxAttempts(3)
+                        .exponentiallyRetry(true)
+                        .build();
 
         Retryable<SessionItem> retryable =
                 () -> {
