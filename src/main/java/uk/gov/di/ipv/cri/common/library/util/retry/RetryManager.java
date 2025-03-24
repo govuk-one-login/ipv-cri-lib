@@ -15,7 +15,13 @@ public class RetryManager {
         for (int attempt = 0; attempt < retryConfig.getMaxAttempts(); attempt++) {
             try {
                 if (attempt > 0) {
-                    Thread.sleep(calculateSleepDuration(retryConfig, attempt)); // NOSONAR
+                    long start = System.currentTimeMillis();
+                    long sleepDuration = calculateSleepDuration(retryConfig, attempt);
+                    LOGGER.info(
+                            "Sleeping for {}ms at {}", sleepDuration, System.currentTimeMillis());
+                    Thread.sleep(sleepDuration); // NOSONAR
+                    long elapsed = System.currentTimeMillis() - start;
+                    LOGGER.info("Slept for {}ms", elapsed);
                 }
 
                 T result = retryable.execute();
