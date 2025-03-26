@@ -27,6 +27,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -191,6 +192,33 @@ class SessionServiceTest {
 
         assertThrows(SessionNotFoundException.class, () -> sessionService.validateSessionId("   "));
         verify(mockDataStore, never()).getItem(any());
+    }
+
+    @Test
+    void shouldRetryWhenSessionNotFound() {
+        SessionItem item = new SessionItem();
+        AccessToken accessToken = new BearerAccessToken();
+        UUID uuid = UUID.randomUUID();
+
+        long tomorrow = Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
+
+        item.setSessionId(uuid);
+        item.setAuthorizationCode(uuid.toString());
+        item.setAccessToken(accessToken.toAuthorizationHeader());
+        item.setExpiryDate(tomorrow);
+        item.setAuthorizationCodeExpiryDate(tomorrow);
+        item.setAccessTokenExpiryDate(tomorrow);
+
+        when(mockDataStore.getItemByIndex(
+                        SessionItem.ACCESS_TOKEN_INDEX, accessToken.toAuthorizationHeader()))
+                .thenReturn(Collections.emptyList())
+                .thenReturn(Collections.emptyList())
+                .thenReturn(List.of(item));
+
+        when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
+
+        SessionItem sessionItem = sessionService.getSessionByAccessToken(accessToken);
+        assertThat(sessionItem.getSessionId(), equalTo(item.getSessionId()));
     }
 
     @Test
