@@ -23,9 +23,7 @@ import uk.gov.di.ipv.cri.common.library.persistence.item.EvidenceRequest;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
 import java.net.URI;
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
@@ -61,8 +59,7 @@ class SessionServiceTest {
 
     @BeforeEach
     void setUp() {
-        Clock nowClock = Clock.fixed(fixedInstant, ZoneId.systemDefault());
-        sessionService = new SessionService(mockDataStore, mockConfigurationService, nowClock);
+        sessionService = new SessionService(mockDataStore, mockConfigurationService);
     }
 
     @Test

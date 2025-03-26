@@ -3,31 +3,38 @@ package uk.gov.di.ipv.cri.common.library.persistence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import uk.gov.di.ipv.cri.common.library.persistence.item.EvidenceRequest;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
+import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.common.library.service.SessionService;
 
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SessionItemTest {
     private static final String INT_USER_CONTEXT = "international_user";
 
-    @Mock private DataStore<SessionItem> dataStore;
-
-    @InjectMocks private SessionService sessionService;
-
+    private DataStore<SessionItem> dataStore;
+    private SessionService sessionService;
     private SessionItem sessionItem;
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     void setup() {
+        DynamoDbEnhancedClient dynamoDbEnhancedClient = mock(DynamoDbEnhancedClient.class);
+        when(dynamoDbEnhancedClient.table(any(), any())).thenReturn(mock(DynamoDbTable.class));
+
+        dataStore = new DataStore<>("dummy-table", SessionItem.class, dynamoDbEnhancedClient);
+        sessionService =
+                new SessionService(mock(ConfigurationService.class), dynamoDbEnhancedClient);
         sessionItem = new SessionItem();
         sessionItem.setSessionId(UUID.randomUUID());
 
@@ -47,6 +54,8 @@ class SessionItemTest {
 
     @Test
     void testGetSessionItem() {
+        when(dataStore.getItem(any())).thenReturn(sessionItem);
+
         SessionItem retrievedItem =
                 sessionService.getSession(sessionItem.getSessionId().toString());
 

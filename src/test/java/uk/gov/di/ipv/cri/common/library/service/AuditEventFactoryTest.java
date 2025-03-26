@@ -1,10 +1,14 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEvent;
 import uk.gov.di.ipv.cri.common.library.domain.AuditEventContext;
@@ -14,7 +18,6 @@ import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -25,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,8 +37,18 @@ class AuditEventFactoryTest {
     private static final String TEST_AUDIT_EVENT_PREFIX = "AUDIT_EVENT_PREFIX";
     private static final String TEST_VC_ISSUER = "VC_ISSUER";
 
-    @Mock private Clock mockClock;
     @Mock private ConfigurationService mockConfigurationService;
+    private MockedStatic<Instant> mockedStatic;
+
+    @BeforeEach
+    void beforeEach() {
+        mockedStatic = Mockito.mockStatic(Instant.class);
+    }
+
+    @AfterEach
+    void afterEach() {
+        mockedStatic.close();
+    }
 
     @ParameterizedTest
     @NullAndEmptySource
@@ -44,7 +56,7 @@ class AuditEventFactoryTest {
         when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn(auditEventPrefix);
         assertThrows(
                 IllegalStateException.class,
-                () -> new AuditEventFactory(mockConfigurationService, mockClock),
+                () -> new AuditEventFactory(mockConfigurationService),
                 "Audit event prefix not retrieved from configuration service");
     }
 
@@ -55,18 +67,8 @@ class AuditEventFactoryTest {
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(vcIssuer);
         assertThrows(
                 IllegalStateException.class,
-                () -> new AuditEventFactory(mockConfigurationService, mockClock),
+                () -> new AuditEventFactory(mockConfigurationService),
                 "Issuer not retrieved from configuration service");
-    }
-
-    @Test
-    void shouldThrowExceptionWhenClockIsNull() {
-        when(mockConfigurationService.getSqsAuditEventPrefix()).thenReturn(TEST_AUDIT_EVENT_PREFIX);
-        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_VC_ISSUER);
-        assertThrows(
-                NullPointerException.class,
-                () -> new AuditEventFactory(mockConfigurationService, null),
-                "clock must not be null");
     }
 
     @Test
@@ -83,7 +85,7 @@ class AuditEventFactoryTest {
         Instant mockInstant = mock(Instant.class);
         when(mockInstant.getEpochSecond()).thenReturn(timestamp);
         when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
-        when(mockClock.instant()).thenReturn(mockInstant);
+        mockedStatic.when(Instant::now).thenReturn(mockInstant);
 
         NamePart firstNamePart = new NamePart();
         firstNamePart.setType("GivenName");
@@ -108,8 +110,7 @@ class AuditEventFactoryTest {
         when(sessionItem.getClientSessionId()).thenReturn(clientSessionId);
         AuditEventContext auditEventContext =
                 new AuditEventContext(personIdentity, requestHeaders, sessionItem);
-        AuditEventFactory auditEventFactory =
-                new AuditEventFactory(mockConfigurationService, mockClock);
+        AuditEventFactory auditEventFactory = new AuditEventFactory(mockConfigurationService);
         Map<String, String> auditEventExtensions = Map.of("test", "extension-data");
 
         AuditEvent<Object> auditEvent =
@@ -128,7 +129,6 @@ class AuditEventFactoryTest {
 
         assertEquals(auditEventExtensions, auditEvent.getExtensions());
 
-        verify(mockClock, times(2)).instant();
         verify(mockInstant).toEpochMilli();
         verify(mockConfigurationService).getSqsAuditEventPrefix();
         verify(mockConfigurationService).getVerifiableCredentialIssuer();
@@ -148,7 +148,7 @@ class AuditEventFactoryTest {
         Instant mockInstant = mock(Instant.class);
         when(mockInstant.getEpochSecond()).thenReturn(timestamp);
         when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
-        when(mockClock.instant()).thenReturn(mockInstant);
+        mockedStatic.when(Instant::now).thenReturn(mockInstant);
         String encodedDeviceInformation = "123456789";
 
         Map<String, String> requestHeaders =
@@ -163,8 +163,7 @@ class AuditEventFactoryTest {
         when(sessionItem.getPersistentSessionId()).thenReturn(persistentSessionId);
         when(sessionItem.getClientSessionId()).thenReturn(clientSessionId);
         AuditEventContext auditEventContext = new AuditEventContext(requestHeaders, sessionItem);
-        AuditEventFactory auditEventFactory =
-                new AuditEventFactory(mockConfigurationService, mockClock);
+        AuditEventFactory auditEventFactory = new AuditEventFactory(mockConfigurationService);
         Map<String, String> auditEventExtensions = Map.of("test", "extension-data");
 
         AuditEvent<Object> auditEvent =
@@ -186,7 +185,6 @@ class AuditEventFactoryTest {
 
         assertEquals(auditEventExtensions, auditEvent.getExtensions());
 
-        verify(mockClock, times(2)).instant();
         verify(mockInstant).toEpochMilli();
         verify(mockConfigurationService).getSqsAuditEventPrefix();
         verify(mockConfigurationService).getVerifiableCredentialIssuer();
@@ -206,7 +204,7 @@ class AuditEventFactoryTest {
         Instant mockInstant = mock(Instant.class);
         when(mockInstant.getEpochSecond()).thenReturn(timestamp);
         when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
-        when(mockClock.instant()).thenReturn(mockInstant);
+        mockedStatic.when(Instant::now).thenReturn(mockInstant);
 
         NamePart firstNamePart = new NamePart();
         firstNamePart.setType("GivenName");
@@ -237,8 +235,7 @@ class AuditEventFactoryTest {
         when(sessionItem.getClientSessionId()).thenReturn(clientSessionId);
         AuditEventContext auditEventContext =
                 new AuditEventContext(personIdentity, requestHeaders, sessionItem);
-        AuditEventFactory auditEventFactory =
-                new AuditEventFactory(mockConfigurationService, mockClock);
+        AuditEventFactory auditEventFactory = new AuditEventFactory(mockConfigurationService);
         Map<String, String> auditEventExtensions = Map.of("test", "extension-data");
 
         AuditEvent<Object> auditEvent =
@@ -260,7 +257,6 @@ class AuditEventFactoryTest {
 
         assertEquals(auditEventExtensions, auditEvent.getExtensions());
 
-        verify(mockClock, times(2)).instant();
         verify(mockInstant).toEpochMilli();
         verify(mockConfigurationService).getSqsAuditEventPrefix();
         verify(mockConfigurationService).getVerifiableCredentialIssuer();
@@ -276,7 +272,7 @@ class AuditEventFactoryTest {
         Instant mockInstant = mock(Instant.class);
         when(mockInstant.getEpochSecond()).thenReturn(timestamp);
         when(mockInstant.toEpochMilli()).thenReturn(eventTimestampMs);
-        when(mockClock.instant()).thenReturn(mockInstant);
+        mockedStatic.when(Instant::now).thenReturn(mockInstant);
 
         NamePart firstNamePart = new NamePart();
         firstNamePart.setType("GivenName");
@@ -296,8 +292,7 @@ class AuditEventFactoryTest {
         Map<String, String> requestHeaders = Map.of("X-Forwarded-For", clientIpAddress);
         AuditEventContext auditEventContext =
                 new AuditEventContext(personIdentity, requestHeaders, null);
-        AuditEventFactory auditEventFactory =
-                new AuditEventFactory(mockConfigurationService, mockClock);
+        AuditEventFactory auditEventFactory = new AuditEventFactory(mockConfigurationService);
 
         AuditEvent<Object> auditEvent =
                 auditEventFactory.create("EVENT_TYPE", auditEventContext, null);
