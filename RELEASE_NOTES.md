@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 5.0.0
+
+    - Replace the usage of Clock#instant with Instant.now()
+
 ## 4.2.0
 
     - Adds a generic RetryManager that allows for retry logic
