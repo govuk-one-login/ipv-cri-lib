@@ -16,7 +16,7 @@ import uk.gov.di.ipv.cri.common.library.util.retry.RetryConfig;
 import uk.gov.di.ipv.cri.common.library.util.retry.RetryManager;
 import uk.gov.di.ipv.cri.common.library.util.retry.Retryable;
 
-import java.time.Clock;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,7 +26,6 @@ public class SessionService {
     private static final String REQUESTED_VERIFICATION_SCORE = "requested_verification_score";
     private final ConfigurationService configurationService;
     private final DataStore<SessionItem> dataStore;
-    private final Clock clock;
 
     @ExcludeFromGeneratedCoverageReport
     public SessionService(
@@ -37,22 +36,18 @@ public class SessionService {
                         configurationService.getCommonParameterValue(SESSION_TABLE_PARAM_NAME),
                         SessionItem.class,
                         dynamoDbEnhancedClient),
-                configurationService,
-                Clock.systemUTC());
+                configurationService);
     }
 
     public SessionService(
-            DataStore<SessionItem> dataStore,
-            ConfigurationService configurationService,
-            Clock clock) {
+            DataStore<SessionItem> dataStore, ConfigurationService configurationService) {
         this.dataStore = dataStore;
         this.configurationService = configurationService;
-        this.clock = clock;
     }
 
     public UUID saveSession(SessionRequest sessionRequest) {
         SessionItem sessionItem = new SessionItem();
-        sessionItem.setCreatedDate(clock.instant().getEpochSecond());
+        sessionItem.setCreatedDate(Instant.now().getEpochSecond());
         sessionItem.setExpiryDate(configurationService.getSessionExpirationEpoch());
         sessionItem.setState(sessionRequest.getState());
         sessionItem.setClientId(sessionRequest.getClientId());
@@ -95,7 +90,7 @@ public class SessionService {
             throw new SessionNotFoundException("session not found");
         }
 
-        if (sessionItem.getExpiryDate() < clock.instant().getEpochSecond()) {
+        if (sessionItem.getExpiryDate() < Instant.now().getEpochSecond()) {
             throw new SessionExpiredException("session expired");
         }
 
@@ -165,7 +160,7 @@ public class SessionService {
 
         SessionItem sessionItem = RetryManager.execute(retryConfig, retryable);
 
-        if (sessionItem.getAccessTokenExpiryDate() < clock.instant().getEpochSecond()) {
+        if (sessionItem.getAccessTokenExpiryDate() < Instant.now().getEpochSecond()) {
             throw new AccessTokenExpiredException("access code expired");
         }
 
@@ -195,7 +190,7 @@ public class SessionService {
         // Re-fetch our session directly to avoid problems with projections
         sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
 
-        if (sessionItem.getAuthorizationCodeExpiryDate() < clock.instant().getEpochSecond()) {
+        if (sessionItem.getAuthorizationCodeExpiryDate() < Instant.now().getEpochSecond()) {
             throw new AuthorizationCodeExpiredException("authorization code expired");
         }
 

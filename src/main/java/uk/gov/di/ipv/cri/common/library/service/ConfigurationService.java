@@ -4,7 +4,7 @@ import software.amazon.lambda.powertools.parameters.SSMProvider;
 import software.amazon.lambda.powertools.parameters.SecretsProvider;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 
-import java.time.Clock;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Objects;
@@ -19,7 +19,6 @@ public class ConfigurationService {
     private final String parameterPrefix;
     private final String commonParameterPrefix;
     private final String secretPrefix;
-    private final Clock clock;
 
     public enum SSMParameterName {
         SESSION_TTL("SessionTtl"),
@@ -43,8 +42,7 @@ public class ConfigurationService {
                 System.getenv("AWS_STACK_NAME"),
                 System.getenv("COMMON_PARAMETER_NAME_PREFIX"),
                 Optional.ofNullable(System.getenv("SECRET_PREFIX"))
-                        .orElse(System.getenv("AWS_STACK_NAME")),
-                Clock.systemUTC());
+                        .orElse(System.getenv("AWS_STACK_NAME")));
     }
 
     ConfigurationService(
@@ -52,14 +50,12 @@ public class ConfigurationService {
             SecretsProvider secretsProvider,
             String parameterPrefix,
             String commonParameterPrefix,
-            String secretPrefix,
-            Clock clock) {
+            String secretPrefix) {
         this.ssmProvider = ssmProvider;
         this.secretsProvider = secretsProvider;
         this.parameterPrefix = parameterPrefix;
         this.commonParameterPrefix = commonParameterPrefix;
         this.secretPrefix = secretPrefix;
-        this.clock = clock;
     }
 
     public String getParameterValue(String parameterName) {
@@ -91,7 +87,7 @@ public class ConfigurationService {
     }
 
     public long getSessionExpirationEpoch() {
-        return clock.instant().plus(getSessionTtl(), ChronoUnit.SECONDS).getEpochSecond();
+        return Instant.now().plus(getSessionTtl(), ChronoUnit.SECONDS).getEpochSecond();
     }
 
     public long getAuthorizationCodeTtl() {
@@ -101,7 +97,7 @@ public class ConfigurationService {
     }
 
     public long getAuthorizationCodeExpirationEpoch() {
-        return clock.instant().plus(getAuthorizationCodeTtl(), ChronoUnit.SECONDS).getEpochSecond();
+        return Instant.now().plus(getAuthorizationCodeTtl(), ChronoUnit.SECONDS).getEpochSecond();
     }
 
     public long getBearerAccessTokenTtl() {
@@ -111,7 +107,7 @@ public class ConfigurationService {
     }
 
     public long getBearerAccessTokenExpirationEpoch() {
-        return clock.instant().plus(getBearerAccessTokenTtl(), ChronoUnit.SECONDS).getEpochSecond();
+        return Instant.now().plus(getBearerAccessTokenTtl(), ChronoUnit.SECONDS).getEpochSecond();
     }
 
     public long getMaxJwtTtl() {

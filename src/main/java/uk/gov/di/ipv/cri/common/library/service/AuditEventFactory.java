@@ -8,7 +8,7 @@ import uk.gov.di.ipv.cri.common.library.domain.DeviceInformation;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
-import java.time.Clock;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
@@ -18,9 +18,8 @@ public class AuditEventFactory {
 
     private final String eventPrefix;
     private final String issuer;
-    private final Clock clock;
 
-    public AuditEventFactory(ConfigurationService configurationService, Clock clock) {
+    public AuditEventFactory(ConfigurationService configurationService) {
         this.eventPrefix = configurationService.getSqsAuditEventPrefix();
         if (StringUtils.isBlank(this.eventPrefix)) {
             throw new IllegalStateException(
@@ -30,14 +29,13 @@ public class AuditEventFactory {
         if (StringUtils.isBlank(this.issuer)) {
             throw new IllegalStateException("Issuer not retrieved from configuration service");
         }
-        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     <T> AuditEvent<T> create(String eventType, AuditEventContext auditEventContext, T extensions) {
         AuditEvent<T> auditEvent =
                 new AuditEvent<>(
-                        clock.instant().getEpochSecond(),
-                        clock.instant().toEpochMilli(),
+                        Instant.now().getEpochSecond(),
+                        Instant.now().toEpochMilli(),
                         eventPrefix + "_" + eventType,
                         issuer);
         if (Objects.nonNull(auditEventContext)) {
