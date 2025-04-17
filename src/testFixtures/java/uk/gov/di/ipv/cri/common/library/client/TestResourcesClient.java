@@ -1,6 +1,8 @@
 package uk.gov.di.ipv.cri.common.library.client;
 
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.http.ContentStreamProvider;
 import software.amazon.awssdk.http.HttpExecuteRequest;
 import software.amazon.awssdk.http.HttpExecuteResponse;
 import software.amazon.awssdk.http.SdkHttpClient;
@@ -17,8 +19,13 @@ import uk.gov.di.ipv.cri.common.library.util.URIBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Objects;
 
 public class TestResourcesClient {
     private final String testHarnessUrl;
@@ -69,6 +76,38 @@ public class TestResourcesClient {
         return sendRequest(request);
     }
 
+    public HttpExecuteResponse sendDefaultStartRequest() throws IOException, URISyntaxException {
+        return sendStartRequest("{}");
+    }
+
+    public HttpExecuteResponse sendOverriddenStartRequest(String overridesFileName) throws IOException, URISyntaxException {
+        //TODO - This does not work
+        Path startSchemaPath =
+                Paths.get(
+                        Objects.requireNonNull(
+                                        getClass().getClassLoader().getResource(overridesFileName))
+                                .toURI());
+        String requestBody = Files.readString(startSchemaPath);
+        return sendStartRequest(requestBody.toString());
+    }
+
+    private HttpExecuteResponse sendStartRequest(String requestBody)
+            throws IOException {
+        final URI startEndpointURI =
+                new URIBuilder(this.testHarnessUrl)
+                        .setPath("start")
+                        .build();
+
+        final SdkHttpFullRequest request =
+                SdkHttpFullRequest.builder()
+                        .method(SdkHttpMethod.POST)
+                        .putHeader("Content-Type", "text/plain")
+                        .uri(startEndpointURI)
+                        .build();
+
+        return sendRequest(request);
+    }
+
     private HttpExecuteResponse sendRequest(SdkHttpFullRequest unsignedRequest) throws IOException {
         final SignedRequest signedRequest = signRequest(unsignedRequest);
 
@@ -77,16 +116,18 @@ public class TestResourcesClient {
                         .request(signedRequest.request())
                         .contentStreamProvider(signedRequest.payload().orElse(null))
                         .build();
-
         return CLIENT.prepareRequest(httpExecuteRequest).call();
     }
 
     private SignedRequest signRequest(SdkHttpFullRequest unsignedRequest) {
+//        ContentStreamProvider contentStreamProvider = () -> new java.io.ByteArrayInputStream(
+//                "{}".getBytes(StandardCharsets.UTF_8));
         try (DefaultCredentialsProvider credentialsProvider = DefaultCredentialsProvider.create()) {
             return SIGNER.sign(
                     signRequest ->
                             signRequest
                                     .request(unsignedRequest)
+//                                    .payload(requestPayload) //TODO - This does not work
                                     .identity(credentialsProvider.resolveCredentials())
                                     .putProperty(
                                             AwsV4HttpSigner.SERVICE_SIGNING_NAME, "execute-api")

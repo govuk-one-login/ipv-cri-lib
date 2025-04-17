@@ -7,12 +7,13 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import software.amazon.awssdk.http.HttpExecuteResponse;
 import uk.gov.di.ipv.cri.common.library.client.ClientConfigurationService;
 import uk.gov.di.ipv.cri.common.library.client.CommonApiClient;
-import uk.gov.di.ipv.cri.common.library.client.IpvCoreStubClient;
 import uk.gov.di.ipv.cri.common.library.client.TestResourcesClient;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,69 +25,35 @@ public class CommonSteps {
     private final CommonApiClient commonApiClient;
     private final TestResourcesClient testResourcesClient;
 
-    private final IpvCoreStubClient ipvCoreStubClient;
     private final CriTestContext testContext;
-    private final ClientConfigurationService clientConfigurationService;
 
     private String sessionRequestBody;
     private String authorizationCode;
 
     public CommonSteps(
             ClientConfigurationService clientConfigurationService, CriTestContext testContext) {
-        this.clientConfigurationService = clientConfigurationService;
         this.commonApiClient = new CommonApiClient(clientConfigurationService);
         this.testResourcesClient = new TestResourcesClient(clientConfigurationService);
-        this.ipvCoreStubClient = new IpvCoreStubClient(clientConfigurationService);
         this.objectMapper = new ObjectMapper();
         this.testContext = testContext;
     }
 
-    @Given("user has the test-identity {int} in the form of a signed JWT string")
-    public void userHasTheTestIdentityInTheFormOfASignedJWTString(int testUserDataSheetRowNumber)
-            throws IOException, InterruptedException {
-        this.testContext.setSerialisedUserIdentity(
-                this.ipvCoreStubClient.getClaimsForUser(
-                        Map.of(
-                                "cri", clientConfigurationService.getIpvCoreStubCriId(),
-                                "rowNumber", String.valueOf(testUserDataSheetRowNumber))));
-        sessionRequestBody =
-                this.ipvCoreStubClient.createSessionRequest(
-                        this.testContext.getSerialisedUserIdentity());
+    @Given("user has a default signed JWT")
+    public void userHasADefaultSignedJWT()
+            throws IOException, URISyntaxException {
+        HttpExecuteResponse response = this.testResourcesClient.sendDefaultStartRequest();
+//        assertEquals(200, response.httpResponse().statusCode());
+        sessionRequestBody = TestResourcesClient.getResponseBody(response);
+        assertEquals("", sessionRequestBody);
     }
 
-    @Given(
-            "user has the test-identity {int} and context of {string} in the form of a signed JWT string")
-    public void userHasTheTestIdentityAndContextOfInTheFormOfASignedJWTString(
-            int testUserDataSheetRowNumber, String userContext)
-            throws IOException, InterruptedException {
-        this.testContext.setSerialisedUserIdentity(
-                this.ipvCoreStubClient.getClaimsForUser(
-                        Map.of(
-                                "cri", clientConfigurationService.getIpvCoreStubCriId(),
-                                "rowNumber", String.valueOf(testUserDataSheetRowNumber),
-                                "context", userContext)));
-        sessionRequestBody =
-                this.ipvCoreStubClient.createSessionRequest(
-                        this.testContext.getSerialisedUserIdentity());
-    }
-
-    @Given(
-            "user has the test-identity {int} and verificationScore of {int} in the form of a signed JWT string")
-    public void userHasTheTestIdentityAndVerificationScoreInTheFormOfASignedJWTString(
-            int testUserDataSheetRowNumber, int verificationScore)
-            throws IOException, InterruptedException {
-
-        this.testContext.setSerialisedUserIdentity(
-                this.ipvCoreStubClient.getClaimsForUser(
-                        Map.of(
-                                "cri", clientConfigurationService.getIpvCoreStubCriId(),
-                                "rowNumber", String.valueOf(testUserDataSheetRowNumber),
-                                "scoringPolicy", "gpg45",
-                                "verificationScore", String.valueOf(verificationScore))));
-
-        sessionRequestBody =
-                this.ipvCoreStubClient.createSessionRequest(
-                        this.testContext.getSerialisedUserIdentity());
+    @Given("user has an overridden signed JWT using {string}")
+    public void userHasAnOverriddenSignedJWT(String overridesFileName)
+            throws IOException, URISyntaxException {
+        HttpExecuteResponse response = this.testResourcesClient.sendOverriddenStartRequest(overridesFileName);
+//        assertEquals(200, response.httpResponse().statusCode());
+        sessionRequestBody = TestResourcesClient.getResponseBody(response);
+        assertEquals("", sessionRequestBody);
     }
 
     @When("user sends a POST request to session end point")
@@ -120,10 +87,12 @@ public class CommonSteps {
 
     @When("user sends a POST request to token end point")
     public void userSendsAPostRequestToTokenEndpoint() throws IOException, InterruptedException {
-        String privateKeyJWT =
-                this.ipvCoreStubClient.getPrivateKeyJWTFormParamsForAuthCode(
-                        authorizationCode.trim());
-        this.testContext.setResponse(this.commonApiClient.sendTokenRequest(privateKeyJWT));
+//        String privateKeyJWT =
+//                this.ipvCoreStubClient.getPrivateKeyJWTFormParamsForAuthCode(
+//                        authorizationCode.trim());
+//
+//
+//        this.testContext.setResponse(this.commonApiClient.sendTokenRequest(privateKeyJWT));
     }
 
     @When("user sends a GET request to events end point for {string}")

@@ -25,12 +25,12 @@ public class CommonApiClient {
                         .setPath(this.clientConfigurationService.createUriPath("authorization"))
                         .addParameter(
                                 "redirect_uri",
-                                new URIBuilder(this.clientConfigurationService.getIPVCoreStubURL())
+                                new URIBuilder("https://test-resources.review-a.dev.account.gov.uk")
                                         .setPath("/callback")
                                         .build()
                                         .toString())
                         .addParameter(
-                                "client_id", this.clientConfigurationService.getDefaultClientId())
+                                "client_id", "ipv-core-stub-aws-headless")
                         .addParameter("response_type", "code")
                         .addParameter("scope", "openid")
                         .addParameter("state", "state-ipv")
