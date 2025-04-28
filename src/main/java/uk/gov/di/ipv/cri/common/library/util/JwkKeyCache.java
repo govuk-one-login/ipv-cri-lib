@@ -62,7 +62,9 @@ public class JwkKeyCache {
             }
             lastUpdated = System.currentTimeMillis();
             cacheControl = TimeUnit.SECONDS.toMillis(cachedJwks.getMaxAgeFromCacheControlHeader());
-            LOGGER.info("JWKs cache has been updated to '{}' seconds", cachedJwks.getMaxAgeFromCacheControlHeader());
+            LOGGER.info(
+                    "JWKs cache has been updated to '{}' seconds",
+                    cachedJwks.getMaxAgeFromCacheControlHeader());
         } else {
             LOGGER.info("Using locally cached JWKs from {}", publicJwkEndpoint);
         }
