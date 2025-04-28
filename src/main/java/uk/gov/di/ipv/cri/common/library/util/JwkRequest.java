@@ -15,6 +15,8 @@ import java.util.Optional;
 
 public class JwkRequest {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwkRequest.class);
+    private static final String CACHE_CONTROL_HEADER_NAME = "Cache-Control";
+    private static final String MAX_AGE_PREFIX = "max-age=";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
@@ -55,12 +57,12 @@ public class JwkRequest {
 
     private Optional<Integer> parseCacheControlHeader(HttpResponse<String> response) {
         return response.headers()
-                .firstValue("Cache-Control")
-                .filter(value -> value.startsWith("max-age="))
+                .firstValue(CACHE_CONTROL_HEADER_NAME)
+                .filter(value -> value.startsWith(MAX_AGE_PREFIX))
                 .map(
                         value -> {
                             try {
-                                return Integer.parseInt(value.substring("max-age=".length()));
+                                return Integer.parseInt(value.substring(MAX_AGE_PREFIX.length()));
                             } catch (NumberFormatException e) {
                                 LOGGER.warn(
                                         "Invalid max-age value in Cache-Control header: {}",
