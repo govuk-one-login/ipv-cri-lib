@@ -66,10 +66,10 @@ public class JwkKeyCache {
         } else {
             LOGGER.info("Using locally cached JWKs from {}", publicJwkEndpoint);
         }
-        return getKeyForKid(cachedJwks, kid).map(this::toBase64);
+        return getSigningKeyForKid(cachedJwks, kid).map(this::toBase64);
     }
 
-    private Optional<Key> getKeyForKid(JWKS jwks, String kid) {
+    private Optional<Key> getSigningKeyForKid(JWKS jwks, String kid) {
         return jwks.getKeys().stream()
                 .filter(entry -> entry.getUse().equals("sig") && entry.getKid().equals(kid))
                 .findFirst();
