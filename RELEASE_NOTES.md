@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 5.0.0
+    - Adds a helper class to invoke the public JWKS endpoint and deserialize its response
+    - In the JWTVerifier, to use the provided public JWK endpoint if they are enabled via the ENV_VAR_FEATURE_FLAG_KEY_ROTATION and PUBLIC_JWKS_ENDPOINT environment variable.
+
 ## 4.2.0
 
     - Adds a generic RetryManager that allows for retry logic
