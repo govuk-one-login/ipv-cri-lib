@@ -13,8 +13,11 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.common.library.exception.ClientConfigurationException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
+import uk.gov.di.ipv.cri.common.library.util.JwkKeyCache;
 
 import java.io.ByteArrayInputStream;
 import java.security.PublicKey;
@@ -35,6 +38,8 @@ import java.util.Set;
 import static com.nimbusds.jose.JWSAlgorithm.ES256;
 
 public class JWTVerifier {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JWTVerifier.class);
+    private final JwkKeyCache jwkKeyCache = new JwkKeyCache();
 
     public void verifyAuthorizationJWT(
             Map<String, String> clientAuthenticationConfig, SignedJWT signedJWT)
@@ -122,6 +127,18 @@ public class JWTVerifier {
             } else {
                 concatSignatureJwt = signedJWT;
             }
+
+            jwkKeyCache
+                    .getBase64JwkForKid(signedJWT.getHeader().getKeyID())
+                    .ifPresentOrElse(
+                            value ->
+                                    clientAuthenticationConfig.replace(
+                                            "publicSigningJwkBase64", value),
+                            () ->
+                                    LOGGER.warn(
+                                            "{} not found in public JWK response",
+                                            signedJWT.getHeader().getKeyID()));
+
             JWSAlgorithm signingAlgorithm = signedJWT.getHeader().getAlgorithm();
             PublicKey pubicKeyFromConfig =
                     getPublicKeyFromConfig(publicCertificateToVerify, signingAlgorithm);
