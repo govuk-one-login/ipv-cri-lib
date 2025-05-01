@@ -16,8 +16,11 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,6 +62,12 @@ class JwkRequestTest {
 
         JwkRequest request = new JwkRequest(mockHttpClient, objectMapper);
         JWKS jwks = request.callJWKSEndpoint("https://example.com/.well-known/jwks.json");
+
+        verify(mockHttpClient).send(any(), any());
+        verify(mockHttpResponse).body();
+        verify(mockHttpResponse).headers();
+        verify(mockHttpHeaders).firstValue("Cache-Control");
+
         assertEquals(300, jwks.getMaxAgeFromCacheControlHeader());
     }
 
@@ -71,6 +80,12 @@ class JwkRequestTest {
 
         JwkRequest request = new JwkRequest(mockHttpClient, objectMapper);
         JWKS jwks = request.callJWKSEndpoint("https://example.com/.well-known/jwks.json");
+
+        verify(mockHttpClient).send(any(), any());
+        verify(mockHttpResponse).body();
+        verify(mockHttpResponse).headers();
+        verify(mockHttpHeaders).firstValue("Cache-Control");
+
         assertEquals(0, jwks.getMaxAgeFromCacheControlHeader());
     }
 
@@ -84,6 +99,10 @@ class JwkRequestTest {
         JWKS jwks = request.callJWKSEndpoint("https://example.com/.well-known/jwks.json");
 
         List<Key> keys = jwks.getKeys();
+
+        verify(mockHttpClient).send(any(), any());
+        verify(mockHttpResponse).body();
+        verify(mockHttpResponse).headers();
 
         assertEquals(2, keys.size());
         assertEquals("RSA", keys.get(0).getKty());
@@ -115,6 +134,7 @@ class JwkRequestTest {
         when(mockHttpResponse.body()).thenReturn("invalid-response");
 
         JwkRequest request = new JwkRequest(mockHttpClient, objectMapper);
+
         assertThrows(
                 JWKSRequestException.class,
                 () -> request.callJWKSEndpoint("https://example.com/.well-known/jwks.json"));
