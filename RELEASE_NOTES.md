@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+## 5.0.1
+    - Add a null check to getSignignKeyForKid
+
 ## 5.0.0
     - Adds a helper class to invoke the public JWKS endpoint and deserialize its response
     - In the JWTVerifier, to use the provided public JWK endpoint if they are enabled via the ENV_VAR_FEATURE_CONSUME_PUBLIC_JWK and PUBLIC_JWKS_ENDPOINT environment variable.
