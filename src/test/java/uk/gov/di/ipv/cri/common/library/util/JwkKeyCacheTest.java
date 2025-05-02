@@ -50,6 +50,21 @@ class JwkKeyCacheTest {
     }
 
     @Test
+    void shouldReturnEmptyWhenNullJwk() throws Exception {
+        String kid = "dummyKid";
+
+        JWKS jwks = new JWKS();
+        jwks.setMaxAgeFromCacheControlHeader(300);
+
+        when(mockJwkRequest.callJWKSEndpoint(anyString())).thenReturn(jwks);
+
+        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest, true, "https://example.com");
+        Optional<String> jwk = jwkKeyCache.getBase64JwkForKid(kid);
+
+        assertTrue(jwk.isEmpty());
+    }
+
+    @Test
     void shouldReturnEmptyWhenDisabled() {
         assertTrue(
                 new JwkKeyCache(mockJwkRequest, false, "").getBase64JwkForKid("dummy").isEmpty());

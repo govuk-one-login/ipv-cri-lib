@@ -72,6 +72,9 @@ public class JwkKeyCache {
     }
 
     private Optional<Key> getSigningKeyForKid(JWKS jwks, String kid) {
+        if (jwks == null || jwks.getKeys() == null) {
+            return Optional.empty();
+        }
         return jwks.getKeys().stream()
                 .filter(entry -> entry.getUse().equals("sig") && entry.getKid().equals(kid))
                 .findFirst();
