@@ -13,7 +13,7 @@ public class JWKS {
     private int maxAgeFromCacheControlHeader;
 
     public JWKS() {
-        // Empty constructor for Jackson
+        maxAgeFromCacheControlHeader = 0;
     }
 
     public List<Key> getKeys() {
