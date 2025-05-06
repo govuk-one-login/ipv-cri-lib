@@ -3,16 +3,26 @@ package uk.gov.di.ipv.cri.common.library.stepdefinitions;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import software.amazon.awssdk.http.HttpExecuteResponse;
 import uk.gov.di.ipv.cri.common.library.client.ClientConfigurationService;
 import uk.gov.di.ipv.cri.common.library.client.CommonApiClient;
 import uk.gov.di.ipv.cri.common.library.client.IpvCoreStubClient;
+import uk.gov.di.ipv.cri.common.library.client.StubClient;
 import uk.gov.di.ipv.cri.common.library.client.TestResourcesClient;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.http.HttpResponse;
+import java.text.ParseException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,6 +35,7 @@ public class CommonSteps {
     private final TestResourcesClient testResourcesClient;
 
     private final IpvCoreStubClient ipvCoreStubClient;
+    private final StubClient stubClient;
     private final CriTestContext testContext;
     private final ClientConfigurationService clientConfigurationService;
 
@@ -33,6 +44,7 @@ public class CommonSteps {
 
     public CommonSteps(
             ClientConfigurationService clientConfigurationService, CriTestContext testContext) {
+        this.stubClient = new StubClient();
         this.clientConfigurationService = clientConfigurationService;
         this.commonApiClient = new CommonApiClient(clientConfigurationService);
         this.testResourcesClient = new TestResourcesClient(clientConfigurationService);
@@ -70,6 +82,13 @@ public class CommonSteps {
                         this.testContext.getSerialisedUserIdentity());
     }
 
+    @Given("user has a default signed JWT")
+    public void userHasADefaultSignedJWT() throws IOException, InterruptedException {
+        HttpResponse<String> response = this.testResourcesClient.sendStartRequest();
+        assertEquals(200, response.statusCode());
+        sessionRequestBody = response.body();
+    }
+
     @Given(
             "user has the test-identity {int} and verificationScore of {int} in the form of a signed JWT string")
     public void userHasTheTestIdentityAndVerificationScoreInTheFormOfASignedJWTString(
@@ -87,6 +106,24 @@ public class CommonSteps {
         sessionRequestBody =
                 this.ipvCoreStubClient.createSessionRequest(
                         this.testContext.getSerialisedUserIdentity());
+    }
+
+    @Given("user has an overridden signed JWT using {string} and {string}:")
+    public void userHasAnOverriddenSignedJWT(
+            String sharedClaims, String evidenceRequested, DataTable dataTable)
+            throws IOException, InterruptedException {
+
+        Map<String, Object> claimOverrides = new HashMap<>();
+        for (List<String> row : dataTable.asLists()) {
+            claimOverrides.put(row.get(0), row.get(1));
+        }
+
+        HttpResponse<String> response =
+                this.testResourcesClient.sendOverwrittenStartRequest(
+                        sharedClaims, evidenceRequested, claimOverrides);
+
+        assertEquals(200, response.statusCode());
+        sessionRequestBody = response.body();
     }
 
     @When("user sends a POST request to session end point")
@@ -118,6 +155,26 @@ public class CommonSteps {
                 this.commonApiClient.sendAuthorizationRequest(this.testContext.getSessionId()));
     }
 
+    @When("user sends a GET request to authorization end point with test resource client")
+    public void userSendsAGetRequestToAuthorizationEndpointWithTestResource()
+            throws IOException, InterruptedException {
+        this.testContext.setResponse(
+                this.commonApiClient.sendNewAuthorizationRequest(this.testContext.getSessionId()));
+    }
+
+    @When("user sends a POST request to token end point with {string} and {string}")
+    public void userSendsAPostRequestToTokenEndpointWith(String issuer, String audience)
+            throws IOException,
+                    InterruptedException,
+                    JOSEException,
+                    ParseException,
+                    URISyntaxException {
+        PrivateKeyJWT privateKeyJWT = this.stubClient.generateClientAssertion(issuer, audience);
+        var code = authorizationCode.trim();
+        this.testContext.setResponse(
+                this.commonApiClient.sendNewTokenRequest(privateKeyJWT, code, issuer));
+    }
+
     @When("user sends a POST request to token end point")
     public void userSendsAPostRequestToTokenEndpoint() throws IOException, InterruptedException {
         String privateKeyJWT =
@@ -127,10 +184,25 @@ public class CommonSteps {
     }
 
     @When("user sends a GET request to events end point for {string}")
-    public void userSendsAGetRequestToEventsEndpoint(String eventName) throws IOException {
-        this.testContext.setResponse(
-                this.testResourcesClient.sendEventRequest(
-                        this.testContext.getSessionId(), eventName));
+    public void userSendsAGetRequestToEventsEndpoint(String eventName)
+            throws IOException, InterruptedException {
+        int maxAttempts = 5;
+        int delayMillis = 500;
+
+        HttpExecuteResponse response = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            response = testResourcesClient.sendEventRequest(testContext.getSessionId(), eventName);
+            String responseBody = (String.valueOf(response.responseBody()));
+
+            if (responseBody != null && !responseBody.isBlank()) {
+                testContext.setResponse(response);
+                return;
+            }
+            System.out.println("Attempt " + attempt + ": no event body returned - retrying");
+            wait(delayMillis);
+        }
+        throw new AssertionError("No audit event body found for session");
     }
 
     @Then("user gets a session-id")
