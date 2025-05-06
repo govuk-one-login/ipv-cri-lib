@@ -139,4 +139,16 @@ class JwkRequestTest {
                 JWKSRequestException.class,
                 () -> request.callJWKSEndpoint("https://example.com/.well-known/jwks.json"));
     }
+
+    @Test
+    void showThrowErrorWhenNon200StatusCode() throws IOException, InterruptedException {
+        when(mockHttpClient.send(any(), any())).thenReturn(mockHttpResponse);
+        when(mockHttpResponse.statusCode()).thenReturn(403);
+
+        JwkRequest request = new JwkRequest(mockHttpClient, objectMapper);
+
+        assertThrows(
+                JWKSRequestException.class,
+                () -> request.callJWKSEndpoint("https://example.com/.well-known/jwks.json"));
+    }
 }
