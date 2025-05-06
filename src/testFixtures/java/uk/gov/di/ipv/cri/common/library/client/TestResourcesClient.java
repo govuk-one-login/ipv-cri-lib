@@ -1,6 +1,11 @@
 package uk.gov.di.ipv.cri.common.library.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jwt.JWTClaimsSet;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.http.ContentStreamProvider;
 import software.amazon.awssdk.http.HttpExecuteRequest;
 import software.amazon.awssdk.http.HttpExecuteResponse;
 import software.amazon.awssdk.http.SdkHttpClient;
@@ -14,17 +19,23 @@ import software.amazon.awssdk.utils.IoUtils;
 import uk.gov.di.ipv.cri.common.library.aws.CloudFormationHelper;
 import uk.gov.di.ipv.cri.common.library.util.URIBuilder;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class TestResourcesClient {
     private final String testHarnessUrl;
 
     private static final SdkHttpClient CLIENT = AwsCrtHttpClient.builder().build();
     private static final AwsV4HttpSigner SIGNER = AwsV4HttpSigner.create();
+    private static final String JSON_MIME_MEDIA_TYPE = "application/json";
 
     public TestResourcesClient(ClientConfigurationService clientConfigurationService) {
         this.testHarnessUrl =
@@ -69,6 +80,58 @@ public class TestResourcesClient {
         return sendRequest(request);
     }
 
+    public HttpResponse<String> sendOverwrittenStartRequest(
+            String sharedClaim, String evidenceRequested, Map<String, Object> claimOverrides)
+            throws IOException, InterruptedException {
+        final URI startEndpointURI = new URIBuilder(this.testHarnessUrl).setPath("start").build();
+        String requestBody = buildStartRequestBody(sharedClaim, evidenceRequested, claimOverrides);
+        final SdkHttpFullRequest request =
+                SdkHttpFullRequest.builder()
+                        .method(SdkHttpMethod.POST)
+                        .uri(startEndpointURI)
+                        .putHeader(HttpHeaders.CONTENT_TYPE, JSON_MIME_MEDIA_TYPE)
+                        .contentStreamProvider(ContentStreamProvider.fromUtf8String(requestBody))
+                        .build();
+
+        return sendSignedStartRequest(request, requestBody);
+    }
+
+    public HttpResponse<String> sendStartRequest() throws IOException, InterruptedException {
+        final URI startEndpointURI = new URIBuilder(this.testHarnessUrl).setPath("start").build();
+        String requestBody = "{}";
+        final SdkHttpFullRequest request =
+                SdkHttpFullRequest.builder()
+                        .method(SdkHttpMethod.POST)
+                        .uri(startEndpointURI)
+                        .putHeader(HttpHeaders.CONTENT_TYPE, JSON_MIME_MEDIA_TYPE)
+                        .contentStreamProvider(
+                                RequestBody.fromString(requestBody).contentStreamProvider())
+                        .build();
+
+        return sendSignedStartRequest(request, requestBody);
+    }
+
+    private HttpResponse<String> sendSignedStartRequest(
+            SdkHttpFullRequest unsignedRequest, String requestBody)
+            throws IOException, InterruptedException {
+        final SignedRequest signedRequest = signRequest(unsignedRequest);
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest.Builder request =
+                HttpRequest.newBuilder().POST(HttpRequest.BodyPublishers.ofString(requestBody));
+        request.uri(unsignedRequest.getUri());
+        signedRequest
+                .request()
+                .headers()
+                .forEach(
+                        (K, B) -> {
+                            if (!K.startsWith("Host")) {
+                                request.header(K, B.get(0));
+                            }
+                        });
+        return client.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
     private HttpExecuteResponse sendRequest(SdkHttpFullRequest unsignedRequest) throws IOException {
         final SignedRequest signedRequest = signRequest(unsignedRequest);
 
@@ -84,14 +147,67 @@ public class TestResourcesClient {
     private SignedRequest signRequest(SdkHttpFullRequest unsignedRequest) {
         try (DefaultCredentialsProvider credentialsProvider = DefaultCredentialsProvider.create()) {
             return SIGNER.sign(
-                    signRequest ->
-                            signRequest
-                                    .request(unsignedRequest)
-                                    .identity(credentialsProvider.resolveCredentials())
-                                    .putProperty(
-                                            AwsV4HttpSigner.SERVICE_SIGNING_NAME, "execute-api")
-                                    .putProperty(
-                                            AwsV4HttpSigner.REGION_NAME, Region.EU_WEST_2.id()));
+                    signRequest -> {
+                        signRequest
+                                .request(unsignedRequest)
+                                .payload(unsignedRequest.contentStreamProvider().orElse(null))
+                                .identity(credentialsProvider.resolveCredentials())
+                                .putProperty(AwsV4HttpSigner.SERVICE_SIGNING_NAME, "execute-api")
+                                .putProperty(AwsV4HttpSigner.REGION_NAME, Region.EU_WEST_2.id());
+                    });
+        }
+    }
+
+    private static String buildStartRequestBody(
+            String sharedClaimsFile,
+            String evidenceRequestedFile,
+            Map<String, Object> claimOverrides)
+            throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        Object sharedClaims = readJsonFromFile(sharedClaimsFile);
+        Object evidenceRequested = readJsonFromFile(evidenceRequestedFile);
+
+        JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder();
+
+        if (sharedClaims != null) {
+            claimsSetBuilder.claim("shared_claims", sharedClaims);
+        }
+
+        if (evidenceRequested != null) {
+            claimsSetBuilder.claim("evidence_requested", evidenceRequested);
+        }
+
+        if (claimOverrides != null && !claimOverrides.isEmpty()) {
+            claimOverrides.forEach(claimsSetBuilder::claim);
+        }
+
+        JWTClaimsSet jwtClaimsSet = claimsSetBuilder.build();
+        return mapper.writeValueAsString(jwtClaimsSet.toJSONObject());
+    }
+
+    private static Object readJsonFromFile(String overridesFileName) throws IOException {
+        if (overridesFileName.trim().isEmpty()) {
+            System.out.println("No file provided.");
+            return null;
+        }
+
+        InputStream input =
+                TestResourcesClient.class
+                        .getClassLoader()
+                        .getResourceAsStream("overrides/" + overridesFileName);
+        if (input == null) {
+            throw new FileNotFoundException(
+                    "Override JSON file not found: overrides/" + overridesFileName);
+        }
+
+        String fileContent = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+
+        try {
+            return new ObjectMapper().readValue(fileContent, Object.class);
+        } catch (JsonProcessingException e) {
+            throw new IOException(
+                    "Invalid JSON in file '" + overridesFileName + "': " + e.getMessage(), e);
         }
     }
 }
