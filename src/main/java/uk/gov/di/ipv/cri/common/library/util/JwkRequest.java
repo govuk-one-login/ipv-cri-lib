@@ -33,6 +33,10 @@ public class JwkRequest {
         try {
             HttpRequest request = createRequest(endpoint);
             HttpResponse<String> response = sendRequest(request);
+            if (response.statusCode() != 200) {
+                throw new JWKSRequestException(
+                        "JWK endpoint returned status code " + response.statusCode());
+            }
             JWKS jwks = objectMapper.readValue(response.body(), JWKS.class);
             parseCacheControlHeader(response).ifPresent(jwks::setMaxAgeFromCacheControlHeader);
             return jwks;
