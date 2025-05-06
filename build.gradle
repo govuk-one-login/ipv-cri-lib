@@ -11,7 +11,7 @@ plugins {
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "5.0.2"
+def buildVersion = "5.1.0"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
@@ -160,6 +160,8 @@ dependencies {
 	testFixturesApi configurations.cloudformation
 	testFixturesApi	configurations.cucumber
 	testFixturesApi	configurations.aspectjrt
+	testFixturesApi configurations.nimbus
+	testFixturesApi configurations.ssm
 
 	testFixturesImplementation configurations.jackson
 	testFixturesImplementation configurations.tests
