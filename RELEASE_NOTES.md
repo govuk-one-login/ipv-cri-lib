@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+## 5.0.2
+    - throw JWKSRequestException in callJWKSEndpoint when the JWKS endpoint does not return a 200
+
 ## 5.0.1
     - Add a null check to getSignignKeyForKid
 
