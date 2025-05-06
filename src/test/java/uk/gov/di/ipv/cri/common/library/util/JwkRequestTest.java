@@ -57,6 +57,7 @@ class JwkRequestTest {
     void shouldReturnCacheControlHeader() throws Exception {
         when(mockHttpClient.send(any(), any())).thenReturn(mockHttpResponse);
         when(mockHttpResponse.body()).thenReturn(MOCK_API_RESPONSE);
+        when(mockHttpResponse.statusCode()).thenReturn(200);
         when(mockHttpResponse.headers()).thenReturn(mockHttpHeaders);
         when(mockHttpHeaders.firstValue("Cache-Control")).thenReturn(Optional.of("max-age=300"));
 
@@ -75,6 +76,7 @@ class JwkRequestTest {
     void cacheControlHeaderZero() throws Exception {
         when(mockHttpClient.send(any(), any())).thenReturn(mockHttpResponse);
         when(mockHttpResponse.body()).thenReturn(MOCK_API_RESPONSE);
+        when(mockHttpResponse.statusCode()).thenReturn(200);
         when(mockHttpResponse.headers()).thenReturn(mockHttpHeaders);
         when(mockHttpHeaders.firstValue("Cache-Control")).thenReturn(Optional.of("invalid"));
 
@@ -93,6 +95,7 @@ class JwkRequestTest {
     void shouldReturnKeys() throws Exception {
         when(mockHttpClient.send(any(), any())).thenReturn(mockHttpResponse);
         when(mockHttpResponse.body()).thenReturn(MOCK_API_RESPONSE);
+        when(mockHttpResponse.statusCode()).thenReturn(200);
         when(mockHttpResponse.headers()).thenReturn(mockHttpHeaders);
 
         JwkRequest request = new JwkRequest(mockHttpClient, objectMapper);
@@ -131,7 +134,20 @@ class JwkRequestTest {
     @Test
     void showThrowErrorWhenInvalidBody() throws IOException, InterruptedException {
         when(mockHttpClient.send(any(), any())).thenReturn(mockHttpResponse);
+        when(mockHttpResponse.statusCode()).thenReturn(200);
         when(mockHttpResponse.body()).thenReturn("invalid-response");
+
+        JwkRequest request = new JwkRequest(mockHttpClient, objectMapper);
+
+        assertThrows(
+                JWKSRequestException.class,
+                () -> request.callJWKSEndpoint("https://example.com/.well-known/jwks.json"));
+    }
+
+    @Test
+    void showThrowErrorWhenNon200StatusCode() throws IOException, InterruptedException {
+        when(mockHttpClient.send(any(), any())).thenReturn(mockHttpResponse);
+        when(mockHttpResponse.statusCode()).thenReturn(403);
 
         JwkRequest request = new JwkRequest(mockHttpClient, objectMapper);
 
