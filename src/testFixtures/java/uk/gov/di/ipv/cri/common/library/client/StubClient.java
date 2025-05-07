@@ -28,6 +28,8 @@ public class StubClient {
         ssmClient = new ClientProviderFactory().getSsmClient();
     }
 
+    private static final long hourTimeLimit = 3600_000;
+
     public PrivateKeyJWT generateClientAssertion(String issuer, String audience)
             throws JOSEException, ParseException {
         var claimsSetValues =
@@ -38,7 +40,7 @@ public class StubClient {
                         .claim(JWTClaimNames.JWT_ID, UUID.randomUUID())
                         .claim(
                                 JWTClaimNames.EXPIRATION_TIME,
-                                new Date(new Date().getTime() + 3600_000))
+                                new Date(new Date().getTime() + hourTimeLimit))
                         .build();
 
         ECDSASigner signer = new ECDSASigner(getEcPrivateKey());
@@ -65,7 +67,7 @@ public class StubClient {
             GetParameterResponse parameterResponse = ssmClient.getParameter(parameterRequest);
             return parameterResponse.parameter().value();
         } catch (SsmException e) {
-            System.err.println(e.getMessage());
+            e.getMessage();
             throw e;
         }
     }

@@ -16,11 +16,13 @@ import java.net.http.HttpResponse;
 public class CommonApiClient {
     private final HttpClient httpClient;
     private final ClientConfigurationService clientConfigurationService;
+    private final TestResourcesClient testResourcesClient;
 
     private static final String JSON_MIME_MEDIA_TYPE = "application/json";
 
     public CommonApiClient(ClientConfigurationService clientConfigurationService) {
         this.clientConfigurationService = clientConfigurationService;
+        this.testResourcesClient = new TestResourcesClient(clientConfigurationService);
         this.httpClient = HttpClient.newBuilder().build();
     }
 
@@ -59,7 +61,7 @@ public class CommonApiClient {
                         .setPath(this.clientConfigurationService.createUriPath("authorization"))
                         .addParameter(
                                 "redirect_uri",
-                                new URIBuilder("https://test-resources.review-a.dev.account.gov.uk")
+                                new URIBuilder(testResourcesClient.getTestHarnessUrl())
                                         .setPath("/callback")
                                         .build()
                                         .toString())

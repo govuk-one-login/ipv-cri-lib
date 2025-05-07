@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
-import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -21,8 +20,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.http.HttpResponse;
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -108,19 +105,12 @@ public class CommonSteps {
                         this.testContext.getSerialisedUserIdentity());
     }
 
-    @Given("user has an overridden signed JWT using {string} and {string}:")
-    public void userHasAnOverriddenSignedJWT(
-            String sharedClaims, String evidenceRequested, DataTable dataTable)
+    @Given("user has an overridden signed JWT using {string}")
+    public void userHasAnOverriddenSignedJWT(String claimOverrides)
             throws IOException, InterruptedException {
 
-        Map<String, Object> claimOverrides = new HashMap<>();
-        for (List<String> row : dataTable.asLists()) {
-            claimOverrides.put(row.get(0), row.get(1));
-        }
-
         HttpResponse<String> response =
-                this.testResourcesClient.sendOverwrittenStartRequest(
-                        sharedClaims, evidenceRequested, claimOverrides);
+                this.testResourcesClient.sendOverwrittenStartRequest(claimOverrides);
 
         assertEquals(200, response.statusCode());
         sessionRequestBody = response.body();

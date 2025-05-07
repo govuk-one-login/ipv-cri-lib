@@ -1,6 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.client;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jwt.JWTClaimsSet;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -44,6 +44,10 @@ public class TestResourcesClient {
                         "TestHarnessExecuteUrl");
     }
 
+    public String getTestHarnessUrl() {
+        return this.testHarnessUrl;
+    }
+
     public static String getResponseBody(HttpExecuteResponse response) throws IOException {
         if (response.responseBody().isEmpty()) {
             return null;
@@ -80,11 +84,10 @@ public class TestResourcesClient {
         return sendRequest(request);
     }
 
-    public HttpResponse<String> sendOverwrittenStartRequest(
-            String sharedClaim, String evidenceRequested, Map<String, Object> claimOverrides)
+    public HttpResponse<String> sendOverwrittenStartRequest(String claimOverrides)
             throws IOException, InterruptedException {
         final URI startEndpointURI = new URIBuilder(this.testHarnessUrl).setPath("start").build();
-        String requestBody = buildStartRequestBody(sharedClaim, evidenceRequested, claimOverrides);
+        String requestBody = buildStartRequestBody(claimOverrides);
         final SdkHttpFullRequest request =
                 SdkHttpFullRequest.builder()
                         .method(SdkHttpMethod.POST)
@@ -124,9 +127,9 @@ public class TestResourcesClient {
                 .request()
                 .headers()
                 .forEach(
-                        (K, B) -> {
-                            if (!K.startsWith("Host")) {
-                                request.header(K, B.get(0));
+                        (key, value) -> {
+                            if (!key.startsWith("Host")) {
+                                request.header(key, value.get(0));
                             }
                         });
         return client.send(request.build(), HttpResponse.BodyHandlers.ofString());
@@ -158,38 +161,27 @@ public class TestResourcesClient {
         }
     }
 
-    private static String buildStartRequestBody(
-            String sharedClaimsFile,
-            String evidenceRequestedFile,
-            Map<String, Object> claimOverrides)
-            throws IOException {
+    private static String buildStartRequestBody(String claimOverridesFile) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
-        Object sharedClaims = readJsonFromFile(sharedClaimsFile);
-        Object evidenceRequested = readJsonFromFile(evidenceRequestedFile);
+        Map<String, Object> claimSet = readJsonFromFile(claimOverridesFile);
 
         JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder();
 
-        if (sharedClaims != null) {
-            claimsSetBuilder.claim("shared_claims", sharedClaims);
-        }
-
-        if (evidenceRequested != null) {
-            claimsSetBuilder.claim("evidence_requested", evidenceRequested);
-        }
-
-        if (claimOverrides != null && !claimOverrides.isEmpty()) {
-            claimOverrides.forEach(claimsSetBuilder::claim);
+        if (claimSet != null) {
+            for (Map.Entry<String, Object> claims : claimSet.entrySet()) {
+                claimsSetBuilder.claim(claims.getKey(), claims.getValue());
+            }
         }
 
         JWTClaimsSet jwtClaimsSet = claimsSetBuilder.build();
         return mapper.writeValueAsString(jwtClaimsSet.toJSONObject());
     }
 
-    private static Object readJsonFromFile(String overridesFileName) throws IOException {
+    private static Map<String, Object> readJsonFromFile(String overridesFileName)
+            throws IOException {
         if (overridesFileName.trim().isEmpty()) {
-            System.out.println("No file provided.");
-            return null;
+            throw new FileNotFoundException("No file provided.");
         }
 
         InputStream input =
@@ -201,13 +193,7 @@ public class TestResourcesClient {
                     "Override JSON file not found: overrides/" + overridesFileName);
         }
 
-        String fileContent = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-
-        try {
-            return new ObjectMapper().readValue(fileContent, Object.class);
-        } catch (JsonProcessingException e) {
-            throw new IOException(
-                    "Invalid JSON in file '" + overridesFileName + "': " + e.getMessage(), e);
-        }
+        ObjectMapper map = new ObjectMapper();
+        return map.readValue(input, new TypeReference<>() {});
     }
 }
