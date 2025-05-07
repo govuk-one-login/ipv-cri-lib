@@ -189,7 +189,6 @@ public class CommonSteps {
                 testContext.setResponse(response);
                 return;
             }
-            System.out.println("Attempt " + attempt + ": no event body returned - retrying");
             wait(delayMillis);
         }
         throw new AssertionError("No audit event body found for session");
