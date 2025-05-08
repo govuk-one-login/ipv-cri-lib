@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 5.2.0
+    - Added WellknownJwkHappyPath.feature which can be used by CRI's to test their
+    .well-known/jwks.json
+    
 ## 5.1.0
     - Add /start request endpoint for the headless core stub implementation updating it based on default or overwritten test scenarios
     - Create new /token and /authorization endpoint specifically for the headless core stub
