@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+## 5.1.0
+    - Add /start request endpoint for the headless core stub implementation updating it based on default or overwritten test scenarios
+    - Create new /token and /authorization endpoint specifically for the headless core stub
+    - Create Stub Client file to generate the client assertion for the /token endpoint to use in replace of ipvCoreStubClient file
+
 ## 5.0.2
     - throw JWKSRequestException in callJWKSEndpoint when the JWKS endpoint does not return a 200
 
