@@ -49,5 +49,4 @@ public class CriTestContext {
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
     }
-
 }
