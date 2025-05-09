@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 6.0.0
+    - Refactored step definitions to remove duplication for the authorization and token endpoint
+    - Removed ipvCoreStub file and references to it 
+
 ## 5.2.0
     - Added WellknownJwkHappyPath.feature which can be used by CRI's to test their
     .well-known/jwks.json
