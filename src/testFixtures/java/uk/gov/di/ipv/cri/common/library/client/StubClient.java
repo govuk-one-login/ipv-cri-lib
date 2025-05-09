@@ -29,8 +29,9 @@ public class StubClient {
     }
 
     private static final long hourTimeLimit = 3600_000;
+    private static final String issuer = "ipv-core-stub-aws-headless";
 
-    public PrivateKeyJWT generateClientAssertion(String issuer, String audience)
+    public PrivateKeyJWT generateClientAssertion(String audience)
             throws JOSEException, ParseException {
         var claimsSetValues =
                 new JWTClaimsSet.Builder()

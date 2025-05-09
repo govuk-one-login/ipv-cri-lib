@@ -33,34 +33,6 @@ public class CommonApiClient {
                         .setPath(this.clientConfigurationService.createUriPath("authorization"))
                         .addParameter(
                                 "redirect_uri",
-                                new URIBuilder(this.clientConfigurationService.getIPVCoreStubURL())
-                                        .setPath("/callback")
-                                        .build()
-                                        .toString())
-                        .addParameter(
-                                "client_id", this.clientConfigurationService.getDefaultClientId())
-                        .addParameter("response_type", "code")
-                        .addParameter("scope", "openid")
-                        .addParameter("state", "state-ipv")
-                        .build();
-
-        var request =
-                HttpRequest.newBuilder()
-                        .uri(url)
-                        .header(HttpHeaders.ACCEPT, JSON_MIME_MEDIA_TYPE)
-                        .header(HttpHeaders.SESSION_ID, sessionId)
-                        .GET()
-                        .build();
-        return sendHttpRequest(request);
-    }
-
-    public HttpResponse<String> sendNewAuthorizationRequest(String sessionId)
-            throws IOException, InterruptedException {
-        var url =
-                new URIBuilder(this.clientConfigurationService.getPrivateApiEndpoint())
-                        .setPath(this.clientConfigurationService.createUriPath("authorization"))
-                        .addParameter(
-                                "redirect_uri",
                                 new URIBuilder(testResourcesClient.getTestHarnessUrl())
                                         .setPath("/callback")
                                         .build()
@@ -122,33 +94,12 @@ public class CommonApiClient {
         return sendHttpRequest(request);
     }
 
-    public HttpResponse<String> sendTokenRequest(String privateKeyJwt)
-            throws IOException, InterruptedException {
-        var request =
-                HttpRequest.newBuilder()
-                        .uri(
-                                new URIBuilder(
-                                                this.clientConfigurationService
-                                                        .getPublicApiEndpoint())
-                                        .setPath(
-                                                this.clientConfigurationService.createUriPath(
-                                                        "token"))
-                                        .build())
-                        .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
-                        .header(
-                                HttpHeaders.API_KEY,
-                                this.clientConfigurationService.getPublicApiKey())
-                        .POST(HttpRequest.BodyPublishers.ofString(privateKeyJwt))
-                        .build();
-        return sendHttpRequest(request);
-    }
-
-    public HttpResponse<String> sendNewTokenRequest(
-            PrivateKeyJWT privateKeyJwt, String code, String issuer)
+    public HttpResponse<String> sendTokenRequest(PrivateKeyJWT privateKeyJwt, String code)
             throws IOException, InterruptedException, URISyntaxException {
         var authorisationGrant =
                 new AuthorizationCodeGrant(
-                        new AuthorizationCode(code), new URI(issuer + "/callback"));
+                        new AuthorizationCode(code),
+                        new URI("ipv-core-stub-aws-headless/callback"));
         var tokenRequest =
                 new TokenRequest(
                         new URIBuilder(this.clientConfigurationService.getPublicApiEndpoint())
