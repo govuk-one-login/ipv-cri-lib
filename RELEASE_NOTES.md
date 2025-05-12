@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+## 5.2.1
+    - Add logging of the first attempt to RetryManager
+    - Increase delayBetweenAttempts in SessionService#getSessionByAccessToken
+
 ## 5.2.0
     - Added WellknownJwkHappyPath.feature which can be used by CRI's to test their
     .well-known/jwks.json
