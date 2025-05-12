@@ -12,8 +12,12 @@ public class RetryManager {
     }
 
     public static <T> T execute(RetryConfig retryConfig, Retryable<T> retryable) {
-        for (int attempt = 0; attempt < retryConfig.getMaxAttempts(); attempt++) {
+        int maxAttempts = retryConfig.getMaxAttempts();
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
             try {
+                LOGGER.info("Retrying attempt {} of {}", attempt, maxAttempts);
+
                 if (attempt > 0) {
                     long start = System.currentTimeMillis();
                     long sleepDuration = calculateSleepDuration(retryConfig, attempt);
@@ -26,10 +30,7 @@ public class RetryManager {
 
                 T result = retryable.execute();
 
-                if (attempt > 0) {
-                    LOGGER.info("Retry succeeded on attempt {}", attempt);
-                }
-
+                LOGGER.info("Retry succeeded on attempt {}", attempt);
                 return result;
 
             } catch (InterruptedException ex) {

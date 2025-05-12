@@ -132,7 +132,7 @@ public class SessionService {
 
         RetryConfig retryConfig =
                 new RetryConfig.Builder()
-                        .delayBetweenAttempts(100)
+                        .delayBetweenAttempts(500)
                         .maxAttempts(3)
                         .exponentiallyRetry(true)
                         .build();
