@@ -11,6 +11,7 @@ public class ClientConfigurationService {
     private final String publicApiEndpoint;
     private final String publicApiKey;
     private final String testResourcesStackName;
+    private final String clientId;
 
     public ClientConfigurationService() {
         this.environment =
@@ -34,6 +35,9 @@ public class ClientConfigurationService {
         this.testResourcesStackName =
                 Optional.ofNullable(System.getenv("TEST_RESOURCES_STACK_NAME"))
                         .orElse("test-resources");
+        this.clientId =
+                Optional.ofNullable(System.getenv("DEFAULT_CLIENT_ID"))
+                        .orElse("ipv-core-stub-aws-headless");
     }
 
     public String getPrivateApiEndpoint() {
@@ -54,6 +58,10 @@ public class ClientConfigurationService {
 
     public String createUriPath(String endpoint) {
         return String.format("/%s/%s", this.environment, endpoint);
+    }
+
+    public String getDefaultClientId() {
+        return this.clientId;
     }
 
     private static String getApiEndpoint(String apikey, String message) {

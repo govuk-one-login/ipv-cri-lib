@@ -4,6 +4,7 @@ import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
 import com.nimbusds.oauth2.sdk.TokenRequest;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
+import uk.gov.di.ipv.cri.common.library.helpers.SSMHelper;
 import uk.gov.di.ipv.cri.common.library.util.URIBuilder;
 
 import java.io.IOException;
@@ -16,13 +17,14 @@ import java.net.http.HttpResponse;
 public class CommonApiClient {
     private final HttpClient httpClient;
     private final ClientConfigurationService clientConfigurationService;
-    private final TestResourcesClient testResourcesClient;
+    private final SSMHelper ssmHelper;
 
     private static final String JSON_MIME_MEDIA_TYPE = "application/json";
 
-    public CommonApiClient(ClientConfigurationService clientConfigurationService) {
+    public CommonApiClient(
+            ClientConfigurationService clientConfigurationService, SSMHelper ssmHelper) {
         this.clientConfigurationService = clientConfigurationService;
-        this.testResourcesClient = new TestResourcesClient(clientConfigurationService);
+        this.ssmHelper = ssmHelper;
         this.httpClient = HttpClient.newBuilder().build();
     }
 
@@ -33,11 +35,15 @@ public class CommonApiClient {
                         .setPath(this.clientConfigurationService.createUriPath("authorization"))
                         .addParameter(
                                 "redirect_uri",
-                                new URIBuilder(testResourcesClient.getTestHarnessUrl())
-                                        .setPath("/callback")
-                                        .build()
-                                        .toString())
-                        .addParameter("client_id", "ipv-core-stub-aws-headless")
+                                ssmHelper
+                                        .getParameterValueByName(
+                                                "/common-cri-api/clients/"
+                                                        + this.clientConfigurationService
+                                                                .getDefaultClientId()
+                                                        + "/jwtAuthentication/redirectUri")
+                                        .trim())
+                        .addParameter(
+                                "client_id", this.clientConfigurationService.getDefaultClientId())
                         .addParameter("response_type", "code")
                         .addParameter("scope", "openid")
                         .addParameter("state", "state-ipv")
@@ -99,7 +105,14 @@ public class CommonApiClient {
         var authorisationGrant =
                 new AuthorizationCodeGrant(
                         new AuthorizationCode(code),
-                        new URI("ipv-core-stub-aws-headless/callback"));
+                        new URI(
+                                ssmHelper
+                                        .getParameterValueByName(
+                                                "/common-cri-api/clients/"
+                                                        + this.clientConfigurationService
+                                                                .getDefaultClientId()
+                                                        + "/jwtAuthentication/redirectUri")
+                                        .trim()));
         var tokenRequest =
                 new TokenRequest(
                         new URIBuilder(this.clientConfigurationService.getPublicApiEndpoint())

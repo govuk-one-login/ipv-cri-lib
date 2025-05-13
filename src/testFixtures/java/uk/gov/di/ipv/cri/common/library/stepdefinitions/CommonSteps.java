@@ -14,6 +14,7 @@ import uk.gov.di.ipv.cri.common.library.client.ClientConfigurationService;
 import uk.gov.di.ipv.cri.common.library.client.CommonApiClient;
 import uk.gov.di.ipv.cri.common.library.client.StubClient;
 import uk.gov.di.ipv.cri.common.library.client.TestResourcesClient;
+import uk.gov.di.ipv.cri.common.library.helpers.SSMHelper;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -35,14 +36,18 @@ public class CommonSteps {
 
     private String sessionRequestBody;
     private String authorizationCode;
+    private final ClientConfigurationService clientConfigurationService;
 
     public CommonSteps(
-            ClientConfigurationService clientConfigurationService, CriTestContext testContext) {
-        this.stubClient = new StubClient();
-        this.commonApiClient = new CommonApiClient(clientConfigurationService);
+            ClientConfigurationService clientConfigurationService,
+            CriTestContext testContext,
+            SSMHelper ssmHelper) {
+        this.stubClient = new StubClient(ssmHelper, clientConfigurationService);
+        this.commonApiClient = new CommonApiClient(clientConfigurationService, ssmHelper);
         this.testResourcesClient = new TestResourcesClient(clientConfigurationService);
         this.objectMapper = new ObjectMapper();
         this.testContext = testContext;
+        this.clientConfigurationService = clientConfigurationService;
     }
 
     @Given("user has a default signed JWT")
@@ -92,14 +97,16 @@ public class CommonSteps {
                 this.commonApiClient.sendAuthorizationRequest(this.testContext.getSessionId()));
     }
 
-    @When("user sends a POST request to token end point with {string}")
-    public void userSendsAPostRequestToTokenEndpointWith(String audience)
+    @When("user sends a POST request to token end point")
+    public void userSendsAPostRequestToTokenEndpoint()
             throws IOException,
                     InterruptedException,
                     JOSEException,
                     ParseException,
                     URISyntaxException {
-        PrivateKeyJWT privateKeyJWT = this.stubClient.generateClientAssertion(audience);
+        PrivateKeyJWT privateKeyJWT =
+                this.stubClient.generateClientAssertion(
+                        clientConfigurationService.getDefaultClientId());
         var code = authorizationCode.trim();
         this.testContext.setResponse(this.commonApiClient.sendTokenRequest(privateKeyJWT, code));
     }
