@@ -10,7 +10,6 @@ public class SSMHelper {
     SsmClient ssmClient;
 
     public SSMHelper() {
-
         ssmClient = new ClientProviderFactory().getSsmClient();
     }
 

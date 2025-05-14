@@ -37,7 +37,10 @@ public class CommonApiClient {
                                 "redirect_uri",
                                 ssmHelper
                                         .getParameterValueByName(
-                                                "/common-cri-api/clients/"
+                                                "/"
+                                                        + this.clientConfigurationService
+                                                                .getCommonStackName()
+                                                        + "/clients/"
                                                         + this.clientConfigurationService
                                                                 .getDefaultClientId()
                                                         + "/jwtAuthentication/redirectUri")
@@ -108,7 +111,10 @@ public class CommonApiClient {
                         new URI(
                                 ssmHelper
                                         .getParameterValueByName(
-                                                "/common-cri-api/clients/"
+                                                "/"
+                                                        + this.clientConfigurationService
+                                                                .getCommonStackName()
+                                                        + "/clients/"
                                                         + this.clientConfigurationService
                                                                 .getDefaultClientId()
                                                         + "/jwtAuthentication/redirectUri")

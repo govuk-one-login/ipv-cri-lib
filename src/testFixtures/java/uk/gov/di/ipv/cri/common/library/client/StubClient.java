@@ -19,7 +19,7 @@ import java.util.UUID;
 public class StubClient {
     private final ClientConfigurationService clientConfigurationService;
     private final SSMHelper ssmHelper;
-    private static final long hourTimeLimit = 3600_000;
+    private static final long HOUR_TIME_LIMIT = 3600_000;
 
     public StubClient(SSMHelper ssmHelper, ClientConfigurationService clientConfigurationService) {
         this.ssmHelper = ssmHelper;
@@ -36,7 +36,10 @@ public class StubClient {
                                 JWTClaimNames.AUDIENCE,
                                 ssmHelper
                                         .getParameterValueByName(
-                                                "/common-cri-api/clients/"
+                                                "/"
+                                                        + this.clientConfigurationService
+                                                                .getCommonStackName()
+                                                        + "/clients/"
                                                         + this.clientConfigurationService
                                                                 .getDefaultClientId()
                                                         + "/jwtAuthentication/audience")
@@ -44,7 +47,7 @@ public class StubClient {
                         .claim(JWTClaimNames.JWT_ID, UUID.randomUUID())
                         .claim(
                                 JWTClaimNames.EXPIRATION_TIME,
-                                new Date(new Date().getTime() + hourTimeLimit))
+                                new Date(new Date().getTime() + HOUR_TIME_LIMIT))
                         .build();
 
         ECDSASigner signer = new ECDSASigner(getEcPrivateKey());
@@ -61,7 +64,10 @@ public class StubClient {
         return ECKey.parse(
                 ssmHelper
                         .getParameterValueByName(
-                                "/test-resources/"
+                                "/"
+                                        + this.clientConfigurationService
+                                                .getTestResourcesStackName()
+                                        + "/"
                                         + this.clientConfigurationService.getDefaultClientId()
                                         + "/privateSigningKey")
                         .trim());

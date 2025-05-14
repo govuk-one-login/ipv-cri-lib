@@ -12,6 +12,7 @@ public class ClientConfigurationService {
     private final String publicApiKey;
     private final String testResourcesStackName;
     private final String clientId;
+    private final String commonStackName;
 
     public ClientConfigurationService() {
         this.environment =
@@ -38,6 +39,8 @@ public class ClientConfigurationService {
         this.clientId =
                 Optional.ofNullable(System.getenv("DEFAULT_CLIENT_ID"))
                         .orElse("ipv-core-stub-aws-headless");
+        this.commonStackName =
+                Optional.ofNullable(System.getenv("COMMON_STACK_NAME")).orElse("common-cri-api");
     }
 
     public String getPrivateApiEndpoint() {
@@ -62,6 +65,10 @@ public class ClientConfigurationService {
 
     public String getDefaultClientId() {
         return this.clientId;
+    }
+
+    public String getCommonStackName() {
+        return this.commonStackName;
     }
 
     private static String getApiEndpoint(String apikey, String message) {
