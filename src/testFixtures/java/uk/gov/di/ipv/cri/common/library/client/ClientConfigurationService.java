@@ -10,12 +10,9 @@ public class ClientConfigurationService {
     private final String privateApiEndpoint;
     private final String publicApiEndpoint;
     private final String publicApiKey;
-    private final String ipvCoreStubUrl;
-    private final String ipvCoreStubUsername;
-    private final String ipvCoreStubPassword;
-    private final String ipvCoreStubCriId;
-    private final String ipvCoreStubClientId;
     private final String testResourcesStackName;
+    private final String clientId;
+    private final String commonStackName;
 
     public ClientConfigurationService() {
         this.environment =
@@ -36,32 +33,14 @@ public class ClientConfigurationService {
                 Objects.requireNonNull(
                         System.getenv("APIGW_API_KEY"),
                         String.format(MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT, "APIGW_API_KEY"));
-        this.ipvCoreStubUrl =
-                Objects.requireNonNull(
-                        System.getenv("IPV_CORE_STUB_URL"),
-                        String.format(MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT, "IPV_CORE_STUB_URL"));
-        this.ipvCoreStubUsername =
-                Objects.requireNonNull(
-                        System.getenv("IPV_CORE_STUB_BASIC_AUTH_USER"),
-                        String.format(
-                                MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT,
-                                "IPV_CORE_STUB_BASIC_AUTH_USER"));
-        this.ipvCoreStubPassword =
-                Objects.requireNonNull(
-                        System.getenv("IPV_CORE_STUB_BASIC_AUTH_PASSWORD"),
-                        String.format(
-                                MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT,
-                                "IPV_CORE_STUB_BASIC_AUTH_PASSWORD"));
-        this.ipvCoreStubCriId =
-                Objects.requireNonNull(
-                        System.getenv("IPV_CORE_STUB_CRI_ID"),
-                        String.format(
-                                MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT, "IPV_CORE_STUB_CRI_ID"));
-        this.ipvCoreStubClientId =
-                Optional.ofNullable(System.getenv("DEFAULT_CLIENT_ID")).orElse("ipv-core-stub");
         this.testResourcesStackName =
                 Optional.ofNullable(System.getenv("TEST_RESOURCES_STACK_NAME"))
                         .orElse("test-resources");
+        this.clientId =
+                Optional.ofNullable(System.getenv("DEFAULT_CLIENT_ID"))
+                        .orElse("ipv-core-stub-aws-headless");
+        this.commonStackName =
+                Optional.ofNullable(System.getenv("COMMON_STACK_NAME")).orElse("common-cri-api");
     }
 
     public String getPrivateApiEndpoint() {
@@ -80,28 +59,16 @@ public class ClientConfigurationService {
         return this.testResourcesStackName;
     }
 
-    public String getIPVCoreStubURL() {
-        return this.ipvCoreStubUrl;
-    }
-
-    public String getIpvCoreStubUsername() {
-        return this.ipvCoreStubUsername;
-    }
-
-    public String getIpvCoreStubPassword() {
-        return this.ipvCoreStubPassword;
-    }
-
-    public String getIpvCoreStubCriId() {
-        return ipvCoreStubCriId;
+    public String createUriPath(String endpoint) {
+        return String.format("/%s/%s", this.environment, endpoint);
     }
 
     public String getDefaultClientId() {
-        return this.ipvCoreStubClientId;
+        return this.clientId;
     }
 
-    public String createUriPath(String endpoint) {
-        return String.format("/%s/%s", this.environment, endpoint);
+    public String getCommonStackName() {
+        return this.commonStackName;
     }
 
     private static String getApiEndpoint(String apikey, String message) {

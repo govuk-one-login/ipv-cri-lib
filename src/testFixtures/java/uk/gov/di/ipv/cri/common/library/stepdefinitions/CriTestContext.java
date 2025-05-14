@@ -11,7 +11,6 @@ public class CriTestContext {
     private HttpResponse<String> response;
     private String sessionId;
     private String accessToken;
-    private String serialisedUserIdentity;
     private String testHarnessResponseBody;
 
     public HttpResponse<String> getResponse() {
@@ -49,13 +48,5 @@ public class CriTestContext {
 
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
-    }
-
-    public String getSerialisedUserIdentity() {
-        return serialisedUserIdentity;
-    }
-
-    public void setSerialisedUserIdentity(String serialisedUserIdentity) {
-        this.serialisedUserIdentity = serialisedUserIdentity;
     }
 }
