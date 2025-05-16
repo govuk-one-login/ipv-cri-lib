@@ -1,6 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.helpers;
 
-import uk.gov.di.ipv.cri.common.library.config.EnvironmentConfig;
+import uk.gov.di.ipv.cri.common.library.config.EnvironConfig;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
@@ -20,6 +20,6 @@ public class HttpClientHelper {
     }
 
     public String createUriPath(String path) {
-        return String.format("/%s/%s", EnvironmentConfig.getEnvironment("ENVIRONMENT"), path);
+        return String.format("/%s/%s", EnvironConfig.getEnv("ENVIRONMENT"), path);
     }
 }
