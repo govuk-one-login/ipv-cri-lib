@@ -2,9 +2,6 @@ package uk.gov.di.ipv.cri.common.library.config;
 
 import uk.gov.di.ipv.cri.common.library.helpers.SSMHelper;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class CriStubClientConfig {
     private final SSMHelper ssmHelper;
     private static final String COMMON_STACK_NAME =
@@ -18,7 +15,7 @@ public class CriStubClientConfig {
 
     public String getValue(CriStubClientEnum key) {
         String envOverride = EnvironConfig.getEnvOrDefault(key.getConfigName().toUpperCase(), null);
-        return envOverride != null ? envOverride : fetchFromSsm(getSsmPath(key));
+        return (envOverride != null ? envOverride : fetchFromSsm(getSsmPath(key))).trim();
     }
 
     private String fetchFromSsm(String path) {

@@ -9,6 +9,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import software.amazon.awssdk.http.AbortableInputStream;
 import software.amazon.awssdk.http.HttpExecuteResponse;
 import uk.gov.di.ipv.cri.common.library.client.ClientConfigurationService;
 import uk.gov.di.ipv.cri.common.library.client.CommonApiClient;
@@ -19,8 +20,10 @@ import uk.gov.di.ipv.cri.common.library.helpers.SSMHelper;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -118,17 +121,20 @@ public class CommonSteps {
         int maxAttempts = 5;
         int delayMillis = 500;
 
-        HttpExecuteResponse response = null;
-
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            response = testResourcesClient.sendEventRequest(testContext.getSessionId(), eventName);
-            String responseBody = (String.valueOf(response.responseBody()));
+            HttpExecuteResponse response =
+                    testResourcesClient.sendEventRequest(testContext.getSessionId(), eventName);
+            Optional<AbortableInputStream> body = response.responseBody();
 
-            if (responseBody != null && !responseBody.isBlank()) {
-                testContext.setResponse(response);
-                return;
+            if (body.isPresent()) {
+                String responseBody = new String(body.get().readAllBytes(), StandardCharsets.UTF_8);
+                if (!responseBody.isBlank()) {
+                    testContext.setResponse(response);
+                    return;
+                }
             }
-            wait(delayMillis);
+
+            Thread.sleep(delayMillis);
         }
         throw new AssertionError("No audit event body found for session");
     }

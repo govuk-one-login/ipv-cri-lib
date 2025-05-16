@@ -13,6 +13,10 @@ public class SSMHelper {
         ssmClient = new ClientProviderFactory().getSsmClient();
     }
 
+    public SSMHelper(SsmClient ssmClient) {
+        this.ssmClient = ssmClient;
+    }
+
     public String getParameterValueByName(String parameterName) {
         try {
             GetParameterRequest parameterRequest =
