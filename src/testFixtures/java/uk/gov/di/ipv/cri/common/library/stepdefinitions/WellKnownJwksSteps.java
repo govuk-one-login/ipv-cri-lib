@@ -7,7 +7,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import uk.gov.di.ipv.cri.common.library.config.ApiGatewayConfig;
+import uk.gov.di.ipv.cri.common.library.config.ApiGateway;
 import uk.gov.di.ipv.cri.common.library.helpers.HttpClientHelper;
 import uk.gov.di.ipv.cri.common.library.helpers.HttpResponseHelper;
 import uk.gov.di.ipv.cri.common.library.util.URIBuilder;
@@ -28,18 +28,16 @@ public class WellKnownJwksSteps {
     private final HttpResponseHelper httpResponse;
     private final HttpClientHelper httpClientHelper;
     private final ObjectMapper objectMapper;
-    private final ApiGatewayConfig apiGatewayConfig;
 
     public WellKnownJwksSteps() {
         this.httpClientHelper = new HttpClientHelper();
         this.httpResponse = new HttpResponseHelper();
-        this.apiGatewayConfig = new ApiGatewayConfig();
         this.objectMapper = new ObjectMapper();
     }
 
     @Given("that a public \\/.well-known\\/jwks.json endpoint exists for CRI")
     public void thatAPublicWellKnownJwksJsonEndpointExistsForCRI() {
-        publicKeyJwksBasePath = this.apiGatewayConfig.getPublicApiEndpoint();
+        publicKeyJwksBasePath = ApiGateway.getPublicApiEndpoint();
     }
 
     @When("a request is made to fetch the public encryption keys")
