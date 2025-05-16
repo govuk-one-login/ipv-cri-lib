@@ -14,7 +14,8 @@ public class ApiGatewayConfig {
     }
 
     private String getApiEndpoint(String key) {
-        String id = EnvironmentConfig.getEnvironment(key);
+        String id = EnvironConfig.getEnv(key);
+
         return String.format("https://%s.execute-api.eu-west-2.amazonaws.com", id);
     }
 }
