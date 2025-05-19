@@ -37,11 +37,9 @@ public class TestResourcesClient {
     private static final AwsV4HttpSigner SIGNER = AwsV4HttpSigner.create();
     private static final String JSON_MIME_MEDIA_TYPE = "application/json";
 
-    public TestResourcesClient(ClientConfigurationService clientConfigurationService) {
+    public TestResourcesClient(String testResourcesStackName) {
         this.testHarnessUrl =
-                CloudFormationHelper.getOutput(
-                        clientConfigurationService.getTestResourcesStackName(),
-                        "TestHarnessExecuteUrl");
+                CloudFormationHelper.getOutput(testResourcesStackName, "TestHarnessExecuteUrl");
     }
 
     public String getTestHarnessUrl() {
