@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+# 6.1.0
+    - Added steps to decrypt and verify session request in WellKnownJwksSteps
+      that have been encrypted by the stub / core using the corresponding kms key
+      if `./well-known` is used the ENV_VAR_FEATURE_FLAG_KEY_ROTATION needs to be set to true
+
 # 6.0.0
     - Refactored step definitions to remove duplication for the authorization and token endpoint
     - Removed ipvCoreStub file and references to it 

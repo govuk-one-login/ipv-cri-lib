@@ -11,7 +11,7 @@ plugins {
 }
 
 // please update RELEASE_NOTES.md when you update this version
-def buildVersion = "6.0.0"
+def buildVersion = "6.1.0"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
@@ -154,6 +154,8 @@ dependencies {
 
 	testRuntimeOnly configurations.test_runtime
 
+
+	testFixturesApi configurations.kms
 	testFixturesApi configurations.aws
 	testFixturesApi configurations.sqs
 	testFixturesApi configurations.aws_crt_client
