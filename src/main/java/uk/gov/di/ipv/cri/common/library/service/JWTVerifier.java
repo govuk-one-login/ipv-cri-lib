@@ -129,7 +129,9 @@ public class JWTVerifier {
             }
 
             jwkKeyCache
-                    .getBase64JwkForKid(signedJWT.getHeader().getKeyID())
+                    .getBase64JwkForKid(
+                            clientAuthenticationConfig.get("jwksEndpoint"),
+                            signedJWT.getHeader().getKeyID())
                     .ifPresentOrElse(
                             value ->
                                     clientAuthenticationConfig.replace(

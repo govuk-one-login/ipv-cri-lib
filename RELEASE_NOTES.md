@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+# 6.1.0
+    - Retrieves JWKS endpoint for JWT verification from SSM params instead of an ENV variable
+    - Caches JWKS per endpoint instead of a single cache to allow for different clients
+
 # 6.0.0
     - Refactored step definitions to remove duplication for the authorization and token endpoint
     - Removed ipvCoreStub file and references to it 

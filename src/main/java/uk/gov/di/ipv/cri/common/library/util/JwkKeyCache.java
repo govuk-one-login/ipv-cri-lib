@@ -9,6 +9,8 @@ import uk.gov.di.ipv.cri.common.library.domain.jwks.Key;
 import uk.gov.di.ipv.cri.common.library.exception.JWKSRequestException;
 
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -17,12 +19,9 @@ public class JwkKeyCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwkKeyCache.class);
 
     private final boolean usePublicJwk;
-    private final String publicJwkEndpoint;
     private final JwkRequest jwkRequest;
 
-    private JWKS cachedJwks;
-    private long lastUpdated;
-    private long cacheControl;
+    private final Map<String, JWKS> cachedJwks = new HashMap<>();
 
     public JwkKeyCache() {
         this(new JwkRequest());
@@ -30,45 +29,52 @@ public class JwkKeyCache {
 
     public JwkKeyCache(JwkRequest jwkRequest) {
         this.jwkRequest = jwkRequest;
-        this.lastUpdated = 0;
-        this.cacheControl = 0;
         usePublicJwk =
                 Boolean.parseBoolean(
                         Optional.ofNullable(System.getenv("ENV_VAR_FEATURE_CONSUME_PUBLIC_JWK"))
                                 .orElse("false"));
-        publicJwkEndpoint = System.getenv("PUBLIC_JWKS_ENDPOINT");
     }
 
-    public JwkKeyCache(JwkRequest jwkRequest, boolean usePublicJwk, String publicJwkEndpoint) {
+    public JwkKeyCache(JwkRequest jwkRequest, boolean usePublicJwk) {
         this.jwkRequest = jwkRequest;
-        this.lastUpdated = 0;
-        this.cacheControl = 0;
         this.usePublicJwk = usePublicJwk;
-        this.publicJwkEndpoint = publicJwkEndpoint;
     }
 
-    public Optional<String> getBase64JwkForKid(String kid) {
-        if (!usePublicJwk || publicJwkEndpoint == null) {
+    public Optional<String> getBase64JwkForKid(String publicJwkEndpoint, String kid) {
+        if (!usePublicJwk) {
             LOGGER.info("Using public JWKs endpoint is disabled");
             return Optional.empty();
         }
+        if (publicJwkEndpoint == null) {
+            LOGGER.error("No JWKS endpoint configured for the client");
+            return Optional.empty();
+        }
+
         LOGGER.info("Using JWKs endpoint: {}", publicJwkEndpoint);
-        if (cachedJwks == null || System.currentTimeMillis() > lastUpdated + cacheControl) {
+        JWKS cachedJwksEndpoint = cachedJwks.get(publicJwkEndpoint);
+
+        if (cachedJwksEndpoint == null
+                || System.currentTimeMillis()
+                        > cachedJwksEndpoint.getLastUpdated()
+                                + cachedJwksEndpoint.getCacheControl()) {
+            JWKS newJwks;
             try {
-                cachedJwks = jwkRequest.callJWKSEndpoint(publicJwkEndpoint);
+                newJwks = jwkRequest.callJWKSEndpoint(publicJwkEndpoint);
             } catch (JWKSRequestException e) {
                 LOGGER.error("Failed to call JWK endpoint ({})", publicJwkEndpoint, e);
                 return Optional.empty();
             }
-            lastUpdated = System.currentTimeMillis();
-            cacheControl = TimeUnit.SECONDS.toMillis(cachedJwks.getMaxAgeFromCacheControlHeader());
+            newJwks.setLastUpdated(System.currentTimeMillis());
+            newJwks.setCacheControl(
+                    TimeUnit.SECONDS.toMillis(newJwks.getMaxAgeFromCacheControlHeader()));
             LOGGER.info(
                     "JWKs cache has been updated to '{}' seconds",
-                    cachedJwks.getMaxAgeFromCacheControlHeader());
+                    newJwks.getMaxAgeFromCacheControlHeader());
+            cachedJwks.put(publicJwkEndpoint, newJwks);
         } else {
             LOGGER.info("Using locally cached JWKs from {}", publicJwkEndpoint);
         }
-        return getSigningKeyForKid(cachedJwks, kid).map(this::toBase64);
+        return getSigningKeyForKid(cachedJwks.get(publicJwkEndpoint), kid).map(this::toBase64);
     }
 
     private Optional<Key> getSigningKeyForKid(JWKS jwks, String kid) {

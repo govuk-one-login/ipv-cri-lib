@@ -15,6 +15,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,8 +40,8 @@ class JwkKeyCacheTest {
 
         when(mockJwkRequest.callJWKSEndpoint(anyString())).thenReturn(jwks);
 
-        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest, true, "https://example.com");
-        Optional<String> jwk = jwkKeyCache.getBase64JwkForKid(kid);
+        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest, true);
+        Optional<String> jwk = jwkKeyCache.getBase64JwkForKid("https://example.com", kid);
 
         String base64Key =
                 Base64.getEncoder()
@@ -47,6 +49,36 @@ class JwkKeyCacheTest {
 
         assertTrue(jwk.isPresent());
         assertEquals(base64Key, jwk.get());
+    }
+
+    @Test
+    void shouldCacheJwkPerEndpoint() throws Exception {
+        String kid = "dummyKid";
+
+        JWKS jwks = new JWKS();
+        jwks.setMaxAgeFromCacheControlHeader(300);
+
+        Key key = new Key();
+        key.setUse("sig");
+        key.setKid(kid);
+
+        jwks.setKeys(List.of(key));
+
+        when(mockJwkRequest.callJWKSEndpoint(anyString())).thenReturn(jwks);
+
+        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest, true);
+
+        Optional<String> jwka = jwkKeyCache.getBase64JwkForKid("https://example.com", kid);
+        assertTrue(jwka.isPresent());
+        verify(mockJwkRequest, times(1)).callJWKSEndpoint(anyString());
+
+        Optional<String> jwkb = jwkKeyCache.getBase64JwkForKid("https://example.com", kid);
+        assertTrue(jwkb.isPresent());
+        verify(mockJwkRequest, times(1)).callJWKSEndpoint(anyString());
+
+        Optional<String> jwkc = jwkKeyCache.getBase64JwkForKid("https://localhost.com", kid);
+        assertTrue(jwkc.isPresent());
+        verify(mockJwkRequest, times(2)).callJWKSEndpoint(anyString());
     }
 
     @Test
@@ -58,8 +90,8 @@ class JwkKeyCacheTest {
 
         when(mockJwkRequest.callJWKSEndpoint(anyString())).thenReturn(jwks);
 
-        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest, true, "https://example.com");
-        Optional<String> jwk = jwkKeyCache.getBase64JwkForKid(kid);
+        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest, true);
+        Optional<String> jwk = jwkKeyCache.getBase64JwkForKid("https://example.com", kid);
 
         assertTrue(jwk.isEmpty());
     }
@@ -67,6 +99,14 @@ class JwkKeyCacheTest {
     @Test
     void shouldReturnEmptyWhenDisabled() {
         assertTrue(
-                new JwkKeyCache(mockJwkRequest, false, "").getBase64JwkForKid("dummy").isEmpty());
+                new JwkKeyCache(mockJwkRequest, false)
+                        .getBase64JwkForKid("https://example.com", "dummy")
+                        .isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyWhenJwksEndpointNull() {
+        assertTrue(
+                new JwkKeyCache(mockJwkRequest, true).getBase64JwkForKid(null, "dummy").isEmpty());
     }
 }
