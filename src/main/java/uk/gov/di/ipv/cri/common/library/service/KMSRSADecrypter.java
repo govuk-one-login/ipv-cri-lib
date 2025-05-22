@@ -38,18 +38,27 @@ public class KMSRSADecrypter implements JWEDecrypter {
     private static final String SESSION_DECRYPTION_KEY_PREVIOUS_ALIAS =
             "session_decryption_key_previous_alias";
     private static final String ALL_ALIASES_UNAVAILABLE = "all_aliases_unavailable_for_decryption";
-    private final boolean keyRotationEnabled =
-            Boolean.parseBoolean(System.getenv("ENV_VAR_FEATURE_FLAG_KEY_ROTATION"));
+    private boolean keyRotationEnabled = false;
     private final JWEJCAContext jcaContext;
     private final KmsClient kmsClient;
     private final EventProbe eventProbe;
     private final String keyId;
 
     public KMSRSADecrypter(String keyId, KmsClient kmsClient, EventProbe eventProbe) {
-        this.keyId = keyId;
+        this(
+                kmsClient,
+                eventProbe,
+                keyId,
+                Boolean.parseBoolean(System.getenv("ENV_VAR_FEATURE_FLAG_KEY_ROTATION")));
+    }
+
+    public KMSRSADecrypter(
+            KmsClient kmsClient, EventProbe eventProbe, String keyId, Boolean keyRotationEnabled) {
+        this.jcaContext = new JWEJCAContext();
         this.kmsClient = kmsClient;
         this.eventProbe = eventProbe;
-        this.jcaContext = new JWEJCAContext();
+        this.keyId = keyId;
+        this.keyRotationEnabled = keyRotationEnabled;
     }
 
     @Override
@@ -81,7 +90,7 @@ public class KMSRSADecrypter implements JWEDecrypter {
                     AlgorithmSupportMessage.unsupportedJWEAlgorithm(alg, supportedJWEAlgorithms()));
         }
         DecryptResponse decryptResponse;
-        if (keyRotationEnabled) {
+        if (isKeyRotationEnabled()) {
             LOGGER.info("Key rotation enabled. Attempting to decrypt with key aliases.");
             // During a key rotation we might receive JWTs encrypted with either the old or new key.
             decryptResponse = decryptWithKeyAliases(encryptedKey);
@@ -128,6 +137,10 @@ public class KMSRSADecrypter implements JWEDecrypter {
         eventProbe.counterMetric(ALL_ALIASES_UNAVAILABLE);
 
         return decryptResponse;
+    }
+
+    public boolean isKeyRotationEnabled() {
+        return keyRotationEnabled;
     }
 
     private DecryptRequest buildDecryptRequest(String keyAlias, Base64URL encryptedKey) {
