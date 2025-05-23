@@ -24,7 +24,7 @@ ext {
 		jackson_version          : "2.15.2", // Use AWS POM version only
 		nimbusds_oauth_version   : "11.4",
 		nimbusds_jwt_version     : "9.36",
-		junit                    : "5.8.2",
+		junit                    : "5.10.3",
 		mockito					 : "4.3.1",
 		glassfish_version        : "3.0.3",
 		cucumber_version         : "7.9.0",
