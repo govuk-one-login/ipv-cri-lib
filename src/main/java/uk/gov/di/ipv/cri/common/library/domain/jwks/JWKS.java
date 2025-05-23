@@ -10,6 +10,8 @@ public class JWKS {
     @JsonProperty("keys")
     private List<Key> keys;
 
+    private long lastUpdated;
+    private long cacheControl;
     private int maxAgeFromCacheControlHeader;
 
     public JWKS() {
@@ -30,5 +32,21 @@ public class JWKS {
 
     public void setMaxAgeFromCacheControlHeader(int maxAgeFromCacheControlHeader) {
         this.maxAgeFromCacheControlHeader = maxAgeFromCacheControlHeader;
+    }
+
+    public long getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(long lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
+    public long getCacheControl() {
+        return cacheControl;
+    }
+
+    public void setCacheControl(long cacheControl) {
+        this.cacheControl = cacheControl;
     }
 }
