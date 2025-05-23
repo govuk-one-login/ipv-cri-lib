@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+# 6.2.0
+    - Added steps to decrypt and verify session request in WellKnownJwksSteps
+      that have been encrypted by the stub for the CRI to decrypt using the corresponding kms key alias
+      if `./well-known` is used the ENV_VAR_FEATURE_FLAG_KEY_ROTATION needs to be set to true
+      when the flag is not enabled then encryption is done using the former approach through a shared public base64 key
 # 6.1.0
     - Retrieves JWKS endpoint for JWT verification from SSM params instead of an ENV variable
     - Caches JWKS per endpoint instead of a single cache to allow for different clients
