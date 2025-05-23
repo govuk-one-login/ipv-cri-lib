@@ -44,7 +44,8 @@ public class CommonSteps {
             SSMHelper ssmHelper) {
         this.stubClient = new StubClient(ssmHelper, clientConfigurationService);
         this.commonApiClient = new CommonApiClient(clientConfigurationService, ssmHelper);
-        this.testResourcesClient = new TestResourcesClient(clientConfigurationService);
+        this.testResourcesClient =
+                new TestResourcesClient(clientConfigurationService.getTestResourcesStackName());
         this.objectMapper = new ObjectMapper();
         this.testContext = testContext;
         this.clientConfigurationService = clientConfigurationService;

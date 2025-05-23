@@ -1,5 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -35,13 +36,11 @@ public class TestResourcesClient {
 
     private static final SdkHttpClient CLIENT = AwsCrtHttpClient.builder().build();
     private static final AwsV4HttpSigner SIGNER = AwsV4HttpSigner.create();
-    private static final String JSON_MIME_MEDIA_TYPE = "application/json";
+    private static final ObjectMapper mapper = new ObjectMapper();
 
-    public TestResourcesClient(ClientConfigurationService clientConfigurationService) {
+    public TestResourcesClient(String testResourcesStackName) {
         this.testHarnessUrl =
-                CloudFormationHelper.getOutput(
-                        clientConfigurationService.getTestResourcesStackName(),
-                        "TestHarnessExecuteUrl");
+                CloudFormationHelper.getOutput(testResourcesStackName, "TestHarnessExecuteUrl");
     }
 
     public String getTestHarnessUrl() {
@@ -58,60 +57,61 @@ public class TestResourcesClient {
         }
     }
 
-    public HttpExecuteResponse sendEventRequest(String sessionId, String eventName)
-            throws IOException {
-        final URI eventsEndpointURI =
-                new URIBuilder(this.testHarnessUrl)
-                        .setPath("events")
-                        .addParameter(
-                                "partitionKey",
-                                URLEncoder.encode(
-                                        String.format("%s%s", "SESSION#", sessionId),
-                                        StandardCharsets.UTF_8))
-                        .addParameter(
-                                "sortKey",
-                                URLEncoder.encode(
-                                        String.format("%s%s", "TXMA#", eventName),
-                                        StandardCharsets.UTF_8))
-                        .build();
-
-        final SdkHttpFullRequest request =
-                SdkHttpFullRequest.builder()
-                        .method(SdkHttpMethod.GET)
-                        .uri(eventsEndpointURI)
-                        .build();
-
-        return sendRequest(request);
-    }
-
     public HttpResponse<String> sendOverwrittenStartRequest(String claimOverrides)
             throws IOException, InterruptedException {
-        final URI startEndpointURI = new URIBuilder(this.testHarnessUrl).setPath("start").build();
-        String requestBody = buildStartRequestBody(claimOverrides);
-        final SdkHttpFullRequest request =
+        return postClaimsSetOverrideToStart(buildStartRequestBody(claimOverrides));
+    }
+
+    public HttpResponse<String> sendOverwrittenStartRequest(Map<String, Object> claimOverrides)
+            throws IOException, InterruptedException {
+        return postClaimsSetOverrideToStart(buildStartRequestBody(claimOverrides));
+    }
+
+    private HttpResponse<String> postClaimsSetOverrideToStart(String requestBody)
+            throws IOException, InterruptedException {
+        return sendSignedStartRequest(
                 SdkHttpFullRequest.builder()
                         .method(SdkHttpMethod.POST)
-                        .uri(startEndpointURI)
-                        .putHeader(HttpHeaders.CONTENT_TYPE, JSON_MIME_MEDIA_TYPE)
+                        .uri(new URIBuilder(getTestHarnessUrl()).setPath("start").build())
+                        .putHeader(HttpHeaders.CONTENT_TYPE, HttpHeaders.JSON_MIME_MEDIA_TYPE)
                         .contentStreamProvider(ContentStreamProvider.fromUtf8String(requestBody))
-                        .build();
-
-        return sendSignedStartRequest(request, requestBody);
+                        .build(),
+                requestBody);
     }
 
     public HttpResponse<String> sendStartRequest() throws IOException, InterruptedException {
-        final URI startEndpointURI = new URIBuilder(this.testHarnessUrl).setPath("start").build();
-        String requestBody = "{}";
+        final String requestBody = "{}";
+        final URI startEndpointURI = new URIBuilder(getTestHarnessUrl()).setPath("start").build();
         final SdkHttpFullRequest request =
                 SdkHttpFullRequest.builder()
                         .method(SdkHttpMethod.POST)
                         .uri(startEndpointURI)
-                        .putHeader(HttpHeaders.CONTENT_TYPE, JSON_MIME_MEDIA_TYPE)
+                        .putHeader(HttpHeaders.CONTENT_TYPE, HttpHeaders.JSON_MIME_MEDIA_TYPE)
                         .contentStreamProvider(
                                 RequestBody.fromString(requestBody).contentStreamProvider())
                         .build();
 
         return sendSignedStartRequest(request, requestBody);
+    }
+
+    public HttpExecuteResponse sendEventRequest(String sessionId, String eventName)
+            throws IOException {
+        final URI eventsEndpointURI =
+                new URIBuilder(getTestHarnessUrl())
+                        .setPath("events")
+                        .addParameter("partitionKey", encodePrefixedKey("SESSION#", sessionId))
+                        .addParameter("sortKey", encodePrefixedKey("TXMA#", eventName))
+                        .build();
+
+        return sendRequest(
+                SdkHttpFullRequest.builder()
+                        .method(SdkHttpMethod.GET)
+                        .uri(eventsEndpointURI)
+                        .build());
+    }
+
+    private String encodePrefixedKey(String prefix, String sessionId) {
+        return URLEncoder.encode(String.format("%s%s", prefix, sessionId), StandardCharsets.UTF_8);
     }
 
     private HttpResponse<String> sendSignedStartRequest(
@@ -162,10 +162,13 @@ public class TestResourcesClient {
     }
 
     private static String buildStartRequestBody(String claimOverridesFile) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-
         Map<String, Object> claimSet = readJsonFromFile(claimOverridesFile);
 
+        return buildStartRequestBody(claimSet);
+    }
+
+    private static String buildStartRequestBody(Map<String, Object> claimSet)
+            throws JsonProcessingException {
         JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder();
 
         if (claimSet != null) {
@@ -193,7 +196,6 @@ public class TestResourcesClient {
                     "Override JSON file not found: overrides/" + overridesFileName);
         }
 
-        ObjectMapper map = new ObjectMapper();
-        return map.readValue(input, new TypeReference<>() {});
+        return mapper.readValue(input, new TypeReference<>() {});
     }
 }
