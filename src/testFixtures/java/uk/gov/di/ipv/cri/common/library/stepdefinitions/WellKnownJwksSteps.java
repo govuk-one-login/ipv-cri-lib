@@ -12,6 +12,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.json.JSONObject;
+import software.amazon.awssdk.services.kms.model.InvalidCiphertextException;
 import uk.gov.di.ipv.cri.common.library.client.HttpHeaders;
 import uk.gov.di.ipv.cri.common.library.client.TestResourcesClient;
 import uk.gov.di.ipv.cri.common.library.config.ApiGateway;
@@ -48,6 +49,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.di.ipv.cri.common.library.client.HttpHeaders.JSON_MIME_MEDIA_TYPE;
 import static uk.gov.di.ipv.cri.common.library.config.Environment.getEnvOrDefault;
 
@@ -179,14 +181,15 @@ public class WellKnownJwksSteps {
     }
 
     @When("the core stub does NOT make a call to the CRI's \\/well-known\\/jwks.json endpoint")
-    public void the_core_stub_doesnt_call_the_well_known_endpoint()
-            throws ParseException, JOSEException {
-        JSONObject jwksResponse = new JSONObject(httpResponse.getResponse().body());
-        String jwe = jwksResponse.getString("request");
+    public void the_core_stub_doesnt_call_the_well_known_endpoint() throws ParseException {
+        try {
+            JSONObject jwksResponse = new JSONObject(httpResponse.getResponse().body());
+            String jwe = jwksResponse.getString("request");
 
-        decryptedJwt = jwtDecrypter.decrypt(jwe);
-
-        assertThat(kmsRsaDecrypter.isKeyRotationEnabled(), is(false));
+            decryptedJwt = jwtDecrypter.decrypt(jwe);
+        } catch (InvalidCiphertextException | JOSEException ice) {
+            assertThat(kmsRsaDecrypter.isKeyRotationEnabled(), is(false));
+        }
     }
 
     @When("the core stub makes a call to the CRI's \\/well-known\\/jwks.json endpoint")
@@ -200,9 +203,15 @@ public class WellKnownJwksSteps {
         assertThat(kmsRsaDecrypter.isKeyRotationEnabled(), is(true));
     }
 
+    @Then("the request by the core stub is NOT verified by the CRI")
+    public void theRequestIsNotVerified() {
+        assertThat(decryptedJwt, is(nullValue()));
+    }
+
     @SuppressWarnings("unchecked")
     @Then("the request by the core stub is verified by the CRI")
-    public void theRequestIsVerified() throws ParseException, ClientConfigurationException {
+    public void theRequestByTheCoreStubIsVerifiedByTheCRI()
+            throws ParseException, ClientConfigurationException {
         verifyRequest(decryptedJwt);
 
         JWSHeader header = decryptedJwt.getHeader();
