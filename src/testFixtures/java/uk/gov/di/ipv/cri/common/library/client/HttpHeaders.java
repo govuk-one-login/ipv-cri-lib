@@ -9,4 +9,5 @@ public final class HttpHeaders {
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String SESSION_ID = "session-id";
     public static final String API_KEY = "x-api-key"; // pragma: allowlist secret
+    public static final String JSON_MIME_MEDIA_TYPE = "application/json";
 }

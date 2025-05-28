@@ -16,7 +16,15 @@ import java.util.Objects;
 public class EventProbe {
     private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final MetricsLogger METRICS_LOGGER = MetricsUtils.metricsLogger();
+    private final MetricsLogger metricsLogger;
+
+    public EventProbe() {
+        this(MetricsUtils.metricsLogger());
+    }
+
+    public EventProbe(MetricsLogger metricsLogger) {
+        this.metricsLogger = metricsLogger;
+    }
 
     public EventProbe log(Level level, Throwable throwable) {
         LOGGER.log(level, throwable.getMessage(), throwable);
@@ -42,17 +50,17 @@ public class EventProbe {
     }
 
     public EventProbe counterMetric(String key) {
-        METRICS_LOGGER.putMetric(key, 1d);
+        metricsLogger.putMetric(key, 1d);
         return this;
     }
 
     public EventProbe counterMetric(String key, double value) {
-        METRICS_LOGGER.putMetric(key, value);
+        metricsLogger.putMetric(key, value);
         return this;
     }
 
     public EventProbe counterMetric(String key, double value, Unit unit) {
-        METRICS_LOGGER.putMetric(key, value, unit);
+        metricsLogger.putMetric(key, value, unit);
         return this;
     }
 
@@ -77,7 +85,7 @@ public class EventProbe {
         if (dimensions != null) {
             DimensionSet dimensionSet = new DimensionSet();
             dimensions.forEach(dimensionSet::addDimension);
-            METRICS_LOGGER.putDimensions(dimensionSet);
+            metricsLogger.putDimensions(dimensionSet);
         }
     }
 }

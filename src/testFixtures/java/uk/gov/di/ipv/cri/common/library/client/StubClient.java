@@ -10,6 +10,7 @@ import com.nimbusds.jwt.JWTClaimNames;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
+import uk.gov.di.ipv.cri.common.library.config.CriStubClientEnum;
 import uk.gov.di.ipv.cri.common.library.helpers.SSMHelper;
 
 import java.text.ParseException;
@@ -18,12 +19,12 @@ import java.util.UUID;
 
 public class StubClient {
     private final ClientConfigurationService clientConfigurationService;
+    private static final long HOUR_TIME_LIMIT = 3_600_000;
     private final SSMHelper ssmHelper;
-    private static final long HOUR_TIME_LIMIT = 3600_000;
 
     public StubClient(SSMHelper ssmHelper, ClientConfigurationService clientConfigurationService) {
-        this.ssmHelper = ssmHelper;
         this.clientConfigurationService = clientConfigurationService;
+        this.ssmHelper = ssmHelper;
     }
 
     public PrivateKeyJWT generateClientAssertion(String clientId)
@@ -34,16 +35,7 @@ public class StubClient {
                         .claim(JWTClaimNames.SUBJECT, clientId)
                         .claim(
                                 JWTClaimNames.AUDIENCE,
-                                ssmHelper
-                                        .getParameterValueByName(
-                                                "/"
-                                                        + this.clientConfigurationService
-                                                                .getCommonStackName()
-                                                        + "/clients/"
-                                                        + this.clientConfigurationService
-                                                                .getDefaultClientId()
-                                                        + "/jwtAuthentication/audience")
-                                        .trim())
+                                ssmHelper.getParameterValue(CriStubClientEnum.AUDIENCE))
                         .claim(JWTClaimNames.JWT_ID, UUID.randomUUID())
                         .claim(
                                 JWTClaimNames.EXPIRATION_TIME,
@@ -62,14 +54,10 @@ public class StubClient {
 
     private ECKey getEcPrivateKey() throws ParseException {
         return ECKey.parse(
-                ssmHelper
-                        .getParameterValueByName(
-                                "/"
-                                        + this.clientConfigurationService
-                                                .getTestResourcesStackName()
-                                        + "/"
-                                        + this.clientConfigurationService.getDefaultClientId()
-                                        + "/privateSigningKey")
-                        .trim());
+                ssmHelper.getParameterValue(
+                        String.format(
+                                "/%s/%s/privateSigningKey",
+                                this.clientConfigurationService.getTestResourcesStackName(),
+                                this.clientConfigurationService.getDefaultClientId())));
     }
 }
