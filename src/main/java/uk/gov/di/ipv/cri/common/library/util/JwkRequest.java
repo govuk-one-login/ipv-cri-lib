@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.common.library.domain.jwks.JWKS;
 import uk.gov.di.ipv.cri.common.library.exception.JWKSRequestException;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -30,18 +29,22 @@ public class JwkRequest {
     }
 
     public JWKS callJWKSEndpoint(String endpoint) throws JWKSRequestException {
+        LOGGER.info("Calling JWKS endpoint ({})", endpoint);
+
+        HttpRequest request = createRequest(endpoint);
+        HttpResponse<String> response = sendRequest(request);
+
+        if (response.statusCode() != 200) {
+            throw new JWKSRequestException(
+                    "JWK endpoint returned status code " + response.statusCode());
+        }
+
         try {
-            HttpRequest request = createRequest(endpoint);
-            HttpResponse<String> response = sendRequest(request);
-            if (response.statusCode() != 200) {
-                throw new JWKSRequestException(
-                        "JWK endpoint returned status code " + response.statusCode());
-            }
             JWKS jwks = objectMapper.readValue(response.body(), JWKS.class);
             parseCacheControlHeader(response).ifPresent(jwks::setMaxAgeFromCacheControlHeader);
             return jwks;
-        } catch (IOException | InterruptedException e) {
-            throw new JWKSRequestException("Failed to retrieve JWKS from endpoint: " + endpoint, e);
+        } catch (Exception e) {
+            throw new JWKSRequestException("Failed to parse JWKS endpoint response", e);
         }
     }
 
@@ -53,9 +56,12 @@ public class JwkRequest {
         }
     }
 
-    private HttpResponse<String> sendRequest(HttpRequest request)
-            throws IOException, InterruptedException {
-        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    private HttpResponse<String> sendRequest(HttpRequest request) throws JWKSRequestException {
+        try {
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            throw new JWKSRequestException("Failed to send HTTP request", e);
+        }
     }
 
     private Optional<Integer> parseCacheControlHeader(HttpResponse<String> response) {
