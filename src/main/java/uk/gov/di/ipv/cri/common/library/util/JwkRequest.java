@@ -41,7 +41,6 @@ public class JwkRequest {
             parseCacheControlHeader(response).ifPresent(jwks::setMaxAgeFromCacheControlHeader);
             return jwks;
         } catch (IOException | InterruptedException e) {
-            Thread.currentThread().interrupt();
             throw new JWKSRequestException("Failed to retrieve JWKS from endpoint: " + endpoint, e);
         }
     }
