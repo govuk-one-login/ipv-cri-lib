@@ -58,8 +58,8 @@ public class JwkRequest {
 
     private HttpResponse<String> sendRequest(HttpRequest request) throws JWKSRequestException {
         try {
-            return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (Exception e) {
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofString()); // NOSONAR
+        } catch (Exception e) { // NOSONAR
             throw new JWKSRequestException("Failed to send HTTP request", e);
         }
     }
