@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+# 6.2.2
+    - Updated SessionService#getSessionByAuthorisationCode to retry in case of any failure due to GSI eventual consistentency
+
 # 6.2.1
     - Removed `Thread.currentThread().interrupt()` from the JwkRequest class as this was causing the AWS SDK to throw
       AbortExceptions.

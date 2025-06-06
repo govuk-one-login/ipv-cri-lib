@@ -195,7 +195,7 @@ class SessionServiceTest {
     }
 
     @Test
-    void shouldRetryWhenSessionNotFound() {
+    void shouldRetryWhenSessionNotByFoundByAccessTokenIndex() {
         SessionItem item = new SessionItem();
         AccessToken accessToken = new BearerAccessToken();
         UUID uuid = UUID.randomUUID();
@@ -218,6 +218,29 @@ class SessionServiceTest {
         when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
 
         SessionItem sessionItem = sessionService.getSessionByAccessToken(accessToken);
+        assertThat(sessionItem.getSessionId(), equalTo(item.getSessionId()));
+    }
+
+    @Test
+    void shouldRetryWhenSessionNotByFoundByAuthorizationCodeIndex() {
+        String authCodeValue = UUID.randomUUID().toString();
+        SessionItem item = new SessionItem();
+        item.setSessionId(UUID.randomUUID());
+        item.setAuthorizationCode(authCodeValue);
+        item.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
+        item.setAuthorizationCodeExpiryDate(
+                Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
+        item.setEvidenceRequest(createEvidenceRequest());
+        setClientSessionIds(item);
+
+        when(mockDataStore.getItemByIndex(SessionItem.AUTHORIZATION_CODE_INDEX, authCodeValue))
+                .thenReturn(Collections.emptyList())
+                .thenReturn(Collections.emptyList())
+                .thenReturn(List.of(item));
+
+        when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
+
+        SessionItem sessionItem = sessionService.getSessionByAuthorisationCode(authCodeValue);
         assertThat(sessionItem.getSessionId(), equalTo(item.getSessionId()));
     }
 

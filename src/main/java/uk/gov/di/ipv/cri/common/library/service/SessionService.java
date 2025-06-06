@@ -20,6 +20,9 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.UUID;
 
+import static uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem.ACCESS_TOKEN_INDEX;
+import static uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem.AUTHORIZATION_CODE_INDEX;
+
 public class SessionService {
     private static final String SESSION_TABLE_PARAM_NAME = "SessionTableName";
     private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
@@ -130,41 +133,17 @@ public class SessionService {
     public SessionItem getSessionByAccessToken(AccessToken accessToken)
             throws SessionExpiredException, AccessTokenExpiredException, SessionNotFoundException {
 
-        RetryConfig retryConfig =
-                new RetryConfig.Builder()
-                        .delayBetweenAttempts(500)
-                        .maxAttempts(3)
-                        .exponentiallyRetry(true)
-                        .build();
-
+        RetryConfig retryConfig = getRetryConfig(500, 3, true);
         Retryable<SessionItem> retryable =
-                () -> {
-                    SessionItem sessionItem;
-
-                    try {
-                        sessionItem =
-                                ListUtil.getOneItemOrThrowError(
-                                        dataStore.getItemByIndex(
-                                                SessionItem.ACCESS_TOKEN_INDEX,
-                                                accessToken.toAuthorizationHeader()));
-                    } catch (IllegalArgumentException e) {
-                        if (e.getMessage().contains("No items found")) {
-                            throw new SessionNotFoundException(
-                                    "no session found with that access token");
-                        } else {
-                            throw new SessionNotFoundException(
-                                    "more than one session found with that access token");
-                        }
-                    }
-
-                    // Re-fetch our session directly to avoid problems with projections
-                    sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
-
-                    return sessionItem;
-                };
+                () ->
+                        getSessionByGsiIndex(
+                                ACCESS_TOKEN_INDEX,
+                                accessToken.toAuthorizationHeader(),
+                                "access token");
 
         SessionItem sessionItem = RetryManager.execute(retryConfig, retryable);
-
+        // Re-fetch our session directly to avoid problems with projections
+        sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
         if (sessionItem.getAccessTokenExpiryDate() < clock.instant().getEpochSecond()) {
             throw new AccessTokenExpiredException("access code expired");
         }
@@ -176,29 +155,43 @@ public class SessionService {
             throws SessionExpiredException,
                     AuthorizationCodeExpiredException,
                     SessionNotFoundException {
-        SessionItem sessionItem;
 
-        try {
-            sessionItem =
-                    ListUtil.getOneItemOrThrowError(
-                            dataStore.getItemByIndex(
-                                    SessionItem.AUTHORIZATION_CODE_INDEX, authCode));
-        } catch (IllegalArgumentException e) {
-            if (e.getMessage().contains("No items found")) {
-                throw new SessionNotFoundException("no session found with that authorization code");
-            } else {
-                throw new SessionNotFoundException(
-                        "more than one session found with that authorization code");
-            }
-        }
+        RetryConfig retryConfig = getRetryConfig(500, 3, true);
+        Retryable<SessionItem> retryable =
+                () ->
+                        getSessionByGsiIndex(
+                                AUTHORIZATION_CODE_INDEX, authCode, "authorization code");
 
+        SessionItem sessionItem = RetryManager.execute(retryConfig, retryable);
         // Re-fetch our session directly to avoid problems with projections
         sessionItem = validateSessionId(String.valueOf(sessionItem.getSessionId()));
-
         if (sessionItem.getAuthorizationCodeExpiryDate() < clock.instant().getEpochSecond()) {
             throw new AuthorizationCodeExpiredException("authorization code expired");
         }
 
         return sessionItem;
+    }
+
+    private RetryConfig getRetryConfig(int delayMs, int maxAttempts, boolean exponential) {
+        return new RetryConfig.Builder()
+                .delayBetweenAttempts(delayMs)
+                .maxAttempts(maxAttempts)
+                .exponentiallyRetry(exponential)
+                .build();
+    }
+
+    private SessionItem getSessionByGsiIndex(
+            String indexName, String indexValue, String indexNameLabel) {
+        try {
+            return ListUtil.getOneItemOrThrowError(dataStore.getItemByIndex(indexName, indexValue));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("No items found")) {
+                throw new SessionNotFoundException(
+                        String.format("no session found with that %s", indexNameLabel));
+            } else {
+                throw new SessionNotFoundException(
+                        String.format("more than one session found with that %s", indexNameLabel));
+            }
+        }
     }
 }
