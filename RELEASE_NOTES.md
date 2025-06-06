@@ -1,5 +1,9 @@
 # Credential Issuer common libraries Release Notes
 
+# 6.2.1
+    - Removed `Thread.currentThread().interrupt()` from the JwkRequest class as this was causing the AWS SDK to throw
+      AbortExceptions.
+
 # 6.2.0
     - Added steps to decrypt and verify session request in WellKnownJwksSteps
       that have been encrypted by the stub for the CRI to decrypt using the corresponding kms key alias
