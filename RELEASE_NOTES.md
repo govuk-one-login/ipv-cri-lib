@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+# 6.2.3
+    - Bug fix: use a new HttpClient in JwkRequest to fix work around GOAWAY frame
+
 # 6.2.2
     - Updated SessionService#getSessionByAuthorisationCode to retry in case of any failure due to GSI eventual consistentency
 
