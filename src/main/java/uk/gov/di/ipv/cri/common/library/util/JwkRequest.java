@@ -16,11 +16,12 @@ public class JwkRequest {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwkRequest.class);
     private static final String CACHE_CONTROL_HEADER_NAME = "Cache-Control";
     private static final String MAX_AGE_PREFIX = "max-age=";
-    private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
+    private HttpClient httpClient;
+
     public JwkRequest() {
-        this(HttpClient.newHttpClient(), new ObjectMapper());
+        this(null, new ObjectMapper());
     }
 
     public JwkRequest(HttpClient httpClient, ObjectMapper objectMapper) {
@@ -58,9 +59,14 @@ public class JwkRequest {
 
     private HttpResponse<String> sendRequest(HttpRequest request) throws JWKSRequestException {
         try {
+            if (httpClient == null) {
+                httpClient = HttpClient.newBuilder().build();
+            }
             return httpClient.send(request, HttpResponse.BodyHandlers.ofString()); // NOSONAR
         } catch (Exception e) { // NOSONAR
             throw new JWKSRequestException("Failed to send HTTP request", e);
+        } finally {
+            httpClient = null;
         }
     }
 
