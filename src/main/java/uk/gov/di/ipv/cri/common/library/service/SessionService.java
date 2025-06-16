@@ -115,12 +115,12 @@ public class SessionService {
                                                     LoggingUtils.appendKey(
                                                             GOVUK_SIGNIN_JOURNEY_ID, id));
                             Optional.ofNullable(s.getEvidenceRequest())
+                                    .flatMap(ev -> Optional.ofNullable(ev.getVerificationScore()))
                                     .ifPresent(
-                                            ev ->
+                                            verificationScore ->
                                                     LoggingUtils.appendKey(
                                                             REQUESTED_VERIFICATION_SCORE,
-                                                            String.valueOf(
-                                                                    ev.getVerificationScore())));
+                                                            String.valueOf(verificationScore)));
                         });
     }
 

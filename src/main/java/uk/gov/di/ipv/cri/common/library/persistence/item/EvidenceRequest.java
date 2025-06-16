@@ -9,11 +9,11 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @DynamoDbBean
 public class EvidenceRequest {
     private String scoringPolicy;
-    private int strengthScore;
-    private int validityScore;
-    private int verificationScore;
-    private int activityHistoryScore;
-    private int identityFraudScore;
+    private Integer strengthScore;
+    private Integer validityScore;
+    private Integer verificationScore;
+    private Integer activityHistoryScore;
+    private Integer identityFraudScore;
 
     public EvidenceRequest() {
         // Empty constructor for Jackson
@@ -27,43 +27,43 @@ public class EvidenceRequest {
         this.scoringPolicy = scoringPolicy;
     }
 
-    public int getStrengthScore() {
+    public Integer getStrengthScore() {
         return strengthScore;
     }
 
-    public void setStrengthScore(int strengthScore) {
+    public void setStrengthScore(Integer strengthScore) {
         this.strengthScore = strengthScore;
     }
 
-    public int getValidityScore() {
+    public Integer getValidityScore() {
         return validityScore;
     }
 
-    public void setValidityScore(int validityScore) {
+    public void setValidityScore(Integer validityScore) {
         this.validityScore = validityScore;
     }
 
-    public int getVerificationScore() {
+    public Integer getVerificationScore() {
         return verificationScore;
     }
 
-    public void setVerificationScore(int verificationScore) {
+    public void setVerificationScore(Integer verificationScore) {
         this.verificationScore = verificationScore;
     }
 
-    public int getActivityHistoryScore() {
+    public Integer getActivityHistoryScore() {
         return activityHistoryScore;
     }
 
-    public void setActivityHistoryScore(int activityHistoryScore) {
+    public void setActivityHistoryScore(Integer activityHistoryScore) {
         this.activityHistoryScore = activityHistoryScore;
     }
 
-    public int getIdentityFraudScore() {
+    public Integer getIdentityFraudScore() {
         return identityFraudScore;
     }
 
-    public void setIdentityFraudScore(int identityFraudScore) {
+    public void setIdentityFraudScore(Integer identityFraudScore) {
         this.identityFraudScore = identityFraudScore;
     }
 }
