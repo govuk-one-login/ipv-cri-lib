@@ -59,6 +59,8 @@ public class JwkRequest {
 
     private HttpResponse<String> sendRequest(HttpRequest request) throws JWKSRequestException {
         try {
+            // This try-catch-finally is to fix a bug with the HttpClient in Java versions less than 21
+            // Where it does not handle the GOAWAY frame in Http 2 properly.
             if (httpClient == null) {
                 httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
             }
