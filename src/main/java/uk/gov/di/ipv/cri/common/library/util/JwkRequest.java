@@ -60,7 +60,7 @@ public class JwkRequest {
     private HttpResponse<String> sendRequest(HttpRequest request) throws JWKSRequestException {
         try {
             if (httpClient == null) {
-                httpClient = HttpClient.newBuilder().build();
+                httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
             }
             return httpClient.send(request, HttpResponse.BodyHandlers.ofString()); // NOSONAR
         } catch (Exception e) { // NOSONAR
