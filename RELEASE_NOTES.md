@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+# 6.3.1
+    - Bug fix: use a HTTP 1.1 in JwkRequest to fix work around GOAWAY frame
+
 # 6.3.0
     - Changed EvidenceRequest types to prevent potential crashes caused by unboxing when null fields are present
     - Improved logging of verification scores in setSessionItemsToLogging method
