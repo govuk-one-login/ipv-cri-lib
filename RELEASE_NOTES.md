@@ -1,5 +1,10 @@
 # Credential Issuer common libraries Release Notes
 
+# 6.4.0
+    - Update KMSRSADecrypter to achieve feature parity with the one in common-lambda, so that it can removed from eventually from common-lambda. 
+    - This class along with JweDecrypter are used in this library for testing purposes
+    - Common-lambda can now reference KMSRSADecrypter and JweDecrypter moved to this lib.
+
 # 6.3.1
     - Bug fix: use a HTTP 1.1 in JwkRequest to fix work around GOAWAY frame
 
