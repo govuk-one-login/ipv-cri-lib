@@ -39,6 +39,9 @@ public class KMSRSADecrypter implements JWEDecrypter {
             "session_decryption_key_previous_alias";
     private static final String ALL_ALIASES_UNAVAILABLE = "all_aliases_unavailable_for_decryption";
     private boolean keyRotationEnabled = false;
+    private final boolean keyRotationLegacyKeyFallbackEnabled =
+            Boolean.parseBoolean(
+                    System.getenv("ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK"));
     private final JWEJCAContext jcaContext;
     private final KmsClient kmsClient;
     private final EventProbe eventProbe;
@@ -92,27 +95,51 @@ public class KMSRSADecrypter implements JWEDecrypter {
         DecryptResponse decryptResponse;
         if (isKeyRotationEnabled()) {
             LOGGER.info("Key rotation enabled. Attempting to decrypt with key aliases.");
-            // During a key rotation we might receive JWTs encrypted with either the old or new key.
+            // During a key rotation, we might receive JWTs encrypted with either the old or new
+            // key.
             decryptResponse = decryptWithKeyAliases(encryptedKey);
 
-            if (decryptResponse == null) {
+            if (keyRotationLegacyKeyFallbackEnabled && decryptResponse == null) {
+                LOGGER.warn(
+                        "Failed to decrypt with all available key aliases, falling back to legacy key.");
+
+                // Legacy Key fallback
+                try {
+                    decryptResponse = decryptWithLegacyKey(encryptedKey);
+                } catch (Exception e) {
+                    // Do nothing
+                }
+
+                if (decryptResponse == null) {
+                    String message = "Failed to decrypt with legacy key.";
+                    LOGGER.error(message);
+                    throw new JOSEException(message);
+                }
+
+                LOGGER.info("Decryption successful with legacy key");
+            } else if (decryptResponse == null) {
                 String message = "Failed to decrypt with all available key aliases.";
                 LOGGER.error(message);
                 throw new JOSEException(message);
             }
         } else {
-            DecryptRequest decryptRequest =
-                    DecryptRequest.builder()
-                            .encryptionAlgorithm(EncryptionAlgorithmSpec.RSAES_OAEP_SHA_256)
-                            .ciphertextBlob(SdkBytes.fromByteArray(encryptedKey.decode()))
-                            .keyId(this.keyId)
-                            .build();
-            decryptResponse = this.kmsClient.decrypt(decryptRequest);
+            // Legacy Key Route
+            decryptResponse = decryptWithLegacyKey(encryptedKey);
         }
 
         SecretKey cek = new SecretKeySpec(decryptResponse.plaintext().asByteArray(), "AES");
         return ContentCryptoProvider.decrypt(
                 header, null, encryptedKey, iv, cipherText, authTag, cek, getJCAContext());
+    }
+
+    private DecryptResponse decryptWithLegacyKey(Base64URL encryptedKey) {
+        DecryptRequest decryptRequest =
+                DecryptRequest.builder()
+                        .encryptionAlgorithm(EncryptionAlgorithmSpec.RSAES_OAEP_SHA_256)
+                        .ciphertextBlob(SdkBytes.fromByteArray(encryptedKey.decode()))
+                        .keyId(this.keyId)
+                        .build();
+        return this.kmsClient.decrypt(decryptRequest);
     }
 
     private DecryptResponse decryptWithKeyAliases(Base64URL encryptedKey) {
@@ -139,10 +166,6 @@ public class KMSRSADecrypter implements JWEDecrypter {
         return decryptResponse;
     }
 
-    public boolean isKeyRotationEnabled() {
-        return keyRotationEnabled;
-    }
-
     private DecryptRequest buildDecryptRequest(String keyAlias, Base64URL encryptedKey) {
         return DecryptRequest.builder()
                 .ciphertextBlob(SdkBytes.fromByteArray(encryptedKey.decode()))
@@ -164,5 +187,9 @@ public class KMSRSADecrypter implements JWEDecrypter {
     @Override
     public JWEJCAContext getJCAContext() {
         return jcaContext;
+    }
+
+    public boolean isKeyRotationEnabled() {
+        return keyRotationEnabled;
     }
 }
