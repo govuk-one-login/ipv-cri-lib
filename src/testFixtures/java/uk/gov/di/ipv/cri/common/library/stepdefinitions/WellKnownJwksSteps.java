@@ -151,14 +151,15 @@ public class WellKnownJwksSteps {
                 is(true));
     }
 
-    @And("the feature flag is {string}")
-    public void feature_flag(String value) {
+    @And("the key rotation feature flag {string} and legacy fallback flag is {string}")
+    public void feature_flag(String enabled, String disabled) {
         setKmsRsaDecrypter(
                 new KMSRSADecrypter(
                         new ClientProviderFactory().getKMSClient(),
                         new EventProbe(),
                         authEncryptionKeyId,
-                        value.equalsIgnoreCase("enabled") ? true : false));
+                        enabled.equalsIgnoreCase("enabled") ? true : false,
+                        disabled.equalsIgnoreCase("disabled") ? true : false));
 
         setJwtDecrypter(new JWTDecrypter(getKmsrsaDecrypter()));
     }

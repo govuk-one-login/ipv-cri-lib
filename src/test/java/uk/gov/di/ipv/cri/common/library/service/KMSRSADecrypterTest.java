@@ -61,6 +61,7 @@ class KMSRSADecrypterTest {
         environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION", "false");
         environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK", "false");
     }
+
     @Nested
     @DisplayName("Focused on decryption when JWE parts / algorithm is invalid or valid")
     class KMSRSADecryptWellFormedJWETest {
@@ -182,8 +183,10 @@ class KMSRSADecrypterTest {
                     "Unsupported JWE algorithm ECDH-1PU+A256KW, must be RSA-OAEP-256");
         }
     }
+
     @Nested
-    @DisplayName("Focused on the decryption when Key rotation flag is enabled and KMS aliases are used")
+    @DisplayName(
+            "Focused on the decryption when Key rotation flag is enabled and KMS aliases are used")
     class KMSRSADecrypterUsingKmsAliasTest {
         @Test
         void shouldDecryptWithPrimaryAlias() throws ParseException, JOSEException {
@@ -221,7 +224,8 @@ class KMSRSADecrypterTest {
             assertEquals(
                     EncryptionAlgorithmSpec.RSAES_OAEP_SHA_256.toString(),
                     actualDecryptRequest.encryptionAlgorithmAsString());
-            assertEquals("alias/" + SESSION_DECRYPTION_KEY_PRIMARY_ALIAS, actualDecryptRequest.keyId());
+            assertEquals(
+                    "alias/" + SESSION_DECRYPTION_KEY_PRIMARY_ALIAS, actualDecryptRequest.keyId());
             assertArrayEquals(
                     encryptedKey.decode(), actualDecryptRequest.ciphertextBlob().asByteArray());
             assertEquals(11, claims.getClaims().size());
@@ -267,7 +271,8 @@ class KMSRSADecrypterTest {
                     EncryptionAlgorithmSpec.RSAES_OAEP_SHA_256.toString(),
                     actualDecryptRequest.encryptionAlgorithmAsString());
             assertEquals(
-                    "alias/" + SESSION_DECRYPTION_KEY_SECONDARY_ALIAS, actualDecryptRequest.keyId());
+                    "alias/" + SESSION_DECRYPTION_KEY_SECONDARY_ALIAS,
+                    actualDecryptRequest.keyId());
             assertArrayEquals(
                     encryptedKey.decode(), actualDecryptRequest.ciphertextBlob().asByteArray());
             assertEquals(11, claims.getClaims().size());
@@ -322,15 +327,18 @@ class KMSRSADecrypterTest {
             assertEquals("ipv-core-stub", claims.getIssuer());
         }
     }
+
     @Nested
     @DisplayName("Focused on decryption when key rotation and legacy fall back flags are enabled")
     class KMSRSADecrypterLegacyKeyFallbackTest {
         @Test
-        @DisplayName("throws when all decryption attempts with aliases fail and the fail back legacy flag is disabled")
+        @DisplayName(
+                "throws when all decryption attempts with aliases fail and the fail back legacy flag is disabled")
         void shouldThrowWhenLegacyFallbackDisabledAndAllAliasesAreNotPresentOrFail()
                 throws Exception {
             environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION", "true");
-            environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK", "false");
+            environmentVariables.set(
+                    "ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK", "false");
 
             KMSRSADecrypter kmsRsaDecrypter =
                     new KMSRSADecrypter(TEST_KEY_ID, mockKmsClient, mockeventProbe);
@@ -351,18 +359,24 @@ class KMSRSADecrypterTest {
                     JOSEException.class,
                     () ->
                             kmsRsaDecrypter.decrypt(
-                                    header, encryptedKey, iv, cipherText, authTag, AAD.compute(header)),
+                                    header,
+                                    encryptedKey,
+                                    iv,
+                                    cipherText,
+                                    authTag,
+                                    AAD.compute(header)),
                     "Failed to decrypt with all available key aliases.");
             verify(mockKmsClient, times(3)).decrypt(any(DecryptRequest.class));
             verify(mockeventProbe, times(1)).counterMetric(ALL_ALIASES_UNAVAILABLE);
         }
 
         @Test
-        @DisplayName("throws when all decryption attempts with aliases fail, but also fails decryption when legacy flag is enabled")
-        void shouldThrowWhenLegacyFallbackIsEnabledButDecryptionAlsoFails()
-                throws Exception {
+        @DisplayName(
+                "throws when all decryption attempts with aliases fail, but also fails decryption when legacy flag is enabled")
+        void shouldThrowWhenLegacyFallbackIsEnabledButDecryptionAlsoFails() throws Exception {
             environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION", "true");
-            environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK", "true");
+            environmentVariables.set(
+                    "ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK", "true");
 
             KMSRSADecrypter kmsRsaDecrypter =
                     new KMSRSADecrypter(TEST_KEY_ID, mockKmsClient, mockeventProbe);
@@ -379,24 +393,32 @@ class KMSRSADecrypterTest {
                     .thenThrow(new RuntimeException("primary key failed to decrypt"))
                     .thenThrow(new RuntimeException("secondary key failed to decrypt"))
                     .thenThrow(new RuntimeException("previous key failed to decrypt"))
-                    .thenThrow(new RuntimeException("Failed to decrypt with legacy key.")); // fallback
+                    .thenThrow(
+                            new RuntimeException("Failed to decrypt with legacy key.")); // fallback
 
             assertThrows(
                     JOSEException.class,
                     () ->
                             kmsRsaDecrypter.decrypt(
-                                    header, encryptedKey, iv, cipherText, authTag, AAD.compute(header)),
+                                    header,
+                                    encryptedKey,
+                                    iv,
+                                    cipherText,
+                                    authTag,
+                                    AAD.compute(header)),
                     "Failed to decrypt with legacy key.");
             verify(mockKmsClient, times(4)).decrypt(any(DecryptRequest.class));
             verify(mockeventProbe, times(1)).counterMetric(ALL_ALIASES_UNAVAILABLE);
         }
 
         @Test
-        @DisplayName("decrypts when all decryption attempts with aliases fail, but succeeds decryption when legacy flag is enabled")
+        @DisplayName(
+                "decrypts when all decryption attempts with aliases fail, but succeeds decryption when legacy flag is enabled")
         void shouldDecryptWhenLegacyKeyFallBackIsEnabledAndLegacyKeyFallBackDecryptionSucceeds()
                 throws Exception {
             environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION", "true");
-            environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK", "true");
+            environmentVariables.set(
+                    "ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK", "true");
 
             KMSRSADecrypter kmsRsaDecrypter =
                     new KMSRSADecrypter(TEST_KEY_ID, mockKmsClient, mockeventProbe);
@@ -446,11 +468,13 @@ class KMSRSADecrypterTest {
             verify(mockKmsClient, times(4)).decrypt(any(DecryptRequest.class));
             verify(mockeventProbe, times(1)).counterMetric(ALL_ALIASES_UNAVAILABLE);
         }
+
         @Test
         @DisplayName("succeeds with second alias and skips legacy fallback even when enabled")
         void shouldNotAttemptLegacyFallbackWhenAliasSucceeds() throws Exception {
             environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION", "true");
-            environmentVariables.set("ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK", "true");
+            environmentVariables.set(
+                    "ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK", "true");
 
             KMSRSADecrypter kmsRsaDecrypter =
                     new KMSRSADecrypter(TEST_KEY_ID, mockKmsClient, mockeventProbe);
@@ -470,8 +494,9 @@ class KMSRSADecrypterTest {
                             DecryptResponse.builder()
                                     .plaintext(
                                             SdkBytes.fromByteArray(
-                                                    Base64.getDecoder().decode(
-                                                            "ngoABokVaj3BYY8FfaPef4nzV9dr+ziueibf2hofYDQ=")))
+                                                    Base64.getDecoder()
+                                                            .decode(
+                                                                    "ngoABokVaj3BYY8FfaPef4nzV9dr+ziueibf2hofYDQ=")))
                                     .build());
 
             byte[] result =

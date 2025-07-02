@@ -39,9 +39,7 @@ public class KMSRSADecrypter implements JWEDecrypter {
             "session_decryption_key_previous_alias";
     private static final String ALL_ALIASES_UNAVAILABLE = "all_aliases_unavailable_for_decryption";
     private boolean keyRotationEnabled = false;
-    private final boolean keyRotationLegacyKeyFallbackEnabled =
-            Boolean.parseBoolean(
-                    System.getenv("ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK"));
+    private boolean keyRotationLegacyKeyFallbackEnabled = false;
     private final JWEJCAContext jcaContext;
     private final KmsClient kmsClient;
     private final EventProbe eventProbe;
@@ -52,16 +50,42 @@ public class KMSRSADecrypter implements JWEDecrypter {
                 kmsClient,
                 eventProbe,
                 keyId,
-                Boolean.parseBoolean(System.getenv("ENV_VAR_FEATURE_FLAG_KEY_ROTATION")));
+                Boolean.parseBoolean(System.getenv("ENV_VAR_FEATURE_FLAG_KEY_ROTATION")),
+                Boolean.parseBoolean(
+                        System.getenv("ENV_VAR_FEATURE_FLAG_KEY_ROTATION_LEGACY_KEY_FALLBACK")));
     }
 
     public KMSRSADecrypter(
-            KmsClient kmsClient, EventProbe eventProbe, String keyId, Boolean keyRotationEnabled) {
+            KmsClient kmsClient,
+            EventProbe eventProbe,
+            String keyId,
+            Boolean keyRotationEnabled,
+            boolean legacyKeyFallbackEnabled) {
         this.jcaContext = new JWEJCAContext();
         this.kmsClient = kmsClient;
         this.eventProbe = eventProbe;
         this.keyId = keyId;
         this.keyRotationEnabled = keyRotationEnabled;
+        this.keyRotationLegacyKeyFallbackEnabled = legacyKeyFallbackEnabled;
+    }
+
+    @Override
+    public Set<JWEAlgorithm> supportedJWEAlgorithms() {
+        return SUPPORTED_ALGORITHMS;
+    }
+
+    @Override
+    public Set<EncryptionMethod> supportedEncryptionMethods() {
+        return SUPPORTED_ENCRYPTION_METHODS;
+    }
+
+    @Override
+    public JWEJCAContext getJCAContext() {
+        return jcaContext;
+    }
+
+    public boolean isKeyRotationEnabled() {
+        return keyRotationEnabled;
     }
 
     @Override
@@ -73,27 +97,12 @@ public class KMSRSADecrypter implements JWEDecrypter {
             Base64URL authTag,
             byte[] aad)
             throws JOSEException {
+
         // Validate required JWE parts
-        if (Objects.isNull(encryptedKey)) {
-            throw new JOSEException("Missing JWE encrypted key");
-        }
+        validateJwe(header, encryptedKey, iv, authTag);
 
-        if (Objects.isNull(iv)) {
-            throw new JOSEException("Missing JWE initialization vector (IV)");
-        }
-
-        if (Objects.isNull(authTag)) {
-            throw new JOSEException("Missing JWE authentication tag");
-        }
-
-        JWEAlgorithm alg = header.getAlgorithm();
-
-        if (!SUPPORTED_ALGORITHMS.contains(alg)) {
-            throw new JOSEException(
-                    AlgorithmSupportMessage.unsupportedJWEAlgorithm(alg, supportedJWEAlgorithms()));
-        }
         DecryptResponse decryptResponse;
-        if (isKeyRotationEnabled()) {
+        if (keyRotationEnabled) {
             LOGGER.info("Key rotation enabled. Attempting to decrypt with key aliases.");
             // During a key rotation, we might receive JWTs encrypted with either the old or new
             // key.
@@ -126,10 +135,32 @@ public class KMSRSADecrypter implements JWEDecrypter {
             // Legacy Key Route
             decryptResponse = decryptWithLegacyKey(encryptedKey);
         }
-
         SecretKey cek = new SecretKeySpec(decryptResponse.plaintext().asByteArray(), "AES");
         return ContentCryptoProvider.decrypt(
                 header, null, encryptedKey, iv, cipherText, authTag, cek, getJCAContext());
+    }
+
+    private void validateJwe(
+            JWEHeader header, Base64URL encryptedKey, Base64URL iv, Base64URL authTag)
+            throws JOSEException {
+        if (Objects.isNull(encryptedKey)) {
+            throw new JOSEException("Missing JWE encrypted key");
+        }
+
+        if (Objects.isNull(iv)) {
+            throw new JOSEException("Missing JWE initialization vector (IV)");
+        }
+
+        if (Objects.isNull(authTag)) {
+            throw new JOSEException("Missing JWE authentication tag");
+        }
+
+        JWEAlgorithm alg = header.getAlgorithm();
+
+        if (!SUPPORTED_ALGORITHMS.contains(alg)) {
+            throw new JOSEException(
+                    AlgorithmSupportMessage.unsupportedJWEAlgorithm(alg, supportedJWEAlgorithms()));
+        }
     }
 
     private DecryptResponse decryptWithLegacyKey(Base64URL encryptedKey) {
@@ -172,24 +203,5 @@ public class KMSRSADecrypter implements JWEDecrypter {
                 .encryptionAlgorithm(RSAES_OAEP_SHA_256)
                 .keyId("alias/" + keyAlias)
                 .build();
-    }
-
-    @Override
-    public Set<JWEAlgorithm> supportedJWEAlgorithms() {
-        return SUPPORTED_ALGORITHMS;
-    }
-
-    @Override
-    public Set<EncryptionMethod> supportedEncryptionMethods() {
-        return SUPPORTED_ENCRYPTION_METHODS;
-    }
-
-    @Override
-    public JWEJCAContext getJCAContext() {
-        return jcaContext;
-    }
-
-    public boolean isKeyRotationEnabled() {
-        return keyRotationEnabled;
     }
 }
