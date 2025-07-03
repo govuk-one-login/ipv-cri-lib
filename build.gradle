@@ -4,8 +4,6 @@ plugins {
 	id "org.sonarqube"
 	id "com.diffplug.spotless"
 	id "jacoco"
-	id "maven-publish"
-	id "signing"
 	id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
 	id 'io.freefair.aspectj.post-compile-weaving' version '6.6.3' // https://github.com/freefair/gradle-plugins
 }
@@ -226,72 +224,3 @@ gradle.projectsEvaluated {
 
 group = "uk.gov.account"
 version = "$buildVersion"
-
-nexusPublishing {
-	useStaging = true
-	repositories {
-		sonatype {
-			// because we registered in Sonatype after 24 Feb 2021, we provide these URIs
-			// see: https://github.com/gradle-nexus/publish-plugin/blob/master/README.md
-			nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-			snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-			username = System.getenv("SONATYPE_USERNAME")
-			password = System.getenv("SONATYPE_PASSWORD")
-		}
-	}
-}
-
-signing {
-	useInMemoryPgpKeys(
-			System.getenv("MAVEN_CENTRAL_SIGNING_KEY"),
-			System.getenv("MAVEN_CENTRAL_SIGNING_KEY_PASSWORD")
-			)
-	sign publishing.publications
-}
-
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			from components.java
-			pom {
-				name = 'Digital Identity Credential Issuer common libraries'
-				packaging = 'jar'
-				description = 'Digital Identity Credential Issuer common libraries'
-				url = 'https://github.com/govuk-one-login/ipv-cri-lib'
-				artifactId = 'cri-common-lib'
-
-				scm {
-					url = 'https://github.com/govuk-one-login/ipv-cri-lib'
-					connection = 'scm:git:git://github.com/govuk-one-login/ipv-cri-lib.git'
-					developerConnection = 'scm:git:ssh://git@github.com:govuk-one-login/ipv-cri-lib.git'
-				}
-
-				licenses {
-					license {
-						name = 'MIT Licence'
-						url = 'https://github.com/govuk-one-login/ipv-cri-lib/blob/main/LICENSE'
-						distribution = 'repo'
-					}
-				}
-
-				developers {
-					developer {
-						name = 'GDS Developers'
-					}
-				}
-			}
-			// The java-test-fixtures plugin results in the API dependencies for testFixtures
-			// being added to the pom with <scope>compile</scope> & <optional>true</optional>.
-			// This is not desired as the scope is incorrect and the testFixtures are referenced
-			// via gradle module metadata. The code below removes the unwanted optional dependencies
-			// from the pom.
-			pom.withXml {
-				asNode().dependencies.dependency.each { dep ->
-					if(dep.optional.text() == 'true') {
-						dep.parent().remove(dep)
-					}
-				}
-			}
-		}
-	}
-}
