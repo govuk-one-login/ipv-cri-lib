@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+# 6.4.1
+    - No change since 6.4.0 - this release is for new central publishing.
+
 # 6.4.0
     - Update KMSRSADecrypter to achieve feature parity with the one in common-lambda, so that it can removed from eventually from common-lambda. 
     - This class along with JweDecrypter are used in this library for testing purposes

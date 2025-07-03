@@ -11,7 +11,7 @@ plugins {
 }
 
 // Important: update RELEASE_NOTES.md when you change the version
-def buildVersion = "6.4.0"
+def buildVersion = "6.4.1"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
