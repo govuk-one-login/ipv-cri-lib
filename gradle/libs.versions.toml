@@ -1,0 +1,83 @@
+[versions]
+aws_sdk_version = "2.29.1"
+aws_lambda_events_version = "3.11.6"
+aspectjrt_version = "1.9.20.1"
+aws_powertools_version = "1.18.0"
+jackson_version = "2.15.2"
+nimbusds_oauth_version = "11.4"
+nimbusds_jwt_version = "9.36"
+junit = "5.8.2"
+mockito = "4.3.1"
+cucumber_version = "7.9.0"
+opentelemetry_version = "2.12.0-alpha"
+
+[libraries]
+aws_bom = { module = "software.amazon.awssdk:bom", version = "2.26.20"}
+aws-crt-client = { module = "software.amazon.awssdk:aws-crt-client", version.ref = "aws_sdk_version" }
+cloudformation = { module = "software.amazon.awssdk:cloudformation", version.ref = "aws_sdk_version" }
+dynamodb = { module = "software.amazon.awssdk:dynamodb", version.ref = "aws_sdk_version" }
+dynamodb-enhanced = { module = "software.amazon.awssdk:dynamodb-enhanced", version.ref = "aws_sdk_version" }
+gson = { module = "com.google.code.gson:gson", version = "2.8.9" }
+
+lambda-core = { module = "software.amazon.awssdk:lambda", version.ref = "aws_sdk_version" }
+lambda-events = { module = "com.amazonaws:aws-lambda-java-events", version.ref = "aws_lambda_events_version" }
+powertools-parameters = { module = "software.amazon.lambda:powertools-parameters", version.ref = "aws_powertools_version" }
+powertools-logging = { module = "software.amazon.lambda:powertools-logging", version.ref = "aws_powertools_version" }
+powertools-metrics = { module = "software.amazon.lambda:powertools-metrics", version.ref = "aws_powertools_version" }
+
+sqs = { module = "software.amazon.awssdk:sqs", version.ref = "aws_sdk_version" }
+ssm = { module = "software.amazon.awssdk:ssm", version.ref = "aws_sdk_version" }
+sso = { module = "software.amazon.awssdk:sso", version.ref = "aws_sdk_version" }
+ssooidc = { module = "software.amazon.awssdk:ssooidc", version.ref = "aws_sdk_version" }
+
+kms = { module = "software.amazon.awssdk:kms", version.ref = "aws_sdk_version" }
+acm = { module = "software.amazon.awssdk:acm", version.ref = "aws_sdk_version" }
+
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson_version" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson_version" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson_version" }
+jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson_version" }
+jackson-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", version.ref = "jackson_version" }
+
+everit-schema = { module = "com.github.erosb:everit-json-schema", version = "1.14.4" }
+
+aspectjrt = { module = "org.aspectj:aspectjrt", version.ref = "aspectjrt_version" }
+
+nimbus-oauth = { module = "com.nimbusds:oauth2-oidc-sdk", version.ref = "nimbusds_oauth_version" }
+nimbus-jose = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbusds_jwt_version" }
+
+junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
+junit-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit" }
+junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+
+mockito-junit = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+mockito-inline = { module = "org.mockito:mockito-inline", version.ref = "mockito" }
+
+hamcrest = { module = "org.hamcrest:hamcrest", version = "2.2" }
+system-stubs-jupiter = { module = "uk.org.webcompere:system-stubs-jupiter", version = "2.0.1" }
+system-stubs-core = { module = "uk.org.webcompere:system-stubs-core", version = "2.0.1" }
+
+opentelemetry-bom = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry_version" }
+otel-aws-sdk = { module = "io.opentelemetry.instrumentation:opentelemetry-aws-sdk-2.2", version = "opentelemetry_version" }
+
+cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber_version" }
+cucumber-pico = { module = "io.cucumber:cucumber-picocontainer", version.ref = "cucumber_version" }
+
+[bundles]
+aws = ["cloudformation", "dynamodb", "dynamodb-enhanced", "sqs", "ssm", "sso", "ssooidc", "kms", "acm", "lambda-core"]
+lambda = ["lambda-core", "lambda-events", "powertools-parameters"]
+powertools = ["powertools-logging", "powertools-metrics"]
+jackson = ["jackson-core", "jackson-databind", "jackson-annotations", "jackson-jsr310", "jackson-jdk8", "everit-schema"]
+nimbus = ["nimbus-oauth", "nimbus-jose"]
+tests = ["junit-api", "junit-params", "mockito-junit", "mockito-inline", "hamcrest", "system-stubs-jupiter", "system-stubs-core"]
+test_runtime = ["junit-engine"]
+cucumber = ["cucumber-java", "cucumber-pico"]
+
+[plugins]
+java-library = { id = "java-library" }
+java-test-fixtures = { id = "java-test-fixtures" }
+sonarqube = { id = "org.sonarqube" }
+spotless = { id = "com.diffplug.spotless" }
+jacoco = { id = "jacoco" }
+post-compile-weaving = { id = "io.freefair.aspectj.post-compile-weaving", version = "6.6.3" }
+publishing = { id = "com.vanniktech.maven.publish", version = "0.32.0" }
