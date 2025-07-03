@@ -6,6 +6,7 @@ plugins {
 	id "jacoco"
 	id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
 	id 'io.freefair.aspectj.post-compile-weaving' version '6.6.3' // https://github.com/freefair/gradle-plugins
+	id "com.vanniktech.maven.publish" version "0.32.0"
 }
 
 // please update RELEASE_NOTES.md when you update this version
@@ -224,3 +225,35 @@ gradle.projectsEvaluated {
 
 group = "uk.gov.account"
 version = "$buildVersion"
+
+mavenPublishing {
+	publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+	signAllPublications()
+
+	coordinates(group.toString(), "cri-common-lib", version.toString())
+
+	pom {
+		name = "Digital Identity Credential Issuer common libraries"
+		description = "Digital Identity Credential Issuer common libraries"
+		inceptionYear = "2025"
+		url = "https://github.com/govuk-one-login/ipv-cri-lib"
+		licenses {
+			license {
+				name = "MIT License"
+				url = "https://github.com/govuk-one-login/ipv-cri-lib/blob/main/LICENSE"
+				distribution = "repo"
+			}
+		}
+		developers {
+			developer {
+				name = "GDS Developers"
+			}
+		}
+		scm {
+			url = "https://github.com/govuk-one-login/ipv-cri-lib"
+			connection = "scm:git:git://github.com/govuk-one-login/ipv-cri-lib.git"
+			developerConnection = "scm:git:ssh://git@github.com/govuk-one-login/ipv-cri-lib.git"
+		}
+	}
+}
