@@ -11,7 +11,7 @@ plugins {
 }
 
 // Important: see README on publishing a new version to Maven
-def buildVersion = "6.4.1"
+def buildVersion = "6.4.2"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
