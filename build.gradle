@@ -10,7 +10,7 @@ plugins {
 	alias(libs.plugins.publishing)
 }
 
-// Important: update RELEASE_NOTES.md when you change the version
+// Important: see README on publishing a new version to Maven
 def buildVersion = "6.4.1"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
@@ -22,8 +22,8 @@ repositories {
 }
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_11
-	targetCompatibility = JavaVersion.VERSION_11
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
 }
 
 configurations.configureEach {
