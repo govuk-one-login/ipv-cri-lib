@@ -1,5 +1,8 @@
 # Credential Issuer common libraries Release Notes
 
+**This file has now been deprecated.**<br>
+Release notes will be generated when creating a new release. See the README.
+
 # 6.4.1
     - No change since 6.4.0 - this release is for new central publishing.
 
