@@ -2,11 +2,28 @@
 
 A library of common functions that can be used across credential issuers for validation, event transmission, describing common data etc.
 
-## Releasing CRI libs to Maven Central
+## Publishing to Maven Central
 
-Update the `buildVersion` in `/build.gradle` to reflect the latest major, minor or patch version of this library and then update the [RELEASE_NOTES](./RELEASE_NOTES.md).
+To publish a new version to Maven Central, follow these steps:
 
-If this version is distinct, it should be deployed to Maven Central at [uk.gov.account:cri-common-lib](https://search.maven.org/artifact/uk.gov.account/cri-common-lib). Note that this is a manual process and needs be done using the `pipeline-cri-libs-to-maven-central` pipeline in the `di-tools-dev` account, see [docs](https://govukverify.atlassian.net/wiki/spaces/OJ/pages/3357605906/di-ipv-cri-lib+deployment+to+maven+central) for more info.
+1. **Bump the version**<br>
+   Create a pull request that updates the `buildVersion` in `build.gradle`.
+
+2. **Merge the PR**<br>
+   Once approved, merge the pull request into the `main` branch.
+
+3. **Create a new GitHub release**<br>
+   Go to [Create new release](https://github.com/govuk-one-login/ipv-cri-lib/releases/new) and:
+    * Set the tag name to match the version from `build.gradle`, prefixed with v (e.g. v1.0.0)
+    * Use the same value for the release title (e.g. v1.0.0)
+    * Click "Generate release notes" and edit them for clarity and readability
+    * Click "Publish release"
+
+4. **Trigger the Maven publish action**<br>
+   Publishing will start automatically via the [Publish to Maven Central](https://github.com/govuk-one-login/ipv-cri-lib/actions/workflows/publish-to-maven.yml) GitHub Action.
+
+5. **Verify the release**<br>
+   It may take up to 15 minutes for the new version to appear on [Maven Central](https://central.sonatype.com/artifact/uk.gov.account/cri-common-lib).
 
 ## Testing local changes to cri_common_lib with a dev CRI stack
 
