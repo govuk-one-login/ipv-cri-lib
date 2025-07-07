@@ -33,7 +33,6 @@ configurations.configureEach {
 }
 
 dependencies {
-	implementation platform("software.amazon.awssdk:bom:2.26.20")
 	implementation platform(libs.aws.bom)
 	implementation platform(libs.opentelemetry.bom)
 
@@ -63,7 +62,6 @@ dependencies {
 
 	testFixturesRuntimeOnly libs.sso
 }
-
 
 tasks.named("jar") {
 	manifest {
