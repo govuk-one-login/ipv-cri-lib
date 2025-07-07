@@ -63,7 +63,6 @@ dependencies {
 	testFixturesRuntimeOnly libs.sso
 }
 
-
 tasks.named("jar") {
 	manifest {
 		attributes("Implementation-Title": project.name,
