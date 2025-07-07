@@ -25,15 +25,18 @@ To publish a new version to Maven Central, follow these steps:
 5. **Verify the release**<br>
    It may take up to 15 minutes for the new version to appear on [Maven Central](https://central.sonatype.com/artifact/uk.gov.account/cri-common-lib).
 
-## Testing local changes to cri_common_lib with a dev CRI stack
+## Testing changes locally with a development CRI stack
 
-In cri-common-lib:
-- Update the `buildVersion` in `/build.gradle` to avoid any potential caching issues.
-- Comment out `sign publishing.publications` in `/build.gradle`
-- run `./gradlew publishToMavenLocal`
+To test changes made to this repository with a development CRI stack you must follow the steps below to publish to `mavenLocal`:
+
+Within this repository:
+
+1. Update `buildVersion` in `build.gradle` to the next version to avoid version conflicts
+2. Comment out `signAllPublications()` within the `mavenPublishing` block
+3. Run the command: `./gradlew publishMavenPublicationToMavenLocal`
 
 In your cri repo:
-- Update the `dependencyVersions` section for `cri_common_lib` to the same version set above in `/build.gradle`
-- Add `mavenLocal()` to the `repositories` sections in `/build.gradle` (In kbv for example there are 2 of these to update). Add it above the existing `maven` field.
+1. Update the version used for `cri_common_lib` to the same version set above in `build.gradle`
+2. Add `mavenLocal()` to the `repositories` sections in `build.gradle`. Note: This may need to be done in multiple places depending on the CRI project setup.
 
-You should now be able to build your cri stack and deploy to AWS with your local cri_common_lib changes.
+You should now be able to build your CRI stack and deploy to AWS with your local cri_common_lib changes.
