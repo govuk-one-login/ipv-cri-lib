@@ -101,9 +101,23 @@ public class WellKnownJwksSteps {
                                 .build()));
     }
 
+    /**
+     * @deprecated Use step "the response from the endpoint contains the public JWK keyset" instead.
+     */
+    @Deprecated
     @Then("the response from the endpoint includes the public JWK keyset")
     public void the_response_from_the_endpoint_includes_the_public_jwk_keyset()
             throws JsonProcessingException {
+        assertResponseContainsPublicJWKKeyset("RSA_OAEP_256");
+    }
+
+    @Then("the response from the endpoint contains the public JWK keyset")
+    public void the_response_from_the_endpoint_contains_the_public_jwk_keyset()
+            throws JsonProcessingException {
+        assertResponseContainsPublicJWKKeyset("RSA-OAEP-256");
+    }
+
+    private void assertResponseContainsPublicJWKKeyset(String alg) throws JsonProcessingException {
 
         JsonNode jwkResponse = objectMapper.readTree(httpResponse.getResponse().body());
 
@@ -116,7 +130,7 @@ public class WellKnownJwksSteps {
 
         assertThat(firstKey.get("kty").asText(), is("RSA"));
         assertThat(firstKey.get("use").asText(), is("enc"));
-        assertThat(firstKey.get("alg").asText(), is("RSA_OAEP_256"));
+        assertThat(firstKey.get("alg").asText(), is(alg));
     }
 
     @And("each key has an associated kid")
