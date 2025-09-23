@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID;
-import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.MAXIMUM_JWT_TTL;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.SESSION_TTL;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.VERIFIABLE_CREDENTIAL_ISSUER;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID;
@@ -137,17 +136,6 @@ class ConfigurationServiceTest {
         }
 
         @Test
-        void shouldGetMaxJwtTtlTtl() {
-            long maxJwtTtl = 10;
-            when(mockSsmProvider.get(
-                            String.format(
-                                    PARAM_NAME_FORMAT, stackName, MAXIMUM_JWT_TTL.parameterName)))
-                    .thenReturn(String.valueOf(maxJwtTtl));
-
-            assertEquals(maxJwtTtl, configurationService.getMaxJwtTtl());
-        }
-
-        @Test
         void shouldGetParameterByAbsoluteName() {
             when(mockSsmProvider.get(PARAM_NAME)).thenReturn(PARAM_VALUE);
 
@@ -224,7 +212,6 @@ class ConfigurationServiceTest {
     class ConfigServiceGetEnvironmentVariables {
         @Test
         void shouldGetSqsAuditEventQueueUrlFromEnv() {
-
             String audiEventQueueUrl = configurationService.getSqsAuditEventQueueUrl();
 
             assertEquals("https://test-audit-queue", audiEventQueueUrl);
@@ -232,10 +219,23 @@ class ConfigurationServiceTest {
 
         @Test
         void shouldGetAuditEventPrefixFromEnv() {
-
             String audiEventQueueUrl = configurationService.getSqsAuditEventPrefix();
 
             assertEquals("AUDIT-PREFIX", audiEventQueueUrl);
+        }
+
+        @Test
+        void shouldGetDefaultMaxJwtTtl() {
+            environment.set("MAXIMUM_JWT_TTL", null);
+
+            assertEquals(6, configurationService.getMaxJwtTtl());
+        }
+
+        @Test
+        void shouldGetExplicitlySetMaxJwtTtl() {
+            environment.set("MAXIMUM_JWT_TTL", "10");
+
+            assertEquals(10, configurationService.getMaxJwtTtl());
         }
     }
 }

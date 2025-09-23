@@ -14,6 +14,7 @@ public class ConfigurationService {
     private static final String PARAMETER_NAME_FORMAT = "/%s/%s";
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final Long AUTHORIZATION_CODE_TTL_IN_SECS = 600L;
+    private static final Long DEFAULT_MAXIMUM_JWT_TTL = 6L;
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
@@ -23,7 +24,6 @@ public class ConfigurationService {
 
     public enum SSMParameterName {
         SESSION_TTL("SessionTtl"),
-        MAXIMUM_JWT_TTL("MaxJwtTtl"),
         VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
         VERIFIABLE_CREDENTIAL_ISSUER("verifiable-credential/issuer"),
         AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId");
@@ -114,8 +114,10 @@ public class ConfigurationService {
         return clock.instant().plus(getBearerAccessTokenTtl(), ChronoUnit.SECONDS).getEpochSecond();
     }
 
-    public long getMaxJwtTtl() {
-        return Long.parseLong(ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)));
+    public Long getMaxJwtTtl() {
+        return Optional.ofNullable(System.getenv("MAXIMUM_JWT_TTL"))
+                .map(Long::parseLong)
+                .orElse(DEFAULT_MAXIMUM_JWT_TTL);
     }
 
     public String getVerifiableCredentialIssuer() {
