@@ -11,6 +11,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class ConfigurationService {
+    private static final String MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT =
+            "Environment variable %s is not set";
     private static final String PARAMETER_NAME_FORMAT = "/%s/%s";
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final Long AUTHORIZATION_CODE_TTL_IN_SECS = 600L;
@@ -131,11 +133,11 @@ public class ConfigurationService {
     }
 
     public String getSqsAuditEventQueueUrl() {
-        return System.getenv("SQS_AUDIT_EVENT_QUEUE_URL");
+        return getEnvironment("SQS_AUDIT_EVENT_QUEUE_URL");
     }
 
     public String getSqsAuditEventPrefix() {
-        return System.getenv("SQS_AUDIT_EVENT_PREFIX");
+        return getEnvironment("SQS_AUDIT_EVENT_PREFIX");
     }
 
     public String getKmsEncryptionKeyId() {
@@ -154,5 +156,14 @@ public class ConfigurationService {
 
     private String getCommonParameterPrefix() {
         return Objects.nonNull(commonParameterPrefix) ? commonParameterPrefix : parameterPrefix;
+    }
+
+    private String getEnvironment(String variable) {
+        return Optional.ofNullable(System.getenv(variable))
+                .orElseThrow(
+                        () ->
+                                new IllegalArgumentException(
+                                        String.format(
+                                                MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT, variable)));
     }
 }

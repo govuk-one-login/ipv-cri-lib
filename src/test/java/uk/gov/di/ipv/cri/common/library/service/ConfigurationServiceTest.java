@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID;
@@ -236,6 +237,34 @@ class ConfigurationServiceTest {
             environment.set("MAXIMUM_JWT_TTL", "10");
 
             assertEquals(10, configurationService.getMaxJwtTtl());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenSqsAuditEventQueueUrlIsMissing() {
+            environment.set("SQS_AUDIT_EVENT_QUEUE_URL", null);
+
+            IllegalArgumentException exception =
+                    assertThrows(
+                            IllegalArgumentException.class,
+                            () -> configurationService.getSqsAuditEventQueueUrl());
+
+            assertEquals(
+                    "Environment variable SQS_AUDIT_EVENT_QUEUE_URL is not set",
+                    exception.getMessage());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenSqsAuditEventPrefixIsMissing() {
+            environment.set("SQS_AUDIT_EVENT_PREFIX", null);
+
+            IllegalArgumentException exception =
+                    assertThrows(
+                            IllegalArgumentException.class,
+                            () -> configurationService.getSqsAuditEventPrefix());
+
+            assertEquals(
+                    "Environment variable SQS_AUDIT_EVENT_PREFIX is not set",
+                    exception.getMessage());
         }
     }
 }
