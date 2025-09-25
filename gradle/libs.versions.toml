@@ -12,7 +12,7 @@ cucumber_version = "7.9.0"
 opentelemetry_version = "2.12.0-alpha"
 
 [libraries]
-aws_bom = { module = "software.amazon.awssdk:bom", version = "2.26.20"}
+aws_bom = { module = "software.amazon.awssdk:bom", version.ref = "aws_sdk_version"}
 aws-crt-client = { module = "software.amazon.awssdk:aws-crt-client", version.ref = "aws_sdk_version" }
 cloudformation = { module = "software.amazon.awssdk:cloudformation", version.ref = "aws_sdk_version" }
 dynamodb = { module = "software.amazon.awssdk:dynamodb", version.ref = "aws_sdk_version" }
