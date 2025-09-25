@@ -4,15 +4,15 @@ aws_lambda_events_version = "3.11.6"
 aspectjrt_version = "1.9.20.1"
 aws_powertools_version = "1.18.0"
 jackson_version = "2.15.2"
-nimbusds_oauth_version = "11.4"
-nimbusds_jwt_version = "9.36"
+nimbusds_oauth_version = "11.29.1"
+nimbusds_jwt_version = "10.5"
 junit = "5.8.2"
 mockito = "4.3.1"
 cucumber_version = "7.9.0"
 opentelemetry_version = "2.12.0-alpha"
 
 [libraries]
-aws_bom = { module = "software.amazon.awssdk:bom", version = "2.26.20"}
+aws_bom = { module = "software.amazon.awssdk:bom", version = "2.29.1"}
 aws-crt-client = { module = "software.amazon.awssdk:aws-crt-client", version.ref = "aws_sdk_version" }
 cloudformation = { module = "software.amazon.awssdk:cloudformation", version.ref = "aws_sdk_version" }
 dynamodb = { module = "software.amazon.awssdk:dynamodb", version.ref = "aws_sdk_version" }
@@ -77,7 +77,7 @@ cucumber = ["cucumber-java", "cucumber-pico"]
 java-library = { id = "java-library" }
 java-test-fixtures = { id = "java-test-fixtures" }
 sonarqube = { id = "org.sonarqube" }
-spotless = { id = "com.diffplug.spotless" }
+spotless = { id = "com.diffplug.spotless", version = "7.2.1" }
 jacoco = { id = "jacoco" }
 post-compile-weaving = { id = "io.freefair.aspectj.post-compile-weaving", version = "6.6.3" }
 publishing = { id = "com.vanniktech.maven.publish", version = "0.32.0" }
