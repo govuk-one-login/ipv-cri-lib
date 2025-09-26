@@ -25,17 +25,6 @@ public class ConfigurationService {
     private final String secretPrefix;
     private final Clock clock;
 
-    public enum SSMParameterName {
-        VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
-        AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId");
-
-        public final String parameterName;
-
-        SSMParameterName(String parameterName) {
-            this.parameterName = parameterName;
-        }
-    }
-
     @ExcludeFromGeneratedCoverageReport
     public ConfigurationService(SSMProvider ssmProvider, SecretsProvider secretsProvider) {
         this(
@@ -127,8 +116,7 @@ public class ConfigurationService {
     }
 
     public String getVerifiableCredentialKmsSigningKeyId() {
-        return ssmProvider.get(
-                getParameterName(SSMParameterName.VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID));
+        return getEnvironment("VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID");
     }
 
     public String getSqsAuditEventQueueUrl() {
@@ -139,18 +127,14 @@ public class ConfigurationService {
         return getEnvironment("SQS_AUDIT_EVENT_PREFIX");
     }
 
+    /**
+     * @deprecated Use {@code session_decryption_key_active_alias} instead. This fallback key will
+     *     be removed in future. See {@link KMSRSADecrypter}.
+     */
+    @SuppressWarnings("java:S1133")
+    @Deprecated(forRemoval = true)
     public String getKmsEncryptionKeyId() {
-        return ssmProvider.get(
-                getParameterName(SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID));
-    }
-
-    private String getParameterName(SSMParameterName parameterName) {
-        return String.format(PARAMETER_NAME_FORMAT, parameterPrefix, parameterName.parameterName);
-    }
-
-    private String getCommonParameterName(SSMParameterName parameterName) {
-        return String.format(
-                PARAMETER_NAME_FORMAT, getCommonParameterPrefix(), parameterName.parameterName);
+        return getEnvironment("AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID");
     }
 
     private String getCommonParameterPrefix() {
