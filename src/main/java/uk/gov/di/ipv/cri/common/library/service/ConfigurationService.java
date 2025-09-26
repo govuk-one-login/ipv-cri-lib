@@ -15,8 +15,9 @@ public class ConfigurationService {
             "Environment variable %s is not set";
     private static final String PARAMETER_NAME_FORMAT = "/%s/%s";
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
-    private static final Long AUTHORIZATION_CODE_TTL_IN_SECS = 600L;
-    private static final Long DEFAULT_MAXIMUM_JWT_TTL = 6L;
+    private static final long AUTHORIZATION_CODE_TTL_IN_SECS = 600L;
+    private static final long DEFAULT_SESSION_TTL_IN_SECS = 7200L;
+    private static final long DEFAULT_MAXIMUM_JWT_TTL = 6L;
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
@@ -25,7 +26,6 @@ public class ConfigurationService {
     private final Clock clock;
 
     public enum SSMParameterName {
-        SESSION_TTL("SessionTtl"),
         VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
         AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId");
 
@@ -87,8 +87,9 @@ public class ConfigurationService {
     }
 
     public long getSessionTtl() {
-        return Long.parseLong(
-                ssmProvider.get(getCommonParameterName(SSMParameterName.SESSION_TTL)));
+        return Optional.ofNullable(System.getenv("SESSION_TTL"))
+                .map(Long::parseLong)
+                .orElse(DEFAULT_SESSION_TTL_IN_SECS);
     }
 
     public long getSessionExpirationEpoch() {

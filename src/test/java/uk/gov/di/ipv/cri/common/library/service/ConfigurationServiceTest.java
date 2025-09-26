@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID;
-import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.SESSION_TTL;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID;
 
 @ExtendWith({MockitoExtension.class, SystemStubsExtension.class})
@@ -150,8 +149,6 @@ class ConfigurationServiceTest {
     @Nested
     class ConfigServiceGetCommonParameters {
         private static final String COMMON_PARAM_PREFIX = "common-param-prefix";
-        private String fullPathSessionTtl =
-                String.format(PARAM_NAME_FORMAT, COMMON_PARAM_PREFIX, SESSION_TTL.parameterName);
 
         @BeforeEach
         void setUp() {
@@ -171,32 +168,33 @@ class ConfigurationServiceTest {
             assertEquals(PARAM_VALUE, configurationService.getCommonParameterValue(PARAM_NAME));
             verify(mockSsmProvider).get(fullPathParams);
         }
-
-        @Test
-        void shouldGetSessionExpirationEpoch() {
-            long sessionTtl = 10;
-
-            when(mockSsmProvider.get(fullPathSessionTtl)).thenReturn(String.valueOf(sessionTtl));
-
-            when(mockClock.instant()).thenReturn(Instant.ofEpochSecond(1655203417));
-
-            assertEquals(1655203427, configurationService.getSessionExpirationEpoch());
-            verify(mockSsmProvider).get(fullPathSessionTtl);
-        }
-
-        @Test
-        void shouldGetSessionTtl() {
-            long sessionTtl = 10;
-
-            when(mockSsmProvider.get(fullPathSessionTtl)).thenReturn(String.valueOf(sessionTtl));
-
-            assertEquals(sessionTtl, configurationService.getSessionTtl());
-            verify(mockSsmProvider).get(fullPathSessionTtl);
-        }
     }
 
     @Nested
     class ConfigServiceGetEnvironmentVariables {
+        @Test
+        void shouldGetSessionTtl() {
+            environment.set("SESSION_TTL", null);
+
+            assertEquals(7200L, configurationService.getSessionTtl());
+        }
+
+        @Test
+        void shouldGetExplicitlySetSessionTtl() {
+            environment.set("SESSION_TTL", 3600L);
+
+            assertEquals(3600L, configurationService.getSessionTtl());
+        }
+
+        @Test
+        void shouldGetSessionExpirationEpoch() {
+            environment.set("SESSION_TTL", 10);
+
+            when(mockClock.instant()).thenReturn(Instant.ofEpochSecond(1655203417));
+
+            assertEquals(1655203427, configurationService.getSessionExpirationEpoch());
+        }
+
         @Test
         void shouldGetSqsAuditEventQueueUrlFromEnv() {
             String audiEventQueueUrl = configurationService.getSqsAuditEventQueueUrl();
