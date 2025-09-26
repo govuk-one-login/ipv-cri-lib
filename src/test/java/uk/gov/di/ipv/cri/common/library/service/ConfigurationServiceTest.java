@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID;
 
 @ExtendWith({MockitoExtension.class, SystemStubsExtension.class})
@@ -28,6 +27,7 @@ class ConfigurationServiceTest {
     private static final String PARAM_NAME_FORMAT = "/%s/%s";
     private static final String PARAM_NAME = "param-name";
     private static final String PARAM_VALUE = "param-value";
+    private static final String VC_KMS_ENCRYPTION_KEY_ID = UUID.randomUUID().toString();
 
     @Mock private SSMProvider mockSsmProvider;
     @Mock private SecretsProvider mockSecretsProvider;
@@ -46,7 +46,9 @@ class ConfigurationServiceTest {
                     "SQS_AUDIT_EVENT_PREFIX",
                     "AUDIT-PREFIX",
                     "VERIFIABLE_CREDENTIAL_ISSUER",
-                    "http://test-vc/issuer");
+                    "http://test-vc/issuer",
+                    "AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID",
+                    VC_KMS_ENCRYPTION_KEY_ID);
 
     private String stackName = environment.getVariables().get("AWS_STACK_NAME");
 
@@ -119,21 +121,6 @@ class ConfigurationServiceTest {
                     vcSigningKmsId, configurationService.getVerifiableCredentialKmsSigningKeyId());
 
             verify(mockSsmProvider).get(fullVcKmsSigningKeyPath);
-        }
-
-        @Test
-        void shouldGetKmsEncryptionKeyId() {
-            String vcKmsEncryptionKeyId = UUID.randomUUID().toString();
-            String fullKmsEncryptionKeyPath =
-                    String.format(
-                            PARAM_NAME_FORMAT,
-                            stackName,
-                            AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID.parameterName);
-            when(mockSsmProvider.get(fullKmsEncryptionKeyPath)).thenReturn(vcKmsEncryptionKeyId);
-
-            assertEquals(vcKmsEncryptionKeyId, configurationService.getKmsEncryptionKeyId());
-
-            verify(mockSsmProvider).get(fullKmsEncryptionKeyPath);
         }
 
         @Test
@@ -231,13 +218,32 @@ class ConfigurationServiceTest {
         }
 
         @Test
+        void shouldGetKmsEncryptionKeyId() {
+            assertEquals(VC_KMS_ENCRYPTION_KEY_ID, configurationService.getKmsEncryptionKeyId());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenGetKmsEncryptionKeyId() {
+            environment.set("AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID", null);
+
+            var exception =
+                    assertThrows(
+                            IllegalArgumentException.class,
+                            configurationService::getKmsEncryptionKeyId);
+
+            assertEquals(
+                    "Environment variable AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID is not set",
+                    exception.getMessage());
+        }
+
+        @Test
         void shouldThrowExceptionWhenSqsAuditEventQueueUrlIsMissing() {
             environment.set("SQS_AUDIT_EVENT_QUEUE_URL", null);
 
-            IllegalArgumentException exception =
+            var exception =
                     assertThrows(
                             IllegalArgumentException.class,
-                            () -> configurationService.getSqsAuditEventQueueUrl());
+                            configurationService::getSqsAuditEventQueueUrl);
 
             assertEquals(
                     "Environment variable SQS_AUDIT_EVENT_QUEUE_URL is not set",
@@ -248,10 +254,10 @@ class ConfigurationServiceTest {
         void shouldThrowExceptionWhenSqsAuditEventPrefixIsMissing() {
             environment.set("SQS_AUDIT_EVENT_PREFIX", null);
 
-            IllegalArgumentException exception =
+            var exception =
                     assertThrows(
                             IllegalArgumentException.class,
-                            () -> configurationService.getSqsAuditEventPrefix());
+                            configurationService::getSqsAuditEventPrefix);
 
             assertEquals(
                     "Environment variable SQS_AUDIT_EVENT_PREFIX is not set",

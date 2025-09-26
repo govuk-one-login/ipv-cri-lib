@@ -26,9 +26,7 @@ public class ConfigurationService {
     private final Clock clock;
 
     public enum SSMParameterName {
-        VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
-        AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId");
-
+        VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId");
         public final String parameterName;
 
         SSMParameterName(String parameterName) {
@@ -140,17 +138,11 @@ public class ConfigurationService {
     }
 
     public String getKmsEncryptionKeyId() {
-        return ssmProvider.get(
-                getParameterName(SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID));
+        return getEnvironment("AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID");
     }
 
     private String getParameterName(SSMParameterName parameterName) {
         return String.format(PARAMETER_NAME_FORMAT, parameterPrefix, parameterName.parameterName);
-    }
-
-    private String getCommonParameterName(SSMParameterName parameterName) {
-        return String.format(
-                PARAMETER_NAME_FORMAT, getCommonParameterPrefix(), parameterName.parameterName);
     }
 
     private String getCommonParameterPrefix() {
