@@ -27,7 +27,6 @@ public class ConfigurationService {
     public enum SSMParameterName {
         SESSION_TTL("SessionTtl"),
         VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
-        VERIFIABLE_CREDENTIAL_ISSUER("verifiable-credential/issuer"),
         AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId");
 
         public final String parameterName;
@@ -123,8 +122,7 @@ public class ConfigurationService {
     }
 
     public String getVerifiableCredentialIssuer() {
-        return ssmProvider.get(
-                getCommonParameterName(SSMParameterName.VERIFIABLE_CREDENTIAL_ISSUER));
+        return getEnvironment("VERIFIABLE_CREDENTIAL_ISSUER");
     }
 
     public String getVerifiableCredentialKmsSigningKeyId() {

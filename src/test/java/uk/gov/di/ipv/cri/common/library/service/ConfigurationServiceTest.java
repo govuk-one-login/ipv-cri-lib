@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.SESSION_TTL;
-import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.VERIFIABLE_CREDENTIAL_ISSUER;
 import static uk.gov.di.ipv.cri.common.library.service.ConfigurationService.SSMParameterName.VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID;
 
 @ExtendWith({MockitoExtension.class, SystemStubsExtension.class})
@@ -46,7 +45,9 @@ class ConfigurationServiceTest {
                     "SQS_AUDIT_EVENT_QUEUE_URL",
                     "https://test-audit-queue",
                     "SQS_AUDIT_EVENT_PREFIX",
-                    "AUDIT-PREFIX");
+                    "AUDIT-PREFIX",
+                    "VERIFIABLE_CREDENTIAL_ISSUER",
+                    "http://test-vc/issuer");
 
     private String stackName = environment.getVariables().get("AWS_STACK_NAME");
 
@@ -184,21 +185,6 @@ class ConfigurationServiceTest {
         }
 
         @Test
-        void shouldGetVerifiableCredentialIssuer() {
-            String vcIssuer = "http://test-vc/issuer";
-
-            String fullPathVcIssuer =
-                    String.format(
-                            PARAM_NAME_FORMAT,
-                            COMMON_PARAM_PREFIX,
-                            VERIFIABLE_CREDENTIAL_ISSUER.parameterName);
-            when(mockSsmProvider.get(fullPathVcIssuer)).thenReturn(vcIssuer);
-
-            assertEquals(vcIssuer, configurationService.getVerifiableCredentialIssuer());
-            verify(mockSsmProvider).get(fullPathVcIssuer);
-        }
-
-        @Test
         void shouldGetSessionTtl() {
             long sessionTtl = 10;
 
@@ -240,6 +226,13 @@ class ConfigurationServiceTest {
         }
 
         @Test
+        void shouldGetVerifiableCredentialIssuer() {
+            String vcIssuer = "http://test-vc/issuer";
+
+            assertEquals(vcIssuer, configurationService.getVerifiableCredentialIssuer());
+        }
+
+        @Test
         void shouldThrowExceptionWhenSqsAuditEventQueueUrlIsMissing() {
             environment.set("SQS_AUDIT_EVENT_QUEUE_URL", null);
 
@@ -264,6 +257,20 @@ class ConfigurationServiceTest {
 
             assertEquals(
                     "Environment variable SQS_AUDIT_EVENT_PREFIX is not set",
+                    exception.getMessage());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenVerifiableCredentialIssuerIsMissing() {
+            environment.set("VERIFIABLE_CREDENTIAL_ISSUER", null);
+
+            IllegalArgumentException exception =
+                    assertThrows(
+                            IllegalArgumentException.class,
+                            configurationService::getVerifiableCredentialIssuer);
+
+            assertEquals(
+                    "Environment variable VERIFIABLE_CREDENTIAL_ISSUER is not set",
                     exception.getMessage());
         }
     }
