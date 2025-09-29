@@ -8,10 +8,11 @@ import uk.gov.di.ipv.cri.common.library.domain.personidentity.SharedClaims;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.common.library.persistence.item.personidentity.PersonIdentityItem;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class PersonIdentityService {
-    private static final String PERSON_IDENTITY_TABLE_PARAM_NAME = "PersonIdentityTableName";
+    private static final String PERSON_IDENTITY_TABLE_NAME = "person-identity-common-cri-api";
     private final PersonIdentityMapper personIdentityMapper;
     private final ConfigurationService configurationService;
     private final DataStore<PersonIdentityItem> personIdentityDataStore;
@@ -24,8 +25,8 @@ public class PersonIdentityService {
                 new PersonIdentityMapper(),
                 configurationService,
                 new DataStore<>(
-                        configurationService.getCommonParameterValue(
-                                PERSON_IDENTITY_TABLE_PARAM_NAME),
+                        Optional.ofNullable(System.getenv("PERSON_IDENTITY_TABLE"))
+                                .orElse(PERSON_IDENTITY_TABLE_NAME),
                         PersonIdentityItem.class,
                         dynamoDbEnhancedClient));
     }

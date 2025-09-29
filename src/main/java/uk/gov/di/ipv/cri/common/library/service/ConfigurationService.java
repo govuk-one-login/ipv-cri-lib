@@ -11,29 +11,19 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class ConfigurationService {
+    private static final String MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT =
+            "Environment variable %s is not set";
     private static final String PARAMETER_NAME_FORMAT = "/%s/%s";
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
-    private static final Long AUTHORIZATION_CODE_TTL_IN_SECS = 600L;
+    private static final long AUTHORIZATION_CODE_TTL_IN_SECS = 600L;
+    private static final long DEFAULT_SESSION_TTL_IN_SECS = 7200L;
+    private static final long DEFAULT_MAXIMUM_JWT_TTL = 6L;
     private final SSMProvider ssmProvider;
     private final SecretsProvider secretsProvider;
     private final String parameterPrefix;
     private final String commonParameterPrefix;
     private final String secretPrefix;
     private final Clock clock;
-
-    public enum SSMParameterName {
-        SESSION_TTL("SessionTtl"),
-        MAXIMUM_JWT_TTL("MaxJwtTtl"),
-        VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID("verifiableCredentialKmsSigningKeyId"),
-        VERIFIABLE_CREDENTIAL_ISSUER("verifiable-credential/issuer"),
-        AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID("AuthRequestKmsEncryptionKeyId");
-
-        public final String parameterName;
-
-        SSMParameterName(String parameterName) {
-            this.parameterName = parameterName;
-        }
-    }
 
     @ExcludeFromGeneratedCoverageReport
     public ConfigurationService(SSMProvider ssmProvider, SecretsProvider secretsProvider) {
@@ -86,8 +76,9 @@ public class ConfigurationService {
     }
 
     public long getSessionTtl() {
-        return Long.parseLong(
-                ssmProvider.get(getCommonParameterName(SSMParameterName.SESSION_TTL)));
+        return Optional.ofNullable(System.getenv("SESSION_TTL"))
+                .map(Long::parseLong)
+                .orElse(DEFAULT_SESSION_TTL_IN_SECS);
     }
 
     public long getSessionExpirationEpoch() {
@@ -114,43 +105,48 @@ public class ConfigurationService {
         return clock.instant().plus(getBearerAccessTokenTtl(), ChronoUnit.SECONDS).getEpochSecond();
     }
 
-    public long getMaxJwtTtl() {
-        return Long.parseLong(ssmProvider.get(getParameterName(SSMParameterName.MAXIMUM_JWT_TTL)));
+    public Long getMaxJwtTtl() {
+        return Optional.ofNullable(System.getenv("MAXIMUM_JWT_TTL"))
+                .map(Long::parseLong)
+                .orElse(DEFAULT_MAXIMUM_JWT_TTL);
     }
 
     public String getVerifiableCredentialIssuer() {
-        return ssmProvider.get(
-                getCommonParameterName(SSMParameterName.VERIFIABLE_CREDENTIAL_ISSUER));
+        return getEnvironment("VERIFIABLE_CREDENTIAL_ISSUER");
     }
 
     public String getVerifiableCredentialKmsSigningKeyId() {
-        return ssmProvider.get(
-                getParameterName(SSMParameterName.VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID));
+        return getEnvironment("VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID");
     }
 
     public String getSqsAuditEventQueueUrl() {
-        return System.getenv("SQS_AUDIT_EVENT_QUEUE_URL");
+        return getEnvironment("SQS_AUDIT_EVENT_QUEUE_URL");
     }
 
     public String getSqsAuditEventPrefix() {
-        return System.getenv("SQS_AUDIT_EVENT_PREFIX");
+        return getEnvironment("SQS_AUDIT_EVENT_PREFIX");
     }
 
+    /**
+     * @deprecated Use {@code session_decryption_key_active_alias} instead. This fallback key will
+     *     be removed in future. See {@link KMSRSADecrypter}.
+     */
+    @SuppressWarnings("java:S1133")
+    @Deprecated(forRemoval = true)
     public String getKmsEncryptionKeyId() {
-        return ssmProvider.get(
-                getParameterName(SSMParameterName.AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID));
-    }
-
-    private String getParameterName(SSMParameterName parameterName) {
-        return String.format(PARAMETER_NAME_FORMAT, parameterPrefix, parameterName.parameterName);
-    }
-
-    private String getCommonParameterName(SSMParameterName parameterName) {
-        return String.format(
-                PARAMETER_NAME_FORMAT, getCommonParameterPrefix(), parameterName.parameterName);
+        return getEnvironment("AUTH_REQUEST_KMS_ENCRYPTION_KEY_ID");
     }
 
     private String getCommonParameterPrefix() {
         return Objects.nonNull(commonParameterPrefix) ? commonParameterPrefix : parameterPrefix;
+    }
+
+    private String getEnvironment(String variable) {
+        return Optional.ofNullable(System.getenv(variable))
+                .orElseThrow(
+                        () ->
+                                new IllegalArgumentException(
+                                        String.format(
+                                                MISSING_ENV_VARIABLE_ERROR_MSG_FORMAT, variable)));
     }
 }

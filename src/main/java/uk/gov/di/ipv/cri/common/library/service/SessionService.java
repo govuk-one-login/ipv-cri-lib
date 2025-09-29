@@ -24,7 +24,7 @@ import static uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem.ACCE
 import static uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem.AUTHORIZATION_CODE_INDEX;
 
 public class SessionService {
-    private static final String SESSION_TABLE_PARAM_NAME = "SessionTableName";
+    private static final String SESSION_TABLE_NAME = "session-common-cri-api";
     private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
     private static final String REQUESTED_VERIFICATION_SCORE = "requested_verification_score";
     private final ConfigurationService configurationService;
@@ -37,7 +37,8 @@ public class SessionService {
             DynamoDbEnhancedClient dynamoDbEnhancedClient) {
         this(
                 new DataStore<>(
-                        configurationService.getCommonParameterValue(SESSION_TABLE_PARAM_NAME),
+                        Optional.ofNullable(System.getenv("SESSION_TABLE"))
+                                .orElse(SESSION_TABLE_NAME),
                         SessionItem.class,
                         dynamoDbEnhancedClient),
                 configurationService,
