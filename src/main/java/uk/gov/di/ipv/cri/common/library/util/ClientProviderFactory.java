@@ -26,9 +26,8 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.SsmClientBuilder;
-import software.amazon.lambda.powertools.parameters.ParamManager;
-import software.amazon.lambda.powertools.parameters.SSMProvider;
-import software.amazon.lambda.powertools.parameters.SecretsProvider;
+import software.amazon.lambda.powertools.parameters.secrets.SecretsProvider;
+import software.amazon.lambda.powertools.parameters.ssm.SSMProvider;
 
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ThreadLocalRandom;
@@ -207,18 +206,14 @@ public class ClientProviderFactory {
     // ThreadLocalRandom not used cryptographically here
     @java.lang.SuppressWarnings("java:S2245")
     public SSMProvider getSSMProvider() {
-
         if (null == ssmProvider) {
 
             int maxAge = generateRandomMaxAgeInSeconds();
-
             LOGGER.info("PowerTools SSMProvider defaultMaxAge selected as {} seconds", maxAge);
 
-            ssmProvider =
-                    ParamManager.getSsmProvider(getSsmClient())
-                            .defaultMaxAge(maxAge, ChronoUnit.SECONDS);
+            ssmProvider = SSMProvider.builder().withClient(getSsmClient()).build();
+            ssmProvider.withMaxAge(maxAge, ChronoUnit.SECONDS);
         }
-
         return ssmProvider;
     }
 
@@ -229,12 +224,11 @@ public class ClientProviderFactory {
         if (null == secretsProvider) {
 
             int maxAge = generateRandomMaxAgeInSeconds();
-
             LOGGER.info("PowerTools SecretsProvider defaultMaxAge selected as {} seconds", maxAge);
 
             secretsProvider =
-                    ParamManager.getSecretsProvider(getSecretsManagerClient())
-                            .defaultMaxAge(maxAge, ChronoUnit.SECONDS);
+                    SecretsProvider.builder().withClient(getSecretsManagerClient()).build();
+            secretsProvider.withMaxAge(maxAge, ChronoUnit.SECONDS);
         }
         return secretsProvider;
     }
