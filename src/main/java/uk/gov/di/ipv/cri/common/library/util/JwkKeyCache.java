@@ -35,11 +35,6 @@ public class JwkKeyCache {
                                 .orElse("false"));
     }
 
-    public JwkKeyCache(JwkRequest jwkRequest, boolean usePublicJwk) {
-        this.jwkRequest = jwkRequest;
-        this.usePublicJwk = usePublicJwk;
-    }
-
     public Optional<String> getBase64JwkForKid(String publicJwkEndpoint, String kid) {
         if (!usePublicJwk) {
             LOGGER.info("Using public JWKs endpoint is disabled");
@@ -75,6 +70,11 @@ public class JwkKeyCache {
             LOGGER.info("Using locally cached JWKs from {}", publicJwkEndpoint);
         }
         return getSigningKeyForKid(cachedJwks.get(publicJwkEndpoint), kid).map(this::toBase64);
+    }
+
+    // Remove when the feature flag is permanent
+    public boolean isUsingPublicJwk() {
+        return usePublicJwk;
     }
 
     private Optional<Key> getSigningKeyForKid(JWKS jwks, String kid) {
