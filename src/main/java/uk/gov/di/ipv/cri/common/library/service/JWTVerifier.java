@@ -13,8 +13,6 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.oauth2.sdk.id.ClientID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.common.library.exception.ClientConfigurationException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
 import uk.gov.di.ipv.cri.common.library.util.JwkKeyCache;
@@ -33,13 +31,21 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.nimbusds.jose.JWSAlgorithm.ES256;
 
 public class JWTVerifier {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JWTVerifier.class);
-    private final JwkKeyCache jwkKeyCache = new JwkKeyCache();
+    private final JwkKeyCache jwkKeyCache;
+
+    public JWTVerifier() {
+        jwkKeyCache = new JwkKeyCache();
+    }
+
+    public JWTVerifier(JwkKeyCache jwkKeyCache) {
+        this.jwkKeyCache = jwkKeyCache;
+    }
 
     public void verifyAuthorizationJWT(
             Map<String, String> clientAuthenticationConfig, SignedJWT signedJWT)
@@ -118,9 +124,8 @@ public class JWTVerifier {
     private void verifyJWTSignature(
             Map<String, String> clientAuthenticationConfig, SignedJWT signedJWT)
             throws SessionValidationException, ClientConfigurationException {
-        String publicCertificateToVerify = clientAuthenticationConfig.get("publicSigningJwkBase64");
-        try {
 
+        try {
             SignedJWT concatSignatureJwt;
             if (signatureIsDerFormat(signedJWT)) {
                 concatSignatureJwt = transcodeSignature(signedJWT);
@@ -128,22 +133,31 @@ public class JWTVerifier {
                 concatSignatureJwt = signedJWT;
             }
 
-            jwkKeyCache
-                    .getBase64JwkForKid(
+            Optional<String> optionalBase64JwkForKid =
+                    jwkKeyCache.getBase64JwkForKid(
                             clientAuthenticationConfig.get("jwksEndpoint"),
-                            signedJWT.getHeader().getKeyID())
-                    .ifPresentOrElse(
-                            value ->
-                                    clientAuthenticationConfig.replace(
-                                            "publicSigningJwkBase64", value),
-                            () ->
-                                    LOGGER.warn(
-                                            "{} not found in public JWK response",
-                                            signedJWT.getHeader().getKeyID()));
+                            signedJWT.getHeader().getKeyID());
+
+            final String publicCertificateToVerify;
+            if (optionalBase64JwkForKid.isPresent() && jwkKeyCache.isUsingPublicJwk()) {
+                // Have KeyID and PublicJwk enabled
+                publicCertificateToVerify = optionalBase64JwkForKid.get();
+            } else if (optionalBase64JwkForKid.isEmpty() && jwkKeyCache.isUsingPublicJwk()) {
+                // No KeyID and PublicJwk enabled - Fail
+                throw new SessionValidationException(
+                        String.format(
+                                "%s not found in public JWK response",
+                                signedJWT.getHeader().getKeyID()));
+            } else {
+                // KeyID ignored and Cache disabled - fall back to legacy key
+                publicCertificateToVerify =
+                        clientAuthenticationConfig.get("publicSigningJwkBase64");
+            }
 
             JWSAlgorithm signingAlgorithm = signedJWT.getHeader().getAlgorithm();
             PublicKey pubicKeyFromConfig =
                     getPublicKeyFromConfig(publicCertificateToVerify, signingAlgorithm);
+
             if (!verifySignature(concatSignatureJwt, pubicKeyFromConfig)) {
                 throw new SessionValidationException("JWT signature verification failed");
             }

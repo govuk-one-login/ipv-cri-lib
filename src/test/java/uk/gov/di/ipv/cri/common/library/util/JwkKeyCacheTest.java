@@ -1,12 +1,16 @@
 package uk.gov.di.ipv.cri.common.library.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.domain.jwks.JWKS;
 import uk.gov.di.ipv.cri.common.library.domain.jwks.Key;
+import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
 import java.util.Base64;
 import java.util.List;
@@ -20,10 +24,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@ExtendWith(SystemStubsExtension.class)
 class JwkKeyCacheTest {
+
+    @SystemStub private EnvironmentVariables environmentVariables = new EnvironmentVariables();
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Mock private JwkRequest mockJwkRequest;
+
+    @BeforeEach
+    void setUp() {
+        environmentVariables.set("ENV_VAR_FEATURE_CONSUME_PUBLIC_JWK", true);
+    }
 
     @Test
     void shouldFetchJwk() throws Exception {
@@ -40,7 +53,7 @@ class JwkKeyCacheTest {
 
         when(mockJwkRequest.callJWKSEndpoint(anyString())).thenReturn(jwks);
 
-        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest, true);
+        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest);
         Optional<String> jwk = jwkKeyCache.getBase64JwkForKid("https://example.com", kid);
 
         String base64Key =
@@ -66,7 +79,7 @@ class JwkKeyCacheTest {
 
         when(mockJwkRequest.callJWKSEndpoint(anyString())).thenReturn(jwks);
 
-        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest, true);
+        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest);
 
         Optional<String> jwka = jwkKeyCache.getBase64JwkForKid("https://example.com", kid);
         assertTrue(jwka.isPresent());
@@ -90,7 +103,7 @@ class JwkKeyCacheTest {
 
         when(mockJwkRequest.callJWKSEndpoint(anyString())).thenReturn(jwks);
 
-        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest, true);
+        JwkKeyCache jwkKeyCache = new JwkKeyCache(mockJwkRequest);
         Optional<String> jwk = jwkKeyCache.getBase64JwkForKid("https://example.com", kid);
 
         assertTrue(jwk.isEmpty());
@@ -98,15 +111,17 @@ class JwkKeyCacheTest {
 
     @Test
     void shouldReturnEmptyWhenDisabled() {
+
+        environmentVariables.set("ENV_VAR_FEATURE_CONSUME_PUBLIC_JWK", false);
+
         assertTrue(
-                new JwkKeyCache(mockJwkRequest, false)
+                new JwkKeyCache(mockJwkRequest)
                         .getBase64JwkForKid("https://example.com", "dummy")
                         .isEmpty());
     }
 
     @Test
     void shouldReturnEmptyWhenJwksEndpointNull() {
-        assertTrue(
-                new JwkKeyCache(mockJwkRequest, true).getBase64JwkForKid(null, "dummy").isEmpty());
+        assertTrue(new JwkKeyCache(mockJwkRequest).getBase64JwkForKid(null, "dummy").isEmpty());
     }
 }

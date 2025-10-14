@@ -9,11 +9,12 @@ import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.id.ClientID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.exception.SessionValidationException;
+import uk.gov.di.ipv.cri.common.library.util.JwkKeyCache;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -27,22 +28,20 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JWTVerifierTest {
+    @Mock private JwkKeyCache mockJwkKeyCache;
+
     private static final ClientID CLIENT_ID = new ClientID("ipv-core-stub");
     private static final Instant NOW = Instant.now();
-    private JWTVerifier jwtVerifier;
-
-    @BeforeEach
-    void setup() {
-        jwtVerifier = new JWTVerifier();
-    }
 
     @Test
     void shouldThrowValidationExceptionWhenJWTHeaderDoesNotMatchConfig() {
@@ -56,8 +55,9 @@ class JWTVerifierTest {
                 assertThrows(
                         SessionValidationException.class,
                         () ->
-                                jwtVerifier.verifyAccessTokenJWT(
-                                        clientConfigMap, signedJWT, CLIENT_ID));
+                                new JWTVerifier()
+                                        .verifyAccessTokenJWT(
+                                                clientConfigMap, signedJWT, CLIENT_ID));
         assertEquals(
                 "jwt signing algorithm RS512 does not match signing algorithm configured for client: RS256",
                 exception.getMessage());
@@ -83,8 +83,9 @@ class JWTVerifierTest {
                 assertThrows(
                         SessionValidationException.class,
                         () ->
-                                jwtVerifier.verifyAccessTokenJWT(
-                                        clientConfigMap, signedJWT, CLIENT_ID));
+                                new JWTVerifier()
+                                        .verifyAccessTokenJWT(
+                                                clientConfigMap, signedJWT, CLIENT_ID));
         assertEquals(
                 "JWT iss claim has value incorrect-issuer-url, must be ipv-core-stub",
                 exception.getMessage());
@@ -97,7 +98,9 @@ class JWTVerifierTest {
         SessionValidationException exception =
                 assertThrows(
                         SessionValidationException.class,
-                        () -> jwtVerifier.validateMaxAllowedJarTtl(jwtExpirationDateTime, 100));
+                        () ->
+                                new JWTVerifier()
+                                        .validateMaxAllowedJarTtl(jwtExpirationDateTime, 100));
         assertEquals(
                 "The client JWT expiry date has surpassed the maximum allowed ttl value",
                 exception.getMessage());
@@ -105,8 +108,9 @@ class JWTVerifierTest {
 
     @Test
     void shouldNotThrowValidationExceptionWhenJWTClaimsWithinLimit() {
-        jwtVerifier.validateMaxAllowedJarTtl(
-                Instant.now().plusSeconds(99).atZone(ZoneId.of("UTC")).toInstant(), 100);
+        new JWTVerifier()
+                .validateMaxAllowedJarTtl(
+                        Instant.now().plusSeconds(99).atZone(ZoneId.of("UTC")).toInstant(), 100);
     }
 
     @Test
@@ -121,8 +125,9 @@ class JWTVerifierTest {
                 assertThrows(
                         SessionValidationException.class,
                         () ->
-                                jwtVerifier.verifyAccessTokenJWT(
-                                        clientConfigMap, signedJWT, CLIENT_ID));
+                                new JWTVerifier()
+                                        .verifyAccessTokenJWT(
+                                                clientConfigMap, signedJWT, CLIENT_ID));
         assertEquals(
                 "JWT missing required claims: [aud, exp, iss, jti, sub]", exception.getMessage());
     }
@@ -162,13 +167,53 @@ class JWTVerifierTest {
                 assertThrows(
                         SessionValidationException.class,
                         () ->
-                                jwtVerifier.verifyAccessTokenJWT(
-                                        clientConfigMap, signedJWT, CLIENT_ID));
+                                new JWTVerifier()
+                                        .verifyAccessTokenJWT(
+                                                clientConfigMap, signedJWT, CLIENT_ID));
         assertEquals("JWT signature verification failed", exception.getMessage());
     }
 
     @Test
-    void shouldValidateJWTSignedWithECKey() throws JOSEException, ParseException {
+    void shouldValidateJWTSignedWithECKeyWhenConsumePublicJWKSIsEnabled()
+            throws JOSEException, ParseException {
+
+        Map<String, String> clientConfigMap = getECSSMClientConfig();
+
+        final String testKeyId = UUID.randomUUID().toString();
+
+        when(mockJwkKeyCache.isUsingPublicJwk()).thenReturn(Boolean.TRUE);
+
+        when(mockJwkKeyCache.getBase64JwkForKid(clientConfigMap.get("jwksEndpoint"), testKeyId))
+                .thenReturn(Optional.of(clientConfigMap.get("publicSigningJwkBase64")));
+
+        SignedJWT signedJWT =
+                new SignedJWT(
+                        new JWSHeader.Builder(JWSAlgorithm.ES256).keyID(testKeyId).build(),
+                        new JWTClaimsSet.Builder()
+                                .jwtID(UUID.randomUUID().toString())
+                                .issuer(CLIENT_ID.getValue())
+                                .notBeforeTime(Date.from(NOW))
+                                .audience("https://address.cri.account.gov.uk")
+                                .subject(CLIENT_ID.getValue())
+                                .expirationTime(Date.from(NOW.plus(1, ChronoUnit.HOURS)))
+                                .build());
+
+        ECDSASigner ecdsaSigner = new ECDSASigner(getECPrivateKey());
+
+        signedJWT.sign(ecdsaSigner);
+
+        assertDoesNotThrow(
+                () ->
+                        new JWTVerifier(mockJwkKeyCache)
+                                .verifyAccessTokenJWT(clientConfigMap, signedJWT, CLIENT_ID));
+    }
+
+    @Test
+    void shouldValidateJWTSignedWithECKeyWhenConsumePublicJWKSIsDisabled()
+            throws JOSEException, ParseException {
+
+        when(mockJwkKeyCache.isUsingPublicJwk()).thenReturn(Boolean.FALSE);
+
         Map<String, String> clientConfigMap = getECSSMClientConfig();
         SignedJWT signedJWT =
                 new SignedJWT(
@@ -187,7 +232,45 @@ class JWTVerifierTest {
         signedJWT.sign(ecdsaSigner);
 
         assertDoesNotThrow(
-                () -> jwtVerifier.verifyAccessTokenJWT(clientConfigMap, signedJWT, CLIENT_ID));
+                () ->
+                        new JWTVerifier(mockJwkKeyCache)
+                                .verifyAccessTokenJWT(clientConfigMap, signedJWT, CLIENT_ID));
+    }
+
+    @Test
+    void shouldThrowSessionValidationExceptionPublicJWKSIsEnabledAndKeyIdIsNotFound()
+            throws JOSEException, ParseException {
+
+        Map<String, String> clientConfigMap = getECSSMClientConfig();
+
+        final String testKeyId = UUID.randomUUID().toString();
+
+        when(mockJwkKeyCache.isUsingPublicJwk()).thenReturn(Boolean.TRUE);
+
+        when(mockJwkKeyCache.getBase64JwkForKid(clientConfigMap.get("jwksEndpoint"), testKeyId))
+                .thenReturn(Optional.empty());
+
+        SignedJWT signedJWT =
+                new SignedJWT(
+                        new JWSHeader.Builder(JWSAlgorithm.ES256).keyID(testKeyId).build(),
+                        new JWTClaimsSet.Builder()
+                                .jwtID(UUID.randomUUID().toString())
+                                .issuer(CLIENT_ID.getValue())
+                                .notBeforeTime(Date.from(NOW))
+                                .audience("https://address.cri.account.gov.uk")
+                                .subject(CLIENT_ID.getValue())
+                                .expirationTime(Date.from(NOW.plus(1, ChronoUnit.HOURS)))
+                                .build());
+
+        ECDSASigner ecdsaSigner = new ECDSASigner(getECPrivateKey());
+
+        signedJWT.sign(ecdsaSigner);
+
+        assertThrows(
+                SessionValidationException.class,
+                () ->
+                        new JWTVerifier(mockJwkKeyCache)
+                                .verifyAccessTokenJWT(clientConfigMap, signedJWT, CLIENT_ID));
     }
 
     @Test
@@ -212,8 +295,9 @@ class JWTVerifierTest {
                 assertThrows(
                         SessionValidationException.class,
                         () ->
-                                jwtVerifier.verifyAccessTokenJWT(
-                                        clientConfigMap, signedJWT, CLIENT_ID));
+                                new JWTVerifier()
+                                        .verifyAccessTokenJWT(
+                                                clientConfigMap, signedJWT, CLIENT_ID));
 
         assertEquals("Expired JWT", exception.getMessage());
     }
@@ -240,8 +324,9 @@ class JWTVerifierTest {
                 assertThrows(
                         SessionValidationException.class,
                         () ->
-                                jwtVerifier.verifyAccessTokenJWT(
-                                        clientConfigMap, signedJWT, CLIENT_ID));
+                                new JWTVerifier()
+                                        .verifyAccessTokenJWT(
+                                                clientConfigMap, signedJWT, CLIENT_ID));
 
         assertEquals(
                 "JWT aud claim has value [incorrect-audience], must be [https://address.cri.account.gov.uk]",
@@ -270,8 +355,9 @@ class JWTVerifierTest {
                 assertThrows(
                         SessionValidationException.class,
                         () ->
-                                jwtVerifier.verifyAccessTokenJWT(
-                                        clientConfigMap, signedJWT, CLIENT_ID));
+                                new JWTVerifier()
+                                        .verifyAccessTokenJWT(
+                                                clientConfigMap, signedJWT, CLIENT_ID));
 
         assertEquals("JWT before use time", exception.getMessage());
     }
@@ -295,7 +381,7 @@ class JWTVerifierTest {
         SessionValidationException exception =
                 assertThrows(
                         SessionValidationException.class,
-                        () -> jwtVerifier.verifyAuthorizationJWT(clientConfigMap, signedJWT));
+                        () -> new JWTVerifier().verifyAuthorizationJWT(clientConfigMap, signedJWT));
 
         assertEquals("JWT missing required claims: [nbf]", exception.getMessage());
     }
@@ -325,7 +411,9 @@ class JWTVerifierTest {
                 "authenticationAlg",
                 "ES256",
                 "audience",
-                "https://address.cri.account.gov.uk");
+                "https://address.cri.account.gov.uk",
+                "jwksEndpoint",
+                "https://cri.core.stubs.account.gov.uk/.well-known/jwks.json");
     }
 
     private RSAPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
