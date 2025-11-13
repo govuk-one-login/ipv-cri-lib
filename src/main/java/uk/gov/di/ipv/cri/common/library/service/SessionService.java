@@ -1,8 +1,8 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
 import com.nimbusds.oauth2.sdk.token.AccessToken;
+import org.slf4j.MDC;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.lambda.powertools.logging.LoggingUtils;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.SessionRequest;
 import uk.gov.di.ipv.cri.common.library.exception.AccessTokenExpiredException;
@@ -111,15 +111,12 @@ public class SessionService {
                 .ifPresent(
                         s -> {
                             Optional.ofNullable(s.getClientSessionId())
-                                    .ifPresent(
-                                            id ->
-                                                    LoggingUtils.appendKey(
-                                                            GOVUK_SIGNIN_JOURNEY_ID, id));
+                                    .ifPresent(id -> MDC.put(GOVUK_SIGNIN_JOURNEY_ID, id));
                             Optional.ofNullable(s.getEvidenceRequest())
                                     .flatMap(ev -> Optional.ofNullable(ev.getVerificationScore()))
                                     .ifPresent(
                                             verificationScore ->
-                                                    LoggingUtils.appendKey(
+                                                    MDC.put(
                                                             REQUESTED_VERIFICATION_SCORE,
                                                             String.valueOf(verificationScore)));
                         });

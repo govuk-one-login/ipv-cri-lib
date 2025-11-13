@@ -43,8 +43,10 @@ dependencies {
 	implementation libs.bundles.jackson
 	implementation libs.bundles.powertools
 	implementation libs.bundles.nimbus
+	implementation libs.bundles.logging
 	implementation libs.aspectjrt
 	implementation libs.otel.aws.sdk
+
 
 	testImplementation libs.bundles.tests
 	testRuntimeOnly libs.bundles.test.runtime
