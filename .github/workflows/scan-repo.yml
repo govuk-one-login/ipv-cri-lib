@@ -81,4 +81,4 @@ jobs:
       - name: Run CodeQL scan
         uses: govuk-one-login/github-actions/code-quality/codeql@cd7d35dde348251237efbbaee5345e95adef0321
         with:
-          languages: javascript-typescript
+          languages: java
