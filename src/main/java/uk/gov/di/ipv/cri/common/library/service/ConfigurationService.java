@@ -1,7 +1,7 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
-import software.amazon.lambda.powertools.parameters.SSMProvider;
-import software.amazon.lambda.powertools.parameters.SecretsProvider;
+import software.amazon.lambda.powertools.parameters.secrets.SecretsProvider;
+import software.amazon.lambda.powertools.parameters.ssm.SSMProvider;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 
 import java.time.Clock;
