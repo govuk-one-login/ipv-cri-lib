@@ -88,4 +88,8 @@ public class EventProbe {
             metrics.addDimension(dimensionSet);
         }
     }
+
+    public static String clean(String metricValue) {
+        return metricValue.replace(" ", "_").trim();
+    }
 }
