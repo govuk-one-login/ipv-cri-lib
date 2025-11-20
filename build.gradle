@@ -36,6 +36,8 @@ dependencies {
 	implementation platform(libs.aws.bom)
 	implementation platform(libs.opentelemetry.bom)
 
+	implementation libs.bundles.logging
+
 	implementation libs.aws.crt.client
 	implementation libs.bundles.aws
 	implementation libs.bundles.lambda

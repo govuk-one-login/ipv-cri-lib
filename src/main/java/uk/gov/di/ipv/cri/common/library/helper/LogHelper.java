@@ -2,8 +2,8 @@ package uk.gov.di.ipv.cri.common.library.helper;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.slf4j.MDC;
 import software.amazon.cloudwatchlogs.emf.util.StringUtils;
-import software.amazon.lambda.powertools.logging.LoggingUtils;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 
 @ExcludeFromGeneratedCoverageReport
@@ -20,7 +20,8 @@ public class LogHelper {
         PASSPORT_SESSION_ID_LOG_FIELD("passportSessionId"),
         GOVUK_SIGNIN_JOURNEY_ID("govuk_signin_journey_id"),
         JTI_LOG_FIELD("jti"),
-        USED_AT_DATE_TIME_LOG_FIELD("usedAtDateTime");
+        USED_AT_DATE_TIME_LOG_FIELD("usedAtDateTime"),
+        REQUESTED_VERIFICATION_SCORE("requested_verification_score");
 
         private final String fieldName;
 
@@ -58,18 +59,20 @@ public class LogHelper {
         }
     }
 
+    public static void attachRequestedVerificationStoreToLogs(String requestedVerificationStore) {
+        attachFieldToLogs(LogField.REQUESTED_VERIFICATION_SCORE, requestedVerificationStore);
+    }
+
     public static void logOauthError(String message, String errorCode, String errorDescription) {
-        LoggingUtils.appendKey(LogField.ERROR_CODE_LOG_FIELD.getFieldName(), errorCode);
-        LoggingUtils.appendKey(
-                LogField.ERROR_DESCRIPTION_LOG_FIELD.getFieldName(), errorDescription);
+        MDC.put(LogField.ERROR_CODE_LOG_FIELD.getFieldName(), errorCode);
+        MDC.put(LogField.ERROR_DESCRIPTION_LOG_FIELD.getFieldName(), errorDescription);
         LOGGER.error(message);
-        LoggingUtils.removeKeys(
-                LogField.ERROR_CODE_LOG_FIELD.getFieldName(),
-                LogField.ERROR_DESCRIPTION_LOG_FIELD.getFieldName());
+        MDC.remove(LogField.ERROR_CODE_LOG_FIELD.getFieldName());
+        MDC.remove(LogField.ERROR_DESCRIPTION_LOG_FIELD.getFieldName());
     }
 
     private static void attachFieldToLogs(LogField field, String value) {
-        LoggingUtils.appendKey(field.getFieldName(), value);
+        MDC.put(field.getFieldName(), value);
         LOGGER.info("{} attached to logs", field);
     }
 }

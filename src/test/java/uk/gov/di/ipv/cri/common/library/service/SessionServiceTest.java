@@ -12,7 +12,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.lambda.powertools.logging.LoggingUtils;
+import org.slf4j.MDC;
 import uk.gov.di.ipv.cri.common.library.domain.SessionRequest;
 import uk.gov.di.ipv.cri.common.library.exception.AccessTokenExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.AuthorizationCodeExpiredException;
@@ -81,10 +81,9 @@ class SessionServiceTest {
         sessionRequest.setEvidenceRequest(createEvidenceRequest());
         sessionRequest.setContext(INT_USER_CONTEXT);
 
-        try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
-                Mockito.mockStatic(LoggingUtils.class)) {
+        try (MockedStatic<MDC> mdcMockedStatic = Mockito.mockStatic(MDC.class)) {
             sessionService.saveSession(sessionRequest);
-            verifyLoggingUtilsAppendKeys(loggingUtilsMockedStatic);
+            verifyLoggingUtilsAppendKeys(mdcMockedStatic);
         }
         verify(mockDataStore).create(sessionItemArgumentCaptor.capture());
         SessionItem capturedValue = sessionItemArgumentCaptor.getValue();
@@ -126,12 +125,11 @@ class SessionServiceTest {
                 .thenReturn(items);
         when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
 
-        try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
-                Mockito.mockStatic(LoggingUtils.class)) {
+        try (MockedStatic<MDC> mdcMockedStatic = Mockito.mockStatic(MDC.class)) {
             SessionItem sessionItem = sessionService.getSessionByAuthorisationCode(authCodeValue);
             assertThat(item.getSessionId(), equalTo(sessionItem.getSessionId()));
             assertThat(item.getAuthorizationCode(), equalTo(sessionItem.getAuthorizationCode()));
-            verifyLoggingUtilsAppendKeys(loggingUtilsMockedStatic);
+            verifyLoggingUtilsAppendKeys(mdcMockedStatic);
         }
     }
 
@@ -153,12 +151,11 @@ class SessionServiceTest {
                 .thenReturn(items);
         when(mockDataStore.getItem(item.getSessionId().toString())).thenReturn(item);
 
-        try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
-                Mockito.mockStatic(LoggingUtils.class)) {
+        try (MockedStatic<MDC> mdcMockedStatic = Mockito.mockStatic(MDC.class)) {
             SessionItem sessionItem = sessionService.getSessionByAccessToken(accessToken);
             assertThat(item.getSessionId(), equalTo(sessionItem.getSessionId()));
             assertThat(item.getAccessToken(), equalTo(sessionItem.getAccessToken()));
-            verifyLoggingUtilsAppendKeys(loggingUtilsMockedStatic);
+            verifyLoggingUtilsAppendKeys(mdcMockedStatic);
         }
     }
 
@@ -289,10 +286,9 @@ class SessionServiceTest {
         SessionItem sessionItem = new SessionItem();
         sessionItem.setEvidenceRequest(createEvidenceRequest());
         setClientSessionIds(sessionItem);
-        try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
-                Mockito.mockStatic(LoggingUtils.class)) {
+        try (MockedStatic<MDC> mdcMockedStatic = Mockito.mockStatic(MDC.class)) {
             sessionService.updateSession(sessionItem);
-            verifyLoggingUtilsAppendKeys(loggingUtilsMockedStatic);
+            verifyLoggingUtilsAppendKeys(mdcMockedStatic);
         }
 
         verify(mockDataStore).update(sessionItem);
@@ -301,8 +297,7 @@ class SessionServiceTest {
     @Test
     void shouldGetSessionItemBySessionId() {
 
-        try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
-                Mockito.mockStatic(LoggingUtils.class)) {
+        try (MockedStatic<MDC> loggingUtilsMockedStatic = Mockito.mockStatic(MDC.class)) {
             SessionItem sessionItem = mock(SessionItem.class);
             when(mockDataStore.getItem(SESSION_ID)).thenReturn(sessionItem);
             when(sessionItem.getClientSessionId()).thenReturn("a client session id");
@@ -310,8 +305,7 @@ class SessionServiceTest {
 
             verify(mockDataStore).getItem(SESSION_ID);
             loggingUtilsMockedStatic.verify(
-                    () -> LoggingUtils.appendKey("govuk_signin_journey_id", "a client session id"),
-                    times(1));
+                    () -> MDC.put("govuk_signin_journey_id", "a client session id"), times(1));
             loggingUtilsMockedStatic.verifyNoMoreInteractions();
         }
     }
@@ -321,20 +315,16 @@ class SessionServiceTest {
         SessionItem item = new SessionItem();
         item.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond());
         when(mockDataStore.getItem(SESSION_ID)).thenReturn(item);
-        try (MockedStatic<LoggingUtils> loggingUtilsMockedStatic =
-                Mockito.mockStatic(LoggingUtils.class)) {
+        try (MockedStatic<MDC> loggingUtilsMockedStatic = Mockito.mockStatic(MDC.class)) {
             assertDoesNotThrow(() -> sessionService.validateSessionId(SESSION_ID));
             loggingUtilsMockedStatic.verifyNoMoreInteractions();
         }
     }
 
-    private void verifyLoggingUtilsAppendKeys(MockedStatic<LoggingUtils> loggingUtilsMockedStatic) {
-        loggingUtilsMockedStatic.verify(
-                () -> LoggingUtils.appendKey("govuk_signin_journey_id", "a client session id"),
-                times(1));
-        loggingUtilsMockedStatic.verify(
-                () -> LoggingUtils.appendKey("requested_verification_score", "2"), times(1));
-        loggingUtilsMockedStatic.verifyNoMoreInteractions();
+    private void verifyLoggingUtilsAppendKeys(MockedStatic<MDC> mdcMockedStatic) {
+        mdcMockedStatic.verify(
+                () -> MDC.put("govuk_signin_journey_id", "a client session id"), times(1));
+        mdcMockedStatic.verify(() -> MDC.put("requested_verification_score", "2"), times(1));
     }
 
     private void setClientSessionIds(SessionItem item) {
