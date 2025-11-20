@@ -9,12 +9,12 @@ import software.amazon.lambda.powertools.metrics.Metrics;
 import software.amazon.lambda.powertools.metrics.MetricsFactory;
 import software.amazon.lambda.powertools.metrics.model.DimensionSet;
 import software.amazon.lambda.powertools.metrics.model.MetricUnit;
+import uk.gov.di.ipv.cri.common.library.helper.LogHelper;
 
 import java.util.Map;
 import java.util.Objects;
 
 public class EventProbe {
-    private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
     private static final Logger LOGGER = LogManager.getLogger(EventProbe.class);
     private final Metrics metrics;
 
@@ -76,7 +76,7 @@ public class EventProbe {
 
     public EventProbe addJourneyIdToLoggingContext(String journeyId) {
         if (StringUtils.isNotBlank(journeyId)) {
-            addFieldToLoggingContext(GOVUK_SIGNIN_JOURNEY_ID, journeyId);
+            LogHelper.attachGovukSigninJourneyIdToLogs(journeyId);
         }
         return this;
     }

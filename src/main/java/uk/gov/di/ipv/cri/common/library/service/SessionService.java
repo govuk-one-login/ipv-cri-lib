@@ -1,7 +1,6 @@
 package uk.gov.di.ipv.cri.common.library.service;
 
 import com.nimbusds.oauth2.sdk.token.AccessToken;
-import org.slf4j.MDC;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.common.library.domain.SessionRequest;
@@ -9,6 +8,7 @@ import uk.gov.di.ipv.cri.common.library.exception.AccessTokenExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.AuthorizationCodeExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionExpiredException;
 import uk.gov.di.ipv.cri.common.library.exception.SessionNotFoundException;
+import uk.gov.di.ipv.cri.common.library.helper.LogHelper;
 import uk.gov.di.ipv.cri.common.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.common.library.util.ListUtil;
@@ -25,8 +25,6 @@ import static uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem.AUTH
 
 public class SessionService {
     private static final String SESSION_TABLE_NAME = "session-common-cri-api";
-    private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
-    private static final String REQUESTED_VERIFICATION_SCORE = "requested_verification_score";
     private final ConfigurationService configurationService;
     private final DataStore<SessionItem> dataStore;
     private final Clock clock;
@@ -111,14 +109,15 @@ public class SessionService {
                 .ifPresent(
                         s -> {
                             Optional.ofNullable(s.getClientSessionId())
-                                    .ifPresent(id -> MDC.put(GOVUK_SIGNIN_JOURNEY_ID, id));
+                                    .ifPresent(LogHelper::attachGovukSigninJourneyIdToLogs);
                             Optional.ofNullable(s.getEvidenceRequest())
                                     .flatMap(ev -> Optional.ofNullable(ev.getVerificationScore()))
                                     .ifPresent(
                                             verificationScore ->
-                                                    MDC.put(
-                                                            REQUESTED_VERIFICATION_SCORE,
-                                                            String.valueOf(verificationScore)));
+                                                    LogHelper
+                                                            .attachRequestedVerificationStoreToLogs(
+                                                                    String.valueOf(
+                                                                            verificationScore)));
                         });
     }
 

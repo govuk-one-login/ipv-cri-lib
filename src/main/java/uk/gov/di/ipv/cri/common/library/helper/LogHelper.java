@@ -20,7 +20,8 @@ public class LogHelper {
         PASSPORT_SESSION_ID_LOG_FIELD("passportSessionId"),
         GOVUK_SIGNIN_JOURNEY_ID("govuk_signin_journey_id"),
         JTI_LOG_FIELD("jti"),
-        USED_AT_DATE_TIME_LOG_FIELD("usedAtDateTime");
+        USED_AT_DATE_TIME_LOG_FIELD("usedAtDateTime"),
+        REQUESTED_VERIFICATION_SCORE("requested_verification_score");
 
         private final String fieldName;
 
@@ -56,6 +57,10 @@ public class LogHelper {
         } else {
             attachFieldToLogs(LogField.GOVUK_SIGNIN_JOURNEY_ID, govukSigninJourneyId);
         }
+    }
+
+    public static void attachRequestedVerificationStoreToLogs(String requestedVerificationStore) {
+        attachFieldToLogs(LogField.REQUESTED_VERIFICATION_SCORE, requestedVerificationStore);
     }
 
     public static void logOauthError(String message, String errorCode, String errorDescription) {
