@@ -197,4 +197,12 @@ class EventProbeTest {
 
         assertTrue(capturedValue.getDimensionKeys().isEmpty());
     }
+
+    @Test
+    void shouldCleanMetricDimension() {
+        assertEquals("this_has_whitespace", EventProbe.clean("this has whitespace"));
+        assertEquals("correct_value", EventProbe.clean("correct_value"));
+        assertTrue(EventProbe.clean("").isEmpty());
+        assertNull(EventProbe.clean(null));
+    }
 }

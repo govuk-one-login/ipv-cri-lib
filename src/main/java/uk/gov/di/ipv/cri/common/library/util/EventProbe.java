@@ -90,6 +90,9 @@ public class EventProbe {
     }
 
     public static String clean(String metricValue) {
+        if (metricValue == null) {
+            return null;
+        }
         return metricValue.replace(" ", "_").trim();
     }
 }
