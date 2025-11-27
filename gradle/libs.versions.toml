@@ -2,7 +2,7 @@
 aws_sdk_version = "2.29.1"
 aws_lambda_events_version = "3.11.6"
 aspectjrt_version = "1.9.20.1"
-aws_powertools_version = "1.18.0"
+aws_powertools_version = "2.7.0"
 jackson_version = "2.17.2"
 nimbusds_oauth_version = "11.29.1"
 nimbusds_jwt_version = "10.5"
@@ -12,6 +12,7 @@ cucumber_version = "7.9.0"
 opentelemetry_version = "2.12.0-alpha"
 sonarqube_version = "4.4.+"
 spotless_version = "8.0.+"
+log4j = "2.23.1"
 
 [libraries]
 aws_bom = { module = "software.amazon.awssdk:bom", version.ref = "aws_sdk_version"}
@@ -20,12 +21,16 @@ cloudformation = { module = "software.amazon.awssdk:cloudformation", version.ref
 dynamodb = { module = "software.amazon.awssdk:dynamodb", version.ref = "aws_sdk_version" }
 dynamodb-enhanced = { module = "software.amazon.awssdk:dynamodb-enhanced", version.ref = "aws_sdk_version" }
 
-
 lambda-core = { module = "software.amazon.awssdk:lambda", version.ref = "aws_sdk_version" }
 lambda-events = { module = "com.amazonaws:aws-lambda-java-events", version.ref = "aws_lambda_events_version" }
-powertools-parameters = { module = "software.amazon.lambda:powertools-parameters", version.ref = "aws_powertools_version" }
-powertools-logging = { module = "software.amazon.lambda:powertools-logging", version.ref = "aws_powertools_version" }
+powertools-parameters-ssm = { module = "software.amazon.lambda:powertools-parameters-ssm", version.ref = "aws_powertools_version" }
+powertools-secrets = { module = "software.amazon.lambda:powertools-parameters-secrets", version.ref = "aws_powertools_version" }
+powertools-logging = { module = "software.amazon.lambda:powertools-logging-log4j", version.ref = "aws_powertools_version" }
 powertools-metrics = { module = "software.amazon.lambda:powertools-metrics", version.ref = "aws_powertools_version" }
+
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
+log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
+log4j-layout-template-json = { module = "org.apache.logging.log4j:log4j-layout-template-json", version.ref = "log4j" }
 
 sqs = { module = "software.amazon.awssdk:sqs", version.ref = "aws_sdk_version" }
 ssm = { module = "software.amazon.awssdk:ssm", version.ref = "aws_sdk_version" }
@@ -67,13 +72,14 @@ cucumber-pico = { module = "io.cucumber:cucumber-picocontainer", version.ref = "
 
 [bundles]
 aws = ["cloudformation", "dynamodb", "dynamodb-enhanced", "sqs", "ssm", "sso", "ssooidc", "kms", "acm", "lambda-core"]
-lambda = ["lambda-core", "lambda-events", "powertools-parameters"]
-powertools = ["powertools-logging", "powertools-metrics"]
+lambda = ["lambda-core", "lambda-events"]
+powertools = ["powertools-logging", "powertools-metrics","powertools-parameters-ssm", "powertools-secrets"]
 jackson = ["jackson-core", "jackson-databind", "jackson-annotations", "jackson-jsr310", "jackson-jdk8", "everit-schema"]
 nimbus = ["nimbus-oauth", "nimbus-jose"]
 tests = ["junit-api", "junit-params", "mockito-junit", "mockito-inline", "hamcrest", "system-stubs-jupiter", "system-stubs-core"]
 test_runtime = ["junit-engine"]
 cucumber = ["cucumber-java", "cucumber-pico"]
+logging = [ "log4j-core", "log4j-slf4j2-impl", "log4j-layout-template-json" ]
 
 [plugins]
 java-library = { id = "java-library" }

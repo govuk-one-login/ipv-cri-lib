@@ -4,26 +4,26 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.cloudwatchlogs.emf.logger.MetricsLogger;
-import software.amazon.cloudwatchlogs.emf.model.DimensionSet;
-import software.amazon.cloudwatchlogs.emf.model.Unit;
-import software.amazon.lambda.powertools.logging.LoggingUtils;
-import software.amazon.lambda.powertools.metrics.MetricsUtils;
+import org.slf4j.MDC;
+import software.amazon.lambda.powertools.metrics.Metrics;
+import software.amazon.lambda.powertools.metrics.MetricsFactory;
+import software.amazon.lambda.powertools.metrics.model.DimensionSet;
+import software.amazon.lambda.powertools.metrics.model.MetricUnit;
+import uk.gov.di.ipv.cri.common.library.helper.LogHelper;
 
 import java.util.Map;
 import java.util.Objects;
 
 public class EventProbe {
-    private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
-    private static final Logger LOGGER = LogManager.getLogger();
-    private final MetricsLogger metricsLogger;
+    private static final Logger LOGGER = LogManager.getLogger(EventProbe.class);
+    private final Metrics metrics;
 
     public EventProbe() {
-        this(MetricsUtils.metricsLogger());
+        this(MetricsFactory.getMetricsInstance());
     }
 
-    public EventProbe(MetricsLogger metricsLogger) {
-        this.metricsLogger = metricsLogger;
+    public EventProbe(Metrics metrics) {
+        this.metrics = metrics;
     }
 
     public EventProbe log(Level level, Throwable throwable) {
@@ -50,17 +50,17 @@ public class EventProbe {
     }
 
     public EventProbe counterMetric(String key) {
-        metricsLogger.putMetric(key, 1d);
+        metrics.addMetric(key, 1d);
         return this;
     }
 
     public EventProbe counterMetric(String key, double value) {
-        metricsLogger.putMetric(key, value);
+        metrics.addMetric(key, value);
         return this;
     }
 
-    public EventProbe counterMetric(String key, double value, Unit unit) {
-        metricsLogger.putMetric(key, value, unit);
+    public EventProbe counterMetric(String key, double value, MetricUnit unit) {
+        metrics.addMetric(key, value, unit);
         return this;
     }
 
@@ -70,13 +70,13 @@ public class EventProbe {
     }
 
     public EventProbe addFieldToLoggingContext(String name, String value) {
-        LoggingUtils.appendKey(name, value);
+        MDC.put(name, value);
         return this;
     }
 
     public EventProbe addJourneyIdToLoggingContext(String journeyId) {
         if (StringUtils.isNotBlank(journeyId)) {
-            addFieldToLoggingContext(GOVUK_SIGNIN_JOURNEY_ID, journeyId);
+            LogHelper.attachGovukSigninJourneyIdToLogs(journeyId);
         }
         return this;
     }
@@ -85,7 +85,14 @@ public class EventProbe {
         if (dimensions != null) {
             DimensionSet dimensionSet = new DimensionSet();
             dimensions.forEach(dimensionSet::addDimension);
-            metricsLogger.putDimensions(dimensionSet);
+            metrics.addDimension(dimensionSet);
         }
+    }
+
+    public static String clean(String metricValue) {
+        if (metricValue == null) {
+            return null;
+        }
+        return metricValue.replace(" ", "_").trim();
     }
 }
