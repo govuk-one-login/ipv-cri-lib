@@ -209,6 +209,8 @@ class EventProbeTest {
         assertEquals("no_content", EventProbe.clean(null));
         assertEquals("test_test", EventProbe.clean("test\ntest"));
         assertEquals("test", EventProbe.clean(":test"));
+        assertEquals("test", EventProbe.clean("::test"));
+        assertEquals("no_content", EventProbe.clean(":"));
         assertEquals(250, EventProbe.clean("1".repeat(300)).length());
         assertEquals(
                 "includes_non_ascii_printable___char",

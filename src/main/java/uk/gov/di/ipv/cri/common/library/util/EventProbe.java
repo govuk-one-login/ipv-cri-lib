@@ -107,12 +107,11 @@ public class EventProbe {
             return "no_content";
         }
 
-        char[] chars;
+        String stripped = removePrefixedColons(value);
+        char[] chars = stripped.toCharArray();
 
-        if (value.startsWith(":")) {
-            chars = value.substring(1).toCharArray();
-        } else {
-            chars = value.toCharArray();
+        if (chars.length == 0 || stripped.isBlank()) {
+            return "no_content";
         }
 
         StringBuilder sb = new StringBuilder();
@@ -134,6 +133,14 @@ public class EventProbe {
         }
 
         return cleaned.replaceAll("\\s+", "_").trim();
+    }
+
+    private static String removePrefixedColons(String value) {
+        if (value.startsWith(":")) {
+            return removePrefixedColons(value.substring(1));
+        } else {
+            return value;
+        }
     }
 
     private static boolean isAsciiPrintable(final char ch) {
