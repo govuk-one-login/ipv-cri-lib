@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 import software.amazon.lambda.powertools.metrics.Metrics;
+import software.amazon.lambda.powertools.metrics.internal.Validator;
 import software.amazon.lambda.powertools.metrics.model.DimensionSet;
 import software.amazon.lambda.powertools.metrics.model.MetricUnit;
 
@@ -21,6 +22,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -203,7 +205,33 @@ class EventProbeTest {
         assertEquals("this_has_whitespace", EventProbe.clean("this has whitespace"));
         assertEquals("correct_value", EventProbe.clean("correct_value"));
         assertEquals("no_content", EventProbe.clean(""));
+        assertEquals("no_content", EventProbe.clean("  "));
         assertEquals("no_content", EventProbe.clean(null));
         assertEquals("test_test", EventProbe.clean("test\ntest"));
+        assertEquals("test", EventProbe.clean(":test"));
+        assertEquals(250, EventProbe.clean("1".repeat(300)).length());
+        assertEquals(
+                "includes_non_ascii_printable___char",
+                EventProbe.clean("includes_non_ascii_printable_¬_char"));
+    }
+
+    @Test
+    void shouldCleanAComplexString() {
+        String complexString =
+                EventProbe.clean(
+                        """
+                :Hello   world\t😀
+                éñö @@##!! 12345 \f \\slashes// ""quotes""
+                line2-with-stuff 🧨🚀✨
+                more-text---here---###$$$%%%&&&
+                control-\u0007-char
+                𝔘𝔫𝔦𝔠𝔬𝔡𝔢 block
+                final-line-with: symbols_*&^%$#@!+=()[]{}<>?/|~`
+                😀😀   end
+                """
+                                .repeat(500));
+
+        assertDoesNotThrow(() -> Validator.validateDimension("_", complexString));
+        assertEquals(250, complexString.length());
     }
 }
