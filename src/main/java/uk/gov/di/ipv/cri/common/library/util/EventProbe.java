@@ -84,15 +84,66 @@ public class EventProbe {
     public void addDimensions(Map<String, String> dimensions) {
         if (dimensions != null) {
             DimensionSet dimensionSet = new DimensionSet();
-            dimensions.forEach(dimensionSet::addDimension);
-            metrics.addDimension(dimensionSet);
+            dimensions.forEach(
+                    (key, value) -> {
+                        try {
+                            dimensionSet.addDimension(key, value);
+                        } catch (Exception e) {
+                            LOGGER.error("Metric failed validation: {}={}", key, value, e);
+                        }
+                    });
+            try {
+                metrics.addDimension(dimensionSet);
+            } catch (Exception e) {
+                LOGGER.error("Failed to add dimensions", e);
+            }
         }
     }
 
-    public static String clean(String metricValue) {
-        if (metricValue == null || metricValue.isBlank()) {
+    public static String clean(String value) {
+        final int maxLen = 250;
+
+        if (value == null || value.isBlank()) {
             return "no_content";
         }
-        return metricValue.replaceAll("\\s+", "_").trim();
+
+        String stripped = removePrefixedColons(value);
+        char[] chars = stripped.toCharArray();
+
+        if (chars.length == 0 || stripped.isBlank()) {
+            return "no_content";
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (char c : chars) {
+            if (Character.isWhitespace(c)) {
+                sb.append("_");
+            } else if (isAsciiPrintable(c)) {
+                sb.append(c);
+            } else {
+                sb.append("_");
+            }
+        }
+
+        String cleaned = sb.toString();
+
+        if (cleaned.length() > maxLen) {
+            cleaned = cleaned.substring(0, maxLen);
+        }
+
+        return cleaned.replaceAll("\\s+", "_").trim();
+    }
+
+    private static String removePrefixedColons(String value) {
+        if (value.startsWith(":")) {
+            return removePrefixedColons(value.substring(1));
+        } else {
+            return value;
+        }
+    }
+
+    private static boolean isAsciiPrintable(final char ch) {
+        return ch >= 32 && ch < 127;
     }
 }
