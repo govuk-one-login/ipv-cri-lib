@@ -90,9 +90,9 @@ public class EventProbe {
     }
 
     public static String clean(String metricValue) {
-        if (metricValue == null) {
-            return null;
+        if (metricValue == null || metricValue.isBlank()) {
+            return "no_content";
         }
-        return metricValue.replace(" ", "_").trim();
+        return metricValue.replaceAll("\\s+", "_").trim();
     }
 }
