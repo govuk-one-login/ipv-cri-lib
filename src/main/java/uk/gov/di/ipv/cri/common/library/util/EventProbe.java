@@ -50,17 +50,21 @@ public class EventProbe {
     }
 
     public EventProbe counterMetric(String key) {
-        metrics.addMetric(key, 1d);
+        addMetric(key, 1d);
         return this;
     }
 
     public EventProbe counterMetric(String key, double value) {
-        metrics.addMetric(key, value);
+        addMetric(key, value);
         return this;
     }
 
     public EventProbe counterMetric(String key, double value, MetricUnit unit) {
-        metrics.addMetric(key, value, unit);
+        try {
+            metrics.addMetric(key, value, unit);
+        } catch (Exception e) {
+            LOGGER.error("Counter metric failed", e);
+        }
         return this;
     }
 
@@ -97,6 +101,14 @@ public class EventProbe {
             } catch (Exception e) {
                 LOGGER.error("Failed to add dimensions", e);
             }
+        }
+    }
+
+    private void addMetric(String key, double value) {
+        try {
+            metrics.addMetric(key, value);
+        } catch (Exception e) {
+            LOGGER.error("Failed to add metric: {}", key, e);
         }
     }
 
