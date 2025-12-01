@@ -132,7 +132,14 @@ public class EventProbe {
             cleaned = cleaned.substring(0, maxLen);
         }
 
-        return cleaned.replaceAll("\\s+", "_").trim();
+        String result = cleaned.replaceAll("\\s+", "_").trim();
+        if (!result.equalsIgnoreCase(value)) {
+            LOGGER.warn(
+                    "Dimension value of {} has been transformed into {} to match Powertools validations",
+                    value,
+                    result);
+        }
+        return result;
     }
 
     private static String removePrefixedColons(String value) {
