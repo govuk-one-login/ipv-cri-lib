@@ -64,6 +64,7 @@ public class EventProbe {
             metrics.addMetric(key, value, unit);
         } catch (Exception e) {
             LOGGER.error("Counter metric failed", e);
+            addMetric(key, value, unit);
         }
         return this;
     }
@@ -108,7 +109,25 @@ public class EventProbe {
         try {
             metrics.addMetric(key, value);
         } catch (Exception e) {
-            LOGGER.error("Failed to add metric: {}", key, e);
+            LOGGER.error("Failed to add metric: {}, trying again with clean", key, e);
+            addMetric(key, value);
+        }
+    }
+
+    private void addMetric(String key, double value, MetricUnit unit) {
+        try {
+            metrics.addMetric(key, value, unit);
+        } catch (Exception e) {
+            LOGGER.error("Failed to add metric: {}, trying again with clean", key, e);
+            addMetric(key, value);
+        }
+    }
+
+    private void addMetricCleaned(String key, double value) {
+        try {
+            metrics.addMetric(clean(key), value);
+        } catch (Exception e) {
+            LOGGER.error("Failed to add metric {} after cleaning: {}", key, value);
         }
     }
 
