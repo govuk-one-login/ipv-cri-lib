@@ -30,8 +30,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -262,5 +266,23 @@ class EventProbeTest {
 
         verify(mockMetrics).addMetric("bad-metric-2", 42d);
         assertSame(eventProbe, result);
+    }
+
+    @Test
+    void addDimensionsHandlesExceptionsGracefully() {
+        DimensionSet mockSet = mock(DimensionSet.class);
+
+        doThrow(new RuntimeException("error")).when(mockSet).addDimension(anyString(), anyString());
+
+        EventProbe spyProbe = spy(new EventProbe(mockMetrics));
+        doReturn(mockSet).when(spyProbe).newDimensionSet();
+
+        doThrow(new RuntimeException("error"))
+                .when(mockMetrics)
+                .addDimension(any(DimensionSet.class));
+
+        assertDoesNotThrow(() -> spyProbe.addDimensions(Map.of("bad Key", "bad Value")));
+
+        verify(mockMetrics).addDimension(mockSet);
     }
 }

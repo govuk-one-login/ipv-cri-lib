@@ -87,7 +87,7 @@ public class EventProbe {
 
     public void addDimensions(Map<String, String> dimensions) {
         if (dimensions != null) {
-            DimensionSet dimensionSet = new DimensionSet();
+            DimensionSet dimensionSet = newDimensionSet();
             dimensions.forEach(
                     (key, value) -> {
                         try {
@@ -164,5 +164,9 @@ public class EventProbe {
 
     private static boolean isAsciiPrintable(final char ch) {
         return ch >= 32 && ch < 127;
+    }
+
+    public DimensionSet newDimensionSet() {
+        return new DimensionSet();
     }
 }
