@@ -236,4 +236,10 @@ class EventProbeTest {
         assertDoesNotThrow(() -> Validator.validateDimension("_", complexString));
         assertEquals(250, complexString.length());
     }
+
+    @Test
+    void shouldFallbackOnBadMetric() {
+        assertDoesNotThrow(() -> eventProbe.counterMetric("with space"));
+        assertDoesNotThrow(() -> eventProbe.counterMetric("with space", 1d));
+    }
 }
