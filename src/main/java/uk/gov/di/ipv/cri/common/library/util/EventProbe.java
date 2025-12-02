@@ -50,17 +50,21 @@ public class EventProbe {
     }
 
     public EventProbe counterMetric(String key) {
-        metrics.addMetric(key, 1d);
+        addMetric(key, 1d);
         return this;
     }
 
     public EventProbe counterMetric(String key, double value) {
-        metrics.addMetric(key, value);
+        addMetric(key, value);
         return this;
     }
 
     public EventProbe counterMetric(String key, double value, MetricUnit unit) {
-        metrics.addMetric(key, value, unit);
+        try {
+            metrics.addMetric(key, value, unit);
+        } catch (Exception e) {
+            LOGGER.error("Counter metric failed", e);
+        }
         return this;
     }
 
@@ -83,16 +87,86 @@ public class EventProbe {
 
     public void addDimensions(Map<String, String> dimensions) {
         if (dimensions != null) {
-            DimensionSet dimensionSet = new DimensionSet();
-            dimensions.forEach(dimensionSet::addDimension);
-            metrics.addDimension(dimensionSet);
+            DimensionSet dimensionSet = newDimensionSet();
+            dimensions.forEach(
+                    (key, value) -> {
+                        try {
+                            dimensionSet.addDimension(key, value);
+                        } catch (Exception e) {
+                            LOGGER.error("Metric failed validation: {}={}", key, value, e);
+                        }
+                    });
+            try {
+                metrics.addDimension(dimensionSet);
+            } catch (Exception e) {
+                LOGGER.error("Failed to add dimensions", e);
+            }
         }
     }
 
-    public static String clean(String metricValue) {
-        if (metricValue == null || metricValue.isBlank()) {
+    private void addMetric(String key, double value) {
+        try {
+            metrics.addMetric(key, value);
+        } catch (Exception e) {
+            LOGGER.error("Failed to add metric: {}, trying again with clean", key, e);
+        }
+    }
+
+    public static String clean(String value) {
+        final int maxLen = 250;
+
+        if (value == null || value.isBlank()) {
             return "no_content";
         }
-        return metricValue.replaceAll("\\s+", "_").trim();
+
+        String stripped = removePrefixedColons(value);
+        char[] chars = stripped.toCharArray();
+
+        if (chars.length == 0 || stripped.isBlank()) {
+            return "no_content";
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (char c : chars) {
+            if (Character.isWhitespace(c)) {
+                sb.append("_");
+            } else if (isAsciiPrintable(c)) {
+                sb.append(c);
+            } else {
+                sb.append("_");
+            }
+        }
+
+        String cleaned = sb.toString();
+
+        if (cleaned.length() > maxLen) {
+            cleaned = cleaned.substring(0, maxLen);
+        }
+
+        String result = cleaned.replaceAll("\\s+", "_").trim();
+        if (!result.equalsIgnoreCase(value)) {
+            LOGGER.warn(
+                    "Dimension value of {} has been transformed into {} to match Powertools validations",
+                    value,
+                    result);
+        }
+        return result;
+    }
+
+    private static String removePrefixedColons(String value) {
+        if (value.startsWith(":")) {
+            return removePrefixedColons(value.substring(1));
+        } else {
+            return value;
+        }
+    }
+
+    private static boolean isAsciiPrintable(final char ch) {
+        return ch >= 32 && ch < 127;
+    }
+
+    public DimensionSet newDimensionSet() {
+        return new DimensionSet();
     }
 }
