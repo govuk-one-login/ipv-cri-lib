@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -241,5 +242,25 @@ class EventProbeTest {
     void shouldFallbackOnBadMetric() {
         assertDoesNotThrow(() -> eventProbe.counterMetric("with space"));
         assertDoesNotThrow(() -> eventProbe.counterMetric("with space", 1d));
+    }
+
+    @Test
+    void counterMetricHandlesExceptionGracefully() {
+        doThrow(new RuntimeException("error")).when(mockMetrics).addMetric("bad metric", 1d);
+
+        EventProbe result = assertDoesNotThrow(() -> eventProbe.counterMetric("bad-metric"));
+
+        verify(mockMetrics).addMetric("bad-metric", 1d);
+        assertSame(eventProbe, result);
+    }
+
+    @Test
+    void counterMetricWithValueHandlesExceptionGracefully() {
+        doThrow(new RuntimeException("error")).when(mockMetrics).addMetric("bad-metric-2", 42d);
+
+        EventProbe result = assertDoesNotThrow(() -> eventProbe.counterMetric("bad-metric-2", 42d));
+
+        verify(mockMetrics).addMetric("bad-metric-2", 42d);
+        assertSame(eventProbe, result);
     }
 }
