@@ -11,7 +11,7 @@ plugins {
 }
 
 // Important: see README on publishing a new version to Maven
-def buildVersion = "8.0.2"
+def buildVersion = "8.0.3"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
