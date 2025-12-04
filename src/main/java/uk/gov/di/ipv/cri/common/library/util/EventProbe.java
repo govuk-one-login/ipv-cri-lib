@@ -61,7 +61,7 @@ public class EventProbe {
 
     public EventProbe counterMetric(String key, double value, MetricUnit unit) {
         try {
-            metrics.addMetric(key, value, unit);
+            metrics.flushMetrics(metrics -> metrics.addMetric(key, value, unit));
         } catch (Exception e) {
             LOGGER.error("Counter metric failed", e);
         }
@@ -86,27 +86,31 @@ public class EventProbe {
     }
 
     public void addDimensions(Map<String, String> dimensions) {
-        if (dimensions != null) {
-            DimensionSet dimensionSet = newDimensionSet();
-            dimensions.forEach(
-                    (key, value) -> {
+        metrics.flushMetrics(
+                metrics -> {
+                    if (dimensions != null) {
+                        DimensionSet dimensionSet = newDimensionSet();
+                        dimensions.forEach(
+                                (key, value) -> {
+                                    try {
+                                        dimensionSet.addDimension(key, value);
+                                    } catch (Exception e) {
+                                        LOGGER.error(
+                                                "Metric failed validation: {}={}", key, value, e);
+                                    }
+                                });
                         try {
-                            dimensionSet.addDimension(key, value);
+                            metrics.addDimension(dimensionSet);
                         } catch (Exception e) {
-                            LOGGER.error("Metric failed validation: {}={}", key, value, e);
+                            LOGGER.error("Failed to add dimensions", e);
                         }
-                    });
-            try {
-                metrics.addDimension(dimensionSet);
-            } catch (Exception e) {
-                LOGGER.error("Failed to add dimensions", e);
-            }
-        }
+                    }
+                });
     }
 
     private void addMetric(String key, double value) {
         try {
-            metrics.addMetric(key, value);
+            metrics.flushMetrics(metrics -> metrics.addMetric(key, value));
         } catch (Exception e) {
             LOGGER.error("Failed to add metric: {}, trying again with clean", key, e);
         }
