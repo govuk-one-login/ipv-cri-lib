@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 import software.amazon.lambda.powertools.metrics.Metrics;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,6 +38,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -284,5 +287,32 @@ class EventProbeTest {
         assertDoesNotThrow(() -> spyProbe.addDimensions(Map.of("bad Key", "bad Value")));
 
         verify(mockMetrics).addDimension(mockSet);
+    }
+
+    @Test
+    void metricsShouldNotPersistAcrossInvocationsWhenFlushed() {
+        Metrics metrics = Mockito.mock(Metrics.class);
+        EventProbe probe = new EventProbe(metrics);
+
+        probe.counterMetric("invocations", 1d);
+        probe.addDimensions(Map.of("User", "Bob"));
+        probe.flush();
+
+        verify(metrics, times(1)).flush();
+
+        probe.counterMetric("invocations", 1d);
+        probe.addDimensions(Map.of("User", "Alice"));
+        probe.flush();
+
+        verify(metrics, times(2)).flush();
+
+        ArgumentCaptor<DimensionSet> dimCaptor = ArgumentCaptor.forClass(DimensionSet.class);
+
+        verify(metrics, times(2)).addDimension(dimCaptor.capture());
+
+        DimensionSet firstCall = dimCaptor.getAllValues().get(0);
+        DimensionSet secondCall = dimCaptor.getAllValues().get(1);
+
+        assertNotSame(firstCall, secondCall, "Dimensions must not persist across invocations");
     }
 }
