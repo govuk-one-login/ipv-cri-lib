@@ -26,6 +26,14 @@ public class EventProbe {
         this.metrics = metrics;
     }
 
+    public void flush() {
+        try {
+            metrics.flush();
+        } catch (Exception e) {
+            LOGGER.error("Failed to flush metrics", e);
+        }
+    }
+
     public EventProbe log(Level level, Throwable throwable) {
         LOGGER.log(level, throwable.getMessage(), throwable);
         if (level == Level.ERROR) {
