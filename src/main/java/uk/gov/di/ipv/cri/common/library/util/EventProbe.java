@@ -32,6 +32,7 @@ public class EventProbe {
         } catch (Exception e) {
             LOGGER.error("Failed to flush metrics", e);
         }
+        MDC.clear();
     }
 
     public EventProbe log(Level level, Throwable throwable) {
