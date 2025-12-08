@@ -315,4 +315,20 @@ class EventProbeTest {
 
         assertNotSame(firstCall, secondCall, "Dimensions must not persist across invocations");
     }
+
+    @Test
+    void flushShouldHandleExceptionAndClearMdc() {
+        Metrics metrics = Mockito.mock(Metrics.class);
+        EventProbe probe = new EventProbe(metrics);
+
+        MDC.put("journeyId", "12345");
+
+        doThrow(new RuntimeException("metrics failure")).when(metrics).flush();
+
+        probe.flush();
+
+        assertNull(MDC.get("journeyId"), "MDC should be cleared even when flush() throws");
+
+        verify(metrics, times(1)).flush();
+    }
 }
