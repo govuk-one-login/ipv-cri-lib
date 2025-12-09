@@ -87,5 +87,5 @@ java-test-fixtures = { id = "java-test-fixtures" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube_version" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless_version" }
 jacoco = { id = "jacoco" }
-post-compile-weaving = { id = "io.freefair.aspectj.post-compile-weaving", version = "6.6.3" }
+post-compile-weaving = { id = "io.freefair.aspectj.post-compile-weaving", version = "9.1.0" }
 publishing = { id = "com.vanniktech.maven.publish", version = "0.32.0" }
