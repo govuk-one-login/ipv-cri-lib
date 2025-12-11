@@ -29,6 +29,7 @@ public class EventProbe {
     public void flush() {
         try {
             metrics.flush();
+            metrics.clearDefaultDimensions();
         } catch (Exception e) {
             LOGGER.error("Failed to flush metrics", e);
         }
