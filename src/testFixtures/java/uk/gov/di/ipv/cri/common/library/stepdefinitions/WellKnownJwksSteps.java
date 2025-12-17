@@ -65,15 +65,12 @@ public class WellKnownJwksSteps {
     private SignedJWT decryptedJwt;
     private KMSRSADecrypter kmsRsaDecrypter;
 
-    public WellKnownJwksSteps() {
+    public WellKnownJwksSteps(TestResourcesClient testResourcesClient) {
+        this.testResourcesClient = testResourcesClient;
         httpClientHelper = new HttpClientHelper();
         httpResponse = new HttpResponseHelper();
         objectMapper = new ObjectMapper();
         ssmHelper = new SSMHelper();
-
-        testResourcesClient =
-                new TestResourcesClient(
-                        getEnvOrDefault("TEST_RESOURCES_STACK_NAME", "test-resources"));
 
         authEncryptionKeyId =
                 ssmHelper.getParameterValue(

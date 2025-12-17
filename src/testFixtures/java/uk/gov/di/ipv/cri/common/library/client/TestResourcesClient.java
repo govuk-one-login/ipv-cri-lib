@@ -38,9 +38,10 @@ public class TestResourcesClient {
     private static final AwsV4HttpSigner SIGNER = AwsV4HttpSigner.create();
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public TestResourcesClient(String testResourcesStackName) {
+    public TestResourcesClient(ClientConfigurationService client) {
         this.testHarnessUrl =
-                CloudFormationHelper.getOutput(testResourcesStackName, "TestHarnessExecuteUrl");
+                CloudFormationHelper.getOutput(
+                        client.getTestResourcesStackName(), "TestHarnessExecuteUrl");
     }
 
     public String getTestHarnessUrl() {
