@@ -12,7 +12,7 @@ cucumber_version = "7.33.0"
 opentelemetry_version = "2.12.0-alpha"
 sonarqube_version = "4.4.+"
 spotless_version = "8.0.+"
-log4j = "2.23.1"
+log4j = "2.25.3"
 
 [libraries]
 aws_bom = { module = "software.amazon.awssdk:bom", version.ref = "aws_sdk_version"}
