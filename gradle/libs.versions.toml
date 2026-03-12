@@ -3,7 +3,8 @@ aws_sdk_version = "2.41.25"
 aws_lambda_events_version = "3.11.6"
 aspectjrt_version = "1.9.20.1"
 aws_powertools_version = "2.9.0"
-jackson_version = "2.17.2"
+jackson_version = "2.21.1"
+jackson_annotations_version = "2.21" # annotations has no patch number
 nimbusds_oauth_version = "11.29.1"
 nimbusds_jwt_version = "10.5"
 junit = "5.10.3"
@@ -42,7 +43,7 @@ acm = { module = "software.amazon.awssdk:acm", version.ref = "aws_sdk_version" }
 
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson_version" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson_version" }
-jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson_version" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson_annotations_version" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson_version" }
 jackson-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", version.ref = "jackson_version" }
 
