@@ -61,6 +61,17 @@ dependencies {
 	testFixturesImplementation libs.bundles.tests
 
 	testFixturesRuntimeOnly libs.sso
+
+	constraints {
+		implementation('com.fasterxml.jackson.core:jackson-core') {
+			version {
+				require '2.21.1'
+				reject '2.20.1'
+			}
+
+			because('Version 2.20.1 is required by latest powertools at time of writing (2.9.0) but affected by GHSA-72hv-8253-57qq')
+		}
+	}
 }
 
 tasks.named("jar") {
