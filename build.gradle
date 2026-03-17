@@ -11,7 +11,7 @@ plugins {
 }
 
 // Important: see README on publishing a new version to Maven
-def buildVersion = "8.3.2"
+def buildVersion = "8.3.3"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
@@ -28,6 +28,20 @@ configurations.configureEach {
 	// https://aws.amazon.com/blogs/developer/tuning-the-aws-java-sdk-2-x-to-reduce-startup-time/
 	exclude group:"software.amazon.awssdk", module: "apache-client"
 	exclude group:"software.amazon.awssdk", module: "netty-nio-client"
+}
+
+configurations.configureEach {
+	// Version 2.20.1 is required by latest powertools at time of writing (2.9.0) but affected by GHSA-72hv-8253-57qq
+	resolutionStrategy.eachDependency { details ->
+		if (details.requested.group == 'com.fasterxml.jackson.core' &&
+				details.requested.name == 'jackson-core') {
+
+			def requestedVersion = details.requested.version
+			if (requestedVersion == null || requestedVersion < '2.21.1') {
+				details.useVersion '2.21.1'
+			}
+		}
+	}
 }
 
 dependencies {
@@ -61,17 +75,6 @@ dependencies {
 	testFixturesImplementation libs.bundles.tests
 
 	testFixturesRuntimeOnly libs.sso
-
-	constraints {
-		implementation('com.fasterxml.jackson.core:jackson-core') {
-			version {
-				require '2.21.1'
-				reject '2.20.1'
-			}
-
-			because('Version 2.20.1 is required by latest powertools at time of writing (2.9.0) but affected by GHSA-72hv-8253-57qq')
-		}
-	}
 }
 
 tasks.named("jar") {
