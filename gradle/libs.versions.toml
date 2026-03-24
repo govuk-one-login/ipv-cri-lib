@@ -2,7 +2,7 @@
 aws_sdk_version = "2.41.25"
 aws_lambda_events_version = "3.11.6"
 aspectjrt_version = "1.9.20.1"
-aws_powertools_version = "2.9.0"
+aws_powertools_version = "2.10.0"
 jackson_version = "2.21.1"
 jackson_annotations_version = "2.21" # annotations has no patch number
 nimbusds_oauth_version = "11.29.1"
