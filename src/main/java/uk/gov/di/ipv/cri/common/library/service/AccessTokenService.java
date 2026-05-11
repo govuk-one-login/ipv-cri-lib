@@ -82,10 +82,10 @@ public class AccessTokenService {
         try {
             URI arbitraryUri = URI.create("https://gds");
             HTTPRequest request = new HTTPRequest(HTTPRequest.Method.POST, arbitraryUri);
-            request.setQuery(requestBody);
             request.setContentType(ContentType.APPLICATION_URLENCODED.getType());
+            request.setBody(requestBody);
 
-            if (!request.getQueryParameters()
+            if (!request.getBodyAsFormParameters()
                     .keySet()
                     .containsAll(
                             Set.of(
@@ -97,7 +97,7 @@ public class AccessTokenService {
                 throw new AccessTokenValidationException(OAuth2Error.INVALID_REQUEST.getCode());
             }
 
-            if (request.getQueryParameters().values().stream()
+            if (request.getBodyAsFormParameters().values().stream()
                     .noneMatch(param -> param.contains(AUTHORISATION_CODE))) {
                 throw new AccessTokenValidationException(OAuth2Error.UNSUPPORTED_GRANT_TYPE_CODE);
             }

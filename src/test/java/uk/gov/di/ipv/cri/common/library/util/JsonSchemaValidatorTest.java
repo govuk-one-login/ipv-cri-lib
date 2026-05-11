@@ -12,14 +12,16 @@ class JsonSchemaValidatorTest {
     private static final String INVALID_JSON = "{ \"name\": \"John\", \"age\": \"thirty\" }";
 
     private static final String VALID_SCHEMA =
-            "{\n"
-                    + "  \"type\": \"object\",\n"
-                    + "  \"properties\": {\n"
-                    + "    \"name\": { \"type\": \"string\" },\n"
-                    + "    \"age\": { \"type\": \"integer\" }\n"
-                    + "  },\n"
-                    + "  \"required\": [\"name\", \"age\"]\n"
-                    + "}";
+            """
+        {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "age": { "type": "integer" }
+          },
+          "required": ["name", "age"]
+        }
+        """;
 
     private static final String INVALID_SCHEMA =
             "{ \"type\": \"object\", \"properties\": { \"name\": { \"type\": \"unknownType\" } } }";

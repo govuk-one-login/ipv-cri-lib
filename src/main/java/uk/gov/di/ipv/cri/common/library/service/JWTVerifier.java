@@ -216,11 +216,11 @@ public class JWTVerifier {
 
     private boolean verifySignature(SignedJWT signedJWT, PublicKey clientPublicKey)
             throws JOSEException, ClientConfigurationException {
-        if (clientPublicKey instanceof RSAPublicKey) {
-            RSASSAVerifier rsassaVerifier = new RSASSAVerifier((RSAPublicKey) clientPublicKey);
+        if (clientPublicKey instanceof RSAPublicKey rsaPublicKey) {
+            RSASSAVerifier rsassaVerifier = new RSASSAVerifier(rsaPublicKey);
             return signedJWT.verify(rsassaVerifier);
-        } else if (clientPublicKey instanceof ECPublicKey) {
-            ECDSAVerifier ecdsaVerifier = new ECDSAVerifier((ECPublicKey) clientPublicKey);
+        } else if (clientPublicKey instanceof ECPublicKey ecPublicKey) {
+            ECDSAVerifier ecdsaVerifier = new ECDSAVerifier(ecPublicKey);
             return signedJWT.verify(ecdsaVerifier);
         } else {
             throw new ClientConfigurationException(

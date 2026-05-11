@@ -24,7 +24,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class PiiRedactingDeserializerTest {
-    private List<String> sensitiveFields = List.of("id", "name", "email");
     private ObjectMapper objectMapper;
 
     @Test
@@ -108,6 +107,7 @@ class PiiRedactingDeserializerTest {
 
     @Test
     void shouldRedactSpecifiedFieldsWhenExceptionOccursDuringDeserializationDue() {
+        List<String> sensitiveFields = List.of("id", "name", "email");
         String inValidJson =
                 "{\"name\":\"John\",\"email\":\"john.doe@example.com\",\"age\":40,\"phone\":\"123456789\",\"city\":\"New York\"}";
         JsonDeserializer<? extends Person> piiRedactingDeserializer =
@@ -138,7 +138,7 @@ class PiiRedactingDeserializerTest {
     @Test
     void shouldRedactFieldsInNestedObjects() {
         List<String> sensitiveFields = List.of("firstName", "lastName", "date");
-        String InvalidNestedJson =
+        String invalidNestedJson =
                 "{\"name\":[{\"firstName\":\"John\",\"lastName\":\"Doe\"}],\"birthDate\":[{\"date\":\"1980-00-00\",\"place\":\"London\"}],\"address\":[{\"addressLine1\":\"123 Main St\",\"addressLine2\":\"\",\"city\":\"London\",\"postcode\":\"SW1A 1AA\",\"countryCode\":\"GB\"}],\"drivingPermit\":[{\"number\":\"AB12345\",\"type\":\"CAR\",\"expiryDate\":\"2023-00-00\"}]}";
         JsonDeserializer<? extends PersonIdentityDetailed> piiRedactingDeserializer =
                 setUpRedactionModule(
@@ -152,7 +152,7 @@ class PiiRedactingDeserializerTest {
                         JsonMappingException.class,
                         () ->
                                 piiRedactingDeserializer.deserialize(
-                                        jsonParser(InvalidNestedJson),
+                                        jsonParser(invalidNestedJson),
                                         getDefaultDeserializationContext()));
 
         assertThat(
@@ -168,7 +168,7 @@ class PiiRedactingDeserializerTest {
     @Test
     void shouldRedactArrayFieldsWithEmptyString() {
         List<String> sensitiveFields = List.of("name", "address", "drivingPermit");
-        String InvalidNestedJson =
+        String invalidNestedJson =
                 "{\"name\":[{\"firstName\":\"John\",\"lastName\":\"Doe\"}],\"birthDate\":[{\"date\":\"1980-00-00\",\"place\":\"London\"}],\"address\":[{\"addressLine1\":\"123 Main St\",\"addressLine2\":\"\",\"city\":\"London\",\"postcode\":\"SW1A 1AA\",\"countryCode\":\"GB\"}],\"drivingPermit\":[{\"number\":\"AB12345\",\"type\":\"CAR\",\"expiryDate\":\"2023-00-00\"}]}";
         JsonDeserializer<? extends PersonIdentityDetailed> piiRedactingDeserializer =
                 setUpRedactionModule(
@@ -182,7 +182,7 @@ class PiiRedactingDeserializerTest {
                         JsonMappingException.class,
                         () ->
                                 piiRedactingDeserializer.deserialize(
-                                        jsonParser(InvalidNestedJson),
+                                        jsonParser(invalidNestedJson),
                                         getDefaultDeserializationContext()));
 
         assertThat(

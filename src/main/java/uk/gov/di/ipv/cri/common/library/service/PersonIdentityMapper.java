@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class PersonIdentityMapper {
 
@@ -144,14 +143,12 @@ public class PersonIdentityMapper {
     }
 
     private List<Address> mapCanonicalAddresses(List<CanonicalAddress> addresses) {
-        return addresses.stream().map(Address::new).collect(Collectors.toList());
+        return addresses.stream().map(Address::new).toList();
     }
 
     private List<SocialSecurityRecord> mapSocialSecurityRecord(
             List<PersonIdentitySocialSecurityRecord> socialSecurityRecords) {
-        return socialSecurityRecords.stream()
-                .map(SocialSecurityRecord::new)
-                .collect(Collectors.toList());
+        return socialSecurityRecords.stream().map(SocialSecurityRecord::new).toList();
     }
 
     private List<BirthDate> mapPersonIdentityBirthDates(
@@ -163,7 +160,7 @@ public class PersonIdentityMapper {
                             mappedBirthDate.setValue(birthDate.getValue());
                             return mappedBirthDate;
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<Name> mapPersonIdentityNames(List<PersonIdentityName> names) {
@@ -181,11 +178,11 @@ public class PersonIdentityMapper {
                                                                 namePart.getValue());
                                                         return mappedNamePart;
                                                     })
-                                            .collect(Collectors.toList());
+                                            .toList();
                             mappedName.setNameParts(mappedNameParts);
                             return mappedName;
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<SocialSecurityRecord> mapPersonIdentitySocialSecurityRecords(
@@ -198,7 +195,7 @@ public class PersonIdentityMapper {
                                     securityRecord.getPersonalNumber());
                             return mappedSocialRecord;
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<PersonIdentityDrivingPermit> mapPersonIdentityDrivingPermits(
@@ -217,7 +214,7 @@ public class PersonIdentityMapper {
                             mappedDrivingPermit.setFullAddress(drivingPermit.getFullAddress());
                             return mappedDrivingPermit;
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private <T> boolean notNullAndNotEmpty(List<T> items) {
@@ -238,14 +235,14 @@ public class PersonIdentityMapper {
                                 namePart ->
                                         namePart.getType()
                                                 .equalsIgnoreCase(NamePartType.GIVEN_NAME.value))
-                        .collect(Collectors.toList());
+                        .toList();
         List<NamePart> familyNameParts =
                 name.getNameParts().stream()
                         .filter(
                                 namePart ->
                                         namePart.getType()
                                                 .equalsIgnoreCase(NamePartType.FAMILY_NAME.value))
-                        .collect(Collectors.toList());
+                        .toList();
 
         personIdentity.setFirstName(givenNameParts.get(0).getValue());
         if (givenNameParts.size() > 1) {
@@ -288,7 +285,7 @@ public class PersonIdentityMapper {
             PersonIdentityName name, NamePartType namePartType) {
         return name.getNameParts().stream()
                 .filter(np -> np.getType().equals(namePartType.value))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<PersonIdentityDateOfBirth> mapBirthDates(List<BirthDate> birthDates) {
@@ -299,7 +296,7 @@ public class PersonIdentityMapper {
                             dob.setValue(bd.getValue());
                             return dob;
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<PersonIdentityName> mapNames(List<Name> names) {
@@ -318,11 +315,11 @@ public class PersonIdentityMapper {
                                                             namePart.setValue(np.getValue());
                                                             return namePart;
                                                         })
-                                                .collect(Collectors.toList()));
+                                                .toList());
                             }
                             return name;
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<CanonicalAddress> mapAddresses(List<Address> addresses) {
@@ -355,7 +352,7 @@ public class PersonIdentityMapper {
 
                             return canonicalAddress;
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<PersonIdentitySocialSecurityRecord> mapSocialSecurityRecords(
@@ -368,7 +365,7 @@ public class PersonIdentityMapper {
                             personalNumber.setPersonalNumber(sr.getPersonalNumber());
                             return personalNumber;
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<DrivingPermit> mapDrivingPermits(
@@ -388,7 +385,7 @@ public class PersonIdentityMapper {
 
                             return drivingPermit;
                         })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<CanonicalAddress> mapAddressesFromDrivingPermitFullAddress(
@@ -409,7 +406,7 @@ public class PersonIdentityMapper {
                             return null;
                         })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private String extractPostalCodeFromDrivingPermitFullAddress(DrivingPermit dp) {

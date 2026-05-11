@@ -31,27 +31,29 @@ class JwkRequestTest {
     @Mock private HttpHeaders mockHttpHeaders;
 
     private static final String MOCK_API_RESPONSE =
-            "{\n"
-                    + "  \"keys\": [\n"
-                    + "    {\n"
-                    + "      \"kty\": \"RSA\",\n"
-                    + "      \"e\": \"AQAB\",\n"
-                    + "      \"use\": \"enc\",\n"
-                    + "      \"alg\": \"RS256\",\n"
-                    + "      \"n\": \"dummy-n\",\n"
-                    + "      \"kid\": \"dummy-kid\"\n"
-                    + "    },\n"
-                    + "    {\n"
-                    + "      \"kty\": \"EC\",\n"
-                    + "      \"use\": \"sig\",\n"
-                    + "      \"crv\": \"P-256\",\n"
-                    + "      \"x\": \"dummy-x\",\n"
-                    + "      \"y\": \"dummy-y\",\n"
-                    + "      \"alg\": \"ES256\",\n"
-                    + "      \"kid\": \"dummy-kid\"\n"
-                    + "    }\n"
-                    + "  ]\n"
-                    + "}";
+            """
+        {
+          "keys": [
+            {
+              "kty": "RSA",
+              "e": "AQAB",
+              "use": "enc",
+              "alg": "RS256",
+              "n": "dummy-n",
+              "kid": "dummy-kid"
+            },
+            {
+              "kty": "EC",
+              "use": "sig",
+              "crv": "P-256",
+              "x": "dummy-x",
+              "y": "dummy-y",
+              "alg": "ES256",
+              "kid": "dummy-kid"
+            }
+          ]
+        }
+        """;
 
     @Test
     void shouldReturnCacheControlHeader() throws Exception {

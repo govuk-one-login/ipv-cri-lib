@@ -60,8 +60,8 @@ public class PiiRedactingDeserializer<T> extends JsonDeserializer<T> {
                     BeanDeserializerFactory.instance.buildBeanDeserializer(
                             context, type, config.introspect(type));
 
-            if (defaultDeserializer instanceof ResolvableDeserializer) {
-                ((ResolvableDeserializer) defaultDeserializer).resolve(context);
+            if (defaultDeserializer instanceof ResolvableDeserializer resolvableDeserializer) {
+                (resolvableDeserializer).resolve(context);
             }
 
             JsonParser treeParser = objectMapper.treeAsTokens(rootNode);
@@ -116,7 +116,7 @@ public class PiiRedactingDeserializer<T> extends JsonDeserializer<T> {
     private ObjectNode processObjectNode(ObjectNode objectNode, Predicate<String> sensitivityTest) {
         ObjectNode processedNode = objectNode.deepCopy();
 
-        Iterator<Map.Entry<String, JsonNode>> fieldIterator = processedNode.fields();
+        Iterator<Map.Entry<String, JsonNode>> fieldIterator = processedNode.properties().iterator();
         while (fieldIterator.hasNext()) {
             Map.Entry<String, JsonNode> fieldEntry = fieldIterator.next();
             String fieldName = fieldEntry.getKey();
@@ -137,6 +137,6 @@ public class PiiRedactingDeserializer<T> extends JsonDeserializer<T> {
     }
 
     private void redactField(ObjectNode objectNode, String field, String value) {
-        objectNode.put(field, "*".repeat(value.length() == 0 ? 6 : value.length()));
+        objectNode.put(field, "*".repeat(value.isEmpty() ? 6 : value.length()));
     }
 }
