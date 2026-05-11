@@ -16,7 +16,6 @@ import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 import uk.gov.di.ipv.cri.common.library.util.ClientProviderFactory;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class DataStore<T> {
 
@@ -80,7 +79,7 @@ public class DataStore<T> {
                                 Key.builder().partitionValue(partitionValue).build()))
                 .stream()
                 .flatMap(page -> page.items().stream())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<T> getItemByIndex(String indexName, String value) throws DynamoDbException {
@@ -93,7 +92,7 @@ public class DataStore<T> {
 
         return index.query(queryEnhancedRequest).stream()
                 .flatMap(page -> page.items().stream())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<T> getItemsByAttribute(String attributeName, String attributeValue) {
@@ -107,7 +106,7 @@ public class DataStore<T> {
 
         return this.table.scan(r -> r.filterExpression(attributeFilterExpression)).stream()
                 .flatMap(page -> page.items().stream())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public T update(T item) {

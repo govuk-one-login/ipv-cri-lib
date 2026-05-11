@@ -8,6 +8,8 @@ import uk.gov.di.ipv.cri.common.library.domain.DeviceInformation;
 
 import java.util.List;
 
+@SuppressWarnings(
+        "java:S1133") // Constructors are deprecated for external use, but are still used internally
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PersonIdentityDetailed {

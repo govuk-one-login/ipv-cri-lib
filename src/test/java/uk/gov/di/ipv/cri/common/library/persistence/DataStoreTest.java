@@ -12,8 +12,6 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 
-import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -37,7 +35,6 @@ class DataStoreTest {
                 .thenReturn(mockDynamoDbTable);
 
         sessionItem = new SessionItem();
-        String accessToken = UUID.randomUUID().toString();
 
         dataStore = new DataStore<>(TEST_TABLE_NAME, SessionItem.class, mockDynamoDbEnhancedClient);
     }

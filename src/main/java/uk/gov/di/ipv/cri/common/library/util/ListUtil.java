@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class ListUtil {
     private ListUtil() {}
@@ -72,9 +71,7 @@ public final class ListUtil {
      * @see ListUtil#except(List, List, Function)
      */
     public static <T> List<T> except(List<T> source, List<T> except, Comparator<T> comparator) {
-        return source.stream()
-                .filter(element -> !contains(except, element, comparator))
-                .collect(Collectors.toList());
+        return source.stream().filter(element -> !contains(except, element, comparator)).toList();
     }
 
     /**

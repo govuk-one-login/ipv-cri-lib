@@ -17,7 +17,6 @@ public class CanonicalAddress {
     private String subBuildingName;
     private String buildingNumber;
     private String buildingName;
-    private String dependentThoroughfare;
     private String dependentStreetName;
     private String streetName;
     private String doubleDependentAddressLocality;
