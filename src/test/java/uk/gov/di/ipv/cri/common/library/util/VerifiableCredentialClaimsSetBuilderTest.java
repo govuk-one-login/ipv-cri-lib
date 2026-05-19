@@ -5,16 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
 import uk.gov.di.ipv.cri.common.library.service.ConfigurationService;
-import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
-import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
 import java.text.ParseException;
@@ -26,7 +22,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.nimbusds.jwt.JWTClaimNames.EXPIRATION_TIME;
 import static com.nimbusds.jwt.JWTClaimNames.NOT_BEFORE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,8 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static uk.gov.di.ipv.cri.common.library.util.VerifiableCredentialClaimsSetBuilder.ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID;
-import static uk.gov.di.ipv.cri.common.library.util.VerifiableCredentialClaimsSetBuilder.ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED;
 
 @ExtendWith(MockitoExtension.class)
 @ExtendWith(SystemStubsExtension.class)
@@ -49,9 +42,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
     private static final PersonIdentityDetailed TEST_PERSON_IDENTITY =
             mock(PersonIdentityDetailed.class);
 
-    // Needs to be created here
-    @SystemStub private EnvironmentVariables environmentVariables = new EnvironmentVariables();
-
     @Mock private ConfigurationService mockConfigurationService;
     private Clock clock;
     private VerifiableCredentialClaimsSetBuilder builder;
@@ -59,11 +49,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
     @BeforeEach
     void setup() {
         clock = Clock.fixed(Instant.parse("2016-11-03T10:15:30Z"), ZoneId.of("UTC"));
-
-        // Defaults
-        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, null);
-        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID, null);
-
         builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
     }
 
@@ -92,9 +77,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
         assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
         assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
         assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
-        assertTrue(
-                builtClaimSet.getLongClaim(EXPIRATION_TIME)
-                        > this.clock.instant().getEpochSecond());
         assertEquals(
                 TEST_PERSON_IDENTITY,
                 builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
@@ -106,13 +88,8 @@ class VerifiableCredentialClaimsSetBuilderTest {
     }
 
     @ParameterizedTest
-    @NullSource
     @ValueSource(strings = {"", " ", "false", "anything"})
-    void shouldBuildVerifiableCredential(String expiryRemovedReleasedFlagValue)
-            throws ParseException {
-
-        environmentVariables.set(
-                ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, expiryRemovedReleasedFlagValue);
+    void shouldBuildVerifiableCredential() throws ParseException {
         builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
 
         String[] testContexts = new String[] {"context1", "context2"};
@@ -137,9 +114,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
         assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
         assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
         assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
-        assertTrue(
-                builtClaimSet.getLongClaim(EXPIRATION_TIME)
-                        > this.clock.instant().getEpochSecond());
         assertEquals(
                 TEST_PERSON_IDENTITY,
                 builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
@@ -154,7 +128,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
     void shouldBuildVerifiableCredentialWithoutAnExpiryTime() throws ParseException {
         String[] testContexts = new String[] {"context1", "context2"};
 
-        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, true);
         builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
 
         Map<String, String> evidence =
@@ -185,58 +158,10 @@ class VerifiableCredentialClaimsSetBuilderTest {
                 (String[]) builtClaimSet.getJSONObjectClaim("vc").get("type"));
         assertEquals(testContexts, builtClaimSet.getJSONObjectClaim("vc").get("@context"));
         assertEquals(evidence, builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
-
-        assertNull(builtClaimSet.getLongClaim(EXPIRATION_TIME));
     }
 
     @Test
-    void shouldOverrideJtiWhenContainUniqueIdIsFalse() {
-        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID, "override");
-        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
-
-        var claimsSetBuilder =
-                new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock)
-                        .subject(TEST_SUBJECT)
-                        .timeToLive(1L, ChronoUnit.MONTHS)
-                        .verifiableCredentialType(TEST_VC_TYPE)
-                        .verifiableCredentialSubject(TEST_PERSON_IDENTITY);
-
-        var originalBuilder = claimsSetBuilder.build();
-
-        claimsSetBuilder.overrideJti("dummyJti");
-        claimsSetBuilder.build();
-
-        assertNotEquals(originalBuilder.getJWTID(), claimsSetBuilder.build().getJWTID());
-        assertEquals(null, originalBuilder.getJWTID());
-
-        assertEquals("dummyJti", claimsSetBuilder.build().getJWTID());
-    }
-
-    @Test
-    void cannotOverrideJtiWhenContainUniqueIdIsFalse() {
-        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID, false);
-        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
-
-        var claimsSetBuilder =
-                new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock)
-                        .subject(TEST_SUBJECT)
-                        .timeToLive(1L, ChronoUnit.MONTHS)
-                        .verifiableCredentialType(TEST_VC_TYPE)
-                        .verifiableCredentialSubject(TEST_PERSON_IDENTITY);
-
-        var originalBuilder = claimsSetBuilder.build();
-
-        claimsSetBuilder.overrideJti("dummyJti");
-        claimsSetBuilder.build();
-
-        assertNull(claimsSetBuilder.build().getJWTID());
-        assertEquals(null, originalBuilder.getJWTID());
-        assertEquals(null, claimsSetBuilder.build().getJWTID());
-    }
-
-    @Test
-    void cannotOverrideJtiWhenContainUniqueIdIsTrue() {
-        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID, true);
+    void cannotOverrideJtiWhenContainUniqueIdIsDefaultedToTrue() {
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
 
         var claimsSetBuilder =
@@ -258,13 +183,10 @@ class VerifiableCredentialClaimsSetBuilderTest {
     }
 
     @ParameterizedTest
-    @NullSource
     @ValueSource(strings = {"", " ", "false", "anything"})
-    void shouldBuildVerifiableCredentialWhenVcContainsUniqueIdReleaseFlagIsNotSpecified(
-            String expiryRemovedReleasedFlagValue) throws ParseException {
+    void shouldBuildVerifiableCredentialWhenVcContainsUniqueIdReleaseFlagIsNotSpecified()
+            throws ParseException {
 
-        environmentVariables.set(
-                ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, expiryRemovedReleasedFlagValue);
         builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
 
         String[] testContexts = new String[] {"context1", "context2"};
@@ -286,9 +208,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
         assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
         assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
         assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
-        assertTrue(
-                builtClaimSet.getLongClaim(EXPIRATION_TIME)
-                        > this.clock.instant().getEpochSecond());
         assertEquals(
                 TEST_PERSON_IDENTITY,
                 builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
@@ -300,14 +219,9 @@ class VerifiableCredentialClaimsSetBuilderTest {
     }
 
     @ParameterizedTest
-    @NullSource
     @ValueSource(strings = {"", " ", "false", "anything"})
-    void shouldBuildVerifiableCredentialWhenVcContainsUniqueIdReleaseFlagIsSpecified(
-            String expiryRemovedReleasedFlagValue) throws ParseException {
+    void shouldBuildVerifiableCredentialWithoutFeatureFlags() throws ParseException {
 
-        environmentVariables.set(
-                ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED, expiryRemovedReleasedFlagValue);
-        environmentVariables.set(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID, true);
         builder = new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock);
 
         String[] testContexts = new String[] {"context1", "context2"};
@@ -328,9 +242,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
         assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
         assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
         assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
-        assertTrue(
-                builtClaimSet.getLongClaim(EXPIRATION_TIME)
-                        > this.clock.instant().getEpochSecond());
         assertEquals(
                 TEST_PERSON_IDENTITY,
                 builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
@@ -372,9 +283,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
         assertEquals(TEST_SUBJECT, builtClaimSet.getSubject());
         assertEquals(TEST_ISSUER, builtClaimSet.getIssuer());
         assertEquals(this.clock.instant().getEpochSecond(), builtClaimSet.getLongClaim(NOT_BEFORE));
-        assertTrue(
-                builtClaimSet.getLongClaim(EXPIRATION_TIME)
-                        > this.clock.instant().getEpochSecond());
         assertEquals(
                 TEST_PERSON_IDENTITY,
                 builtClaimSet.getJSONObjectClaim("vc").get("credentialSubject"));
@@ -384,33 +292,6 @@ class VerifiableCredentialClaimsSetBuilderTest {
 
         assertNull(builtClaimSet.getJSONObjectClaim("vc").get("@context"));
         assertNull(builtClaimSet.getJSONObjectClaim("vc").get("evidence"));
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-        "66,SECONDS,2016-11-03T10:16:36Z",
-        "30,MINUTES,2016-11-03T10:45:30Z",
-        "4,HOURS,2016-11-03T14:15:30Z",
-        "2,DAYS,2016-11-05T10:15:30Z",
-        "1,MONTHS,2016-12-03T10:15:30Z",
-        "2,YEARS,2018-11-03T10:15:30Z"
-    })
-    void shouldBuildVerifiableCredentialWithAppropriateExpirationTime(
-            long ttl, ChronoUnit ttlUnit, String expectedExpirationTime) throws ParseException {
-
-        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
-
-        JWTClaimsSet builtClaimSet =
-                this.builder
-                        .subject(TEST_SUBJECT)
-                        .timeToLive(ttl, ttlUnit)
-                        .verifiableCredentialType(TEST_VC_TYPE)
-                        .verifiableCredentialSubject(TEST_PERSON_IDENTITY)
-                        .build();
-
-        assertEquals(
-                builtClaimSet.getLongClaim(EXPIRATION_TIME),
-                Instant.parse(expectedExpirationTime).getEpochSecond());
     }
 
     @Test
@@ -532,19 +413,5 @@ class VerifiableCredentialClaimsSetBuilderTest {
                         NullPointerException.class,
                         () -> this.builder.verifiableCredentialEvidence(null));
         assertEquals("evidence must not be null", thrownException.getMessage());
-    }
-
-    @Test
-    void shouldThrowErrorWhenInvalidTimeToLiveUnitSupplied() {
-        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
-        this.builder
-                .subject(TEST_SUBJECT)
-                .timeToLive(5L, ChronoUnit.MILLIS)
-                .verifiableCredentialType(TEST_VC_TYPE)
-                .verifiableCredentialSubject(TEST_PERSON_IDENTITY);
-        IllegalStateException thrownException =
-                assertThrows(IllegalStateException.class, () -> this.builder.build());
-        assertEquals(
-                "Unexpected time-to-live unit encountered: Millis", thrownException.getMessage());
     }
 }

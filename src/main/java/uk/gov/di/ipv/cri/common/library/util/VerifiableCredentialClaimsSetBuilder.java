@@ -15,11 +15,6 @@ import java.util.UUID;
 
 public class VerifiableCredentialClaimsSetBuilder {
 
-    public static final String ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED =
-            "ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED";
-    public static final String ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID =
-            "ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID";
-
     private final ConfigurationService configurationService;
     private final Clock clock;
 
@@ -28,7 +23,6 @@ public class VerifiableCredentialClaimsSetBuilder {
     private String[] contexts;
     private String subject;
     private Object evidence;
-    private ChronoUnit ttlUnit;
     private long ttl;
     private JWTClaimsSet.Builder jwtClaimsSetBuilder;
 
@@ -47,7 +41,7 @@ public class VerifiableCredentialClaimsSetBuilder {
     }
 
     public VerifiableCredentialClaimsSetBuilder timeToLive(long ttl, ChronoUnit ttlUnit) {
-        this.ttlUnit = Objects.requireNonNull(ttlUnit, "ttlUnit must not be null");
+        Objects.requireNonNull(ttlUnit, "ttlUnit must not be null");
         if (ttl < 1L) {
             throw new IllegalArgumentException("ttl must be greater than zero");
         }
@@ -108,17 +102,11 @@ public class VerifiableCredentialClaimsSetBuilder {
                         .issuer(issuer)
                         .claim(JWTClaimNames.NOT_BEFORE, dateTimeNow.toEpochSecond());
 
-        if (!isReleaseFlag(ENV_VAR_FEATURE_FLAG_VC_EXPIRY_REMOVED)) {
-            builder.claim(JWTClaimNames.EXPIRATION_TIME, getExpirationTimestamp(dateTimeNow));
-        }
-
         Map<String, Object> verifiableCredentialClaims = new LinkedHashMap<>();
         verifiableCredentialClaims.put(
                 "type", new String[] {"VerifiableCredential", this.verifiableCredentialType});
 
-        if (isReleaseFlag(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID)) {
-            builder.claim(JWTClaimNames.JWT_ID, generateUniqueId());
-        }
+        builder.claim(JWTClaimNames.JWT_ID, generateUniqueId());
 
         if (Objects.nonNull(this.contexts) && contexts.length > 0) {
             verifiableCredentialClaims.put("@context", contexts);
@@ -134,10 +122,7 @@ public class VerifiableCredentialClaimsSetBuilder {
     }
 
     public JWTClaimsSet.Builder overrideJti(String jti) {
-        if (System.getenv(ENV_VAR_FEATURE_FLAG_VC_CONTAINS_UNIQUE_ID).equals("override")) {
-            return overrideJti().jwtID(jti);
-        }
-        return this.jwtClaimsSetBuilder;
+        return overrideJti().jwtID(jti);
     }
 
     private JWTClaimsSet.Builder overrideJti() {
@@ -145,30 +130,6 @@ public class VerifiableCredentialClaimsSetBuilder {
             this.jwtClaimsSetBuilder = new JWTClaimsSet.Builder();
         }
         return this.jwtClaimsSetBuilder;
-    }
-
-    private boolean isReleaseFlag(String environmentVariable) {
-        return Boolean.parseBoolean(System.getenv(environmentVariable));
-    }
-
-    private long getExpirationTimestamp(OffsetDateTime dateTimeNow) {
-        switch (this.ttlUnit) {
-            case SECONDS:
-                return dateTimeNow.plusSeconds(this.ttl).toEpochSecond();
-            case MINUTES:
-                return dateTimeNow.plusMinutes(this.ttl).toEpochSecond();
-            case HOURS:
-                return dateTimeNow.plusHours(this.ttl).toEpochSecond();
-            case DAYS:
-                return dateTimeNow.plusDays(this.ttl).toEpochSecond();
-            case MONTHS:
-                return dateTimeNow.plusMonths(this.ttl).toEpochSecond();
-            case YEARS:
-                return dateTimeNow.plusYears(this.ttl).toEpochSecond();
-            default:
-                throw new IllegalStateException(
-                        "Unexpected time-to-live unit encountered: " + ttlUnit);
-        }
     }
 
     private String generateUniqueId() {
