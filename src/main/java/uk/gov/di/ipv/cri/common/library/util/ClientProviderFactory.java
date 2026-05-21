@@ -112,7 +112,7 @@ public class ClientProviderFactory {
                         ClientOverrideConfiguration.builder()
                                 .addExecutionInterceptor(
                                         AwsSdkTelemetry.create(GlobalOpenTelemetry.get())
-                                                .newExecutionInterceptor())
+                                                .createExecutionInterceptor())
                                 .build());
             }
 
@@ -138,7 +138,8 @@ public class ClientProviderFactory {
 
                 sqsClientBuilder.overrideConfiguration(
                         ClientOverrideConfiguration.builder()
-                                .addExecutionInterceptor(awsSdkTelemetry.newExecutionInterceptor())
+                                .addExecutionInterceptor(
+                                        awsSdkTelemetry.createExecutionInterceptor())
                                 .build());
 
                 sqsClient = awsSdkTelemetry.wrap(sqsClientBuilder.build());
@@ -164,7 +165,7 @@ public class ClientProviderFactory {
                         ClientOverrideConfiguration.builder()
                                 .addExecutionInterceptor(
                                         AwsSdkTelemetry.create(GlobalOpenTelemetry.get())
-                                                .newExecutionInterceptor())
+                                                .createExecutionInterceptor())
                                 .build());
             }
 
@@ -193,7 +194,7 @@ public class ClientProviderFactory {
                         ClientOverrideConfiguration.builder()
                                 .addExecutionInterceptor(
                                         AwsSdkTelemetry.create(GlobalOpenTelemetry.get())
-                                                .newExecutionInterceptor())
+                                                .createExecutionInterceptor())
                                 .build());
             }
 
@@ -274,7 +275,7 @@ public class ClientProviderFactory {
                         ClientOverrideConfiguration.builder()
                                 .addExecutionInterceptor(
                                         AwsSdkTelemetry.create(GlobalOpenTelemetry.get())
-                                                .newExecutionInterceptor())
+                                                .createExecutionInterceptor())
                                 .build());
             }
 
@@ -299,7 +300,7 @@ public class ClientProviderFactory {
                         ClientOverrideConfiguration.builder()
                                 .addExecutionInterceptor(
                                         AwsSdkTelemetry.create(GlobalOpenTelemetry.get())
-                                                .newExecutionInterceptor())
+                                                .createExecutionInterceptor())
                                 .build());
             }
 
