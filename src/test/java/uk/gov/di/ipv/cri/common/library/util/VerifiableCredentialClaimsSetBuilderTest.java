@@ -191,8 +191,8 @@ class VerifiableCredentialClaimsSetBuilderTest {
         var originalBuilder = claimsSetBuilder.build();
 
         claimsSetBuilder.overrideJti("dummyJti");
-        claimsSetBuilder.build();
 
+        assertNotNull(originalBuilder.getJWTID());
         assertNotEquals(originalBuilder.getJWTID(), claimsSetBuilder.build().getJWTID());
         assertEquals("dummyJti", claimsSetBuilder.build().getJWTID());
     }
