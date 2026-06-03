@@ -161,7 +161,7 @@ class VerifiableCredentialClaimsSetBuilderTest {
     }
 
     @Test
-    void cannotOverrideJtiWhenContainUniqueIdIsDefaultedToTrue() {
+    void cannotOverrideJtiWhenOverrideJtiNotContainString() {
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
 
         var claimsSetBuilder =
@@ -173,13 +173,28 @@ class VerifiableCredentialClaimsSetBuilderTest {
 
         var originalClaimsSet = claimsSetBuilder.build();
 
-        claimsSetBuilder.overrideJti("dummyJti");
-        var newClaimsSet = claimsSetBuilder.build();
-
-        assertNotEquals("dummyJti", newClaimsSet.getJWTID());
-        assertNotEquals(originalClaimsSet.getJWTID(), newClaimsSet.getJWTID());
+        assertNotEquals("dummyJti", originalClaimsSet.getJWTID());
         assertNotNull(originalClaimsSet.getJWTID());
-        assertNotNull(newClaimsSet.getJWTID());
+    }
+
+    @Test
+    void shouldOverrideJtiWhenOverrideJtiContainString() {
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn(TEST_ISSUER);
+
+        var claimsSetBuilder =
+                new VerifiableCredentialClaimsSetBuilder(mockConfigurationService, clock)
+                        .subject(TEST_SUBJECT)
+                        .timeToLive(1L, ChronoUnit.MONTHS)
+                        .verifiableCredentialType(TEST_VC_TYPE)
+                        .verifiableCredentialSubject(TEST_PERSON_IDENTITY);
+
+        var originalBuilder = claimsSetBuilder.build();
+
+        claimsSetBuilder.overrideJti("dummyJti");
+
+        assertNotNull(originalBuilder.getJWTID());
+        assertNotEquals(originalBuilder.getJWTID(), claimsSetBuilder.build().getJWTID());
+        assertEquals("dummyJti", claimsSetBuilder.build().getJWTID());
     }
 
     @ParameterizedTest

@@ -22,6 +22,7 @@ public class VerifiableCredentialClaimsSetBuilder {
     private String verifiableCredentialType;
     private String[] contexts;
     private String subject;
+    private String jtiOverride;
     private Object evidence;
     private long ttl;
     private JWTClaimsSet.Builder jwtClaimsSetBuilder;
@@ -106,7 +107,9 @@ public class VerifiableCredentialClaimsSetBuilder {
         verifiableCredentialClaims.put(
                 "type", new String[] {"VerifiableCredential", this.verifiableCredentialType});
 
-        builder.claim(JWTClaimNames.JWT_ID, generateUniqueId());
+        builder.claim(
+                JWTClaimNames.JWT_ID,
+                Objects.requireNonNullElseGet(jtiOverride, this::generateUniqueId));
 
         if (Objects.nonNull(this.contexts) && contexts.length > 0) {
             verifiableCredentialClaims.put("@context", contexts);
@@ -121,8 +124,9 @@ public class VerifiableCredentialClaimsSetBuilder {
         return builder.build();
     }
 
-    public JWTClaimsSet.Builder overrideJti(String jti) {
-        return overrideJti().jwtID(jti);
+    public void overrideJti(String jti) {
+        this.jtiOverride = jti;
+        overrideJti();
     }
 
     private JWTClaimsSet.Builder overrideJti() {
