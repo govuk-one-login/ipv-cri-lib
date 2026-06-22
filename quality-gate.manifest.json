@@ -1,72 +1,68 @@
 {
-  "$schema": "https://raw.githubusercontent.com/govuk-one-login/quality-gates/refs/tags/v0.1.0/schemas/schema.json",
+  "$schema": "https://raw.githubusercontent.com/govuk-one-login/quality-gates/refs/tags/v0.11.0/schemas/schema.json",
   "services": [
     {
-      "quality-gates": [
+      "serviceTag": "ipv-cri-lib",
+      "promotionType": "securePipelines",
+      "checks": [
         {
-          "check-types": [
+          "checkTypes": [
             "secret scanning"
           ],
+          "phase": "pre-merge",
+          "provider": "GitHub",
           "config": {
             "file": ".github/workflows/code-quality.yml",
-            "name": "pre-commit",
-            "path": "jobs.run-pre-commit"
-          },
-          "phase": "pre-merge",
-          "provider": "GitHub"
+            "path": "$.jobs.run-pre-commit"
+          }
         },
         {
-          "check-types": [
+          "checkTypes": [
             "code style and linting"
           ],
+          "phase": "pre-merge",
+          "provider": "GitHub",
           "config": {
             "file": ".github/workflows/code-quality.yml",
-            "name": "Linting",
-            "path": "jobs.linting"
-          },
-          "phase": "pre-merge",
-          "provider": "GitHub"
+            "path": "$.jobs.linting"
+          }
         },
         {
-          "check-types": [
+          "checkTypes": [
             "unit"
           ],
+          "phase": "pre-merge",
+          "provider": "GitHub",
           "config": {
             "file": ".github/workflows/check-pr.yml",
-            "name": "Run tests",
-            "path": "jobs.unit-tests"
-          },
-          "phase": "pre-merge",
-          "provider": "GitHub"
+            "path": "$.jobs.unit-tests"
+          }
         },
         {
-          "check-types": [
+          "checkTypes": [
             "code style and linting",
             "unit test coverage",
             "vulnerability detection"
           ],
+          "phase": "pre-merge",
+          "provider": "GitHub",
           "config": {
             "file": ".github/workflows/scan-repo.yml",
-            "name": "SonarCloud",
-            "path": "jobs.sonarcloud"
-          },
-          "phase": "pre-merge",
-          "provider": "GitHub"
+            "path": "$.jobs.sonarcloud"
+          }
         },
         {
-          "check-types": [
+          "checkTypes": [
             "vulnerability detection"
           ],
+          "phase": "pre-merge",
+          "provider": "GitHub",
           "config": {
             "file": ".github/workflows/scan-repo.yml",
-            "name": "CodeQL",
-            "path": "jobs.codeql"
-          },
-          "phase": "pre-merge",
-          "provider": "GitHub"
+            "path": "$.jobs.codeql"
+          }
         }
-      ],
-      "service-tag": "ipv-cri-lib"
+      ]
     }
   ]
 }
