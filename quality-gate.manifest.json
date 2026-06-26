@@ -13,7 +13,7 @@
           "provider": "GitHub",
           "config": {
             "file": ".github/workflows/code-quality.yml",
-            "path": "$.jobs.run-pre-commit"
+            "path": "$.jobs.pre-commit"
           }
         },
         {
