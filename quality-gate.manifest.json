@@ -3,7 +3,7 @@
   "services": [
     {
       "serviceTag": "ipv-cri-lib",
-      "promotionType": "securePipelines",
+      "promotionType": "library",
       "checks": [
         {
           "checkTypes": [
