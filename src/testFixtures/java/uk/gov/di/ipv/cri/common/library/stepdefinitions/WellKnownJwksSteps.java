@@ -13,6 +13,7 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.json.JSONObject;
 import software.amazon.awssdk.services.kms.model.InvalidCiphertextException;
+import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import uk.gov.di.ipv.cri.common.library.client.HttpHeaders;
 import uk.gov.di.ipv.cri.common.library.client.TestResourcesClient;
 import uk.gov.di.ipv.cri.common.library.config.ApiGateway;
@@ -72,12 +73,19 @@ public class WellKnownJwksSteps {
         objectMapper = new ObjectMapper();
         ssmHelper = new SSMHelper();
 
-        authEncryptionKeyId =
-                ssmHelper.getParameterValue(
-                        format(
-                                "/%s/%s",
-                                getEnvOrDefault("COMMON_STACK_NAME", "common-cri-api"),
-                                "AuthRequestKmsEncryptionKeyId"));
+        String keyId;
+        try {
+            keyId =
+                    ssmHelper.getParameterValue(
+                            format(
+                                    "/%s/%s",
+                                    getEnvOrDefault("COMMON_STACK_NAME", "common-cri-api"),
+                                    "AuthRequestKmsEncryptionKeyId"));
+        } catch (ParameterNotFoundException e) {
+            // This SSM param is now only present if fallback is enabled
+            keyId = "";
+        }
+        authEncryptionKeyId = keyId;
     }
 
     @Given("that a public \\/.well-known\\/jwks.json endpoint exists for a CRI")
