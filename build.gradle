@@ -25,6 +25,12 @@ java {
 }
 
 configurations.configureEach {
+	resolutionStrategy {
+		force 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+	}
+}
+
+configurations.configureEach {
 	// https://aws.amazon.com/blogs/developer/tuning-the-aws-java-sdk-2-x-to-reduce-startup-time/
 	exclude group:"software.amazon.awssdk", module: "apache-client"
 	exclude group:"software.amazon.awssdk", module: "netty-nio-client"
