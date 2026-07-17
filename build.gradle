@@ -11,7 +11,7 @@ plugins {
 }
 
 // Important: see README on publishing a new version to Maven
-def buildVersion = "9.1.1"
+def buildVersion = "9.1.2"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
@@ -22,6 +22,12 @@ repositories {
 java {
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
+}
+
+configurations.configureEach {
+	resolutionStrategy {
+		force 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+	}
 }
 
 configurations.configureEach {
