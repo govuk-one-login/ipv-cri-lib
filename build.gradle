@@ -11,17 +11,12 @@ plugins {
 }
 
 // Important: see README on publishing a new version to Maven
-def buildVersion = "9.1.2"
+def buildVersion = "9.2.0"
 
 defaultTasks 'clean', 'spotlessApply', 'build'
 
 repositories {
 	mavenCentral()
-}
-
-java {
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
 }
 
 configurations.configureEach {
@@ -52,6 +47,7 @@ dependencies {
 	implementation libs.aspectjrt
 	implementation libs.otel.aws.sdk
 
+	testImplementation platform(libs.junit.bom)
 	testImplementation libs.bundles.tests
 	testRuntimeOnly libs.bundles.test.runtime
 
