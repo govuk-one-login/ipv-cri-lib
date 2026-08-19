@@ -19,11 +19,6 @@ repositories {
 	mavenCentral()
 }
 
-java {
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
-}
-
 configurations.configureEach {
 	resolutionStrategy {
 		force 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
