@@ -21,7 +21,7 @@ repositories {
 
 configurations.configureEach {
 	resolutionStrategy {
-		force 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+		force 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
 	}
 }
 
