@@ -29,24 +29,24 @@ jobs:
       pull-requests: read
     steps:
       - name: Pull repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        uses: gradle/actions/setup-gradle@b9bee63ef481cc545e4517ec730544a4d8b1dfa0 # v6.4.0
         with:
           gradle-version: 9.7.0
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           java-version: 21
           distribution: corretto
           cache: gradle
 
       - name: Cache build artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           key: ${{ runner.os }}-cri-lib-java-${{ github.head_ref || github.ref_name }}
           restore-keys: ${{ runner.os }}-cri-lib-java-
@@ -56,14 +56,14 @@ jobs:
             !build/reports
 
       - name: Cache SonarCloud packages
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
           path: ~/.sonar/cache
 
       - name: Get coverage results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ needs.unit-tests.outputs.coverage-artifact }}
           path: build/reports/jacoco/test
@@ -81,6 +81,6 @@ jobs:
       security-events: write
     steps:
       - name: Run CodeQL scan
-        uses: govuk-one-login/github-actions/code-quality/codeql@cd7d35dde348251237efbbaee5345e95adef0321
+        uses: govuk-one-login/github-actions/code-quality/codeql@b5f4f92a0692bf297b08c43745e545e45631f0ee
         with:
           languages: java
