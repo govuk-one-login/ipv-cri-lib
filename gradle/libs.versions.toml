@@ -11,7 +11,7 @@ junit = "5.14.4"
 mockito = "5.23.0"
 system_stubs_version = "2.1.8"
 cucumber_version = "7.33.0"
-opentelemetry_version = "2.28.0-alpha"
+opentelemetry_version = "2.33.1-alpha"
 sonarqube_version = "7.5.+"
 spotless_version = "8.0.+"
 log4j = "2.26.1"
@@ -48,7 +48,7 @@ jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson_version" }
 jackson-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", version.ref = "jackson_version" }
 
-everit-schema = { module = "com.github.erosb:everit-json-schema", version = "1.14.4" }
+everit-schema = { module = "com.github.erosb:everit-json-schema", version = "1.14.6" }
 
 aspectjrt = { module = "org.aspectj:aspectjrt", version.ref = "aspectjrt_version" }
 
